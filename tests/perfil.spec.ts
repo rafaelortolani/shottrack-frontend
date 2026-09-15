@@ -29,4 +29,18 @@ test.describe("Perfil (FUC03)", () => {
     await page.goto("/perfil");
     await expect(page).toHaveURL(/\/login/);
   });
+
+  test("chega no perfil pelo link do menu no dashboard", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Senha").fill("senha12345");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    await page.getByRole("link", { name: "Perfil" }).click();
+    await expect(page).toHaveURL(/\/perfil$/);
+  });
 });

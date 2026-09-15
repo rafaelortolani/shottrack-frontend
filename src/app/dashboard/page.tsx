@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TargetRings } from "@/components/TargetRings";
 
 const stats = [
@@ -21,22 +22,31 @@ export default function DashboardPage() {
           ShotTrack
         </span>
         <nav className="space-y-1 text-sm">
-          <a className="block rounded-md px-3 py-2 bg-surface text-foreground" href="#">
+          <Link className="block rounded-md px-3 py-2 bg-surface text-foreground" href="/dashboard">
             <span className="hidden md:inline">Dashboard</span>
             <span className="md:hidden">●</span>
-          </a>
-          <a className="block rounded-md px-3 py-2 text-foreground-muted hover:text-foreground hover:bg-surface transition-colors" href="#">
+          </Link>
+          <span
+            className="block rounded-md px-3 py-2 text-foreground-muted/60 cursor-not-allowed"
+            title="Em breve"
+          >
             <span className="hidden md:inline">Treinos</span>
             <span className="md:hidden">○</span>
-          </a>
-          <a className="block rounded-md px-3 py-2 text-foreground-muted hover:text-foreground hover:bg-surface transition-colors" href="#">
+          </span>
+          <span
+            className="block rounded-md px-3 py-2 text-foreground-muted/60 cursor-not-allowed"
+            title="Em breve"
+          >
             <span className="hidden md:inline">Acervo</span>
             <span className="md:hidden">○</span>
-          </a>
-          <a className="block rounded-md px-3 py-2 text-foreground-muted hover:text-foreground hover:bg-surface transition-colors" href="#">
+          </span>
+          <Link
+            className="block rounded-md px-3 py-2 text-foreground-muted hover:text-foreground hover:bg-surface transition-colors"
+            href="/perfil"
+          >
             <span className="hidden md:inline">Perfil</span>
             <span className="md:hidden">○</span>
-          </a>
+          </Link>
         </nav>
       </aside>
 
