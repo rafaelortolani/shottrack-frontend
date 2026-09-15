@@ -206,12 +206,12 @@ export default function PerfilPage() {
                 <p className="text-sm text-foreground-muted">Email</p>
                 <p className="text-foreground">{email}</p>
               </div>
-              <span
-                className="text-sm text-foreground-muted/60 cursor-not-allowed"
-                title="Em breve"
+              <Link
+                href="/perfil/email"
+                className="text-sm text-foreground-muted hover:text-foreground transition-colors"
               >
                 Alterar
-              </span>
+              </Link>
             </div>
             <div className="flex items-center justify-between">
               <div>
