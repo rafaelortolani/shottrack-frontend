@@ -11,11 +11,13 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.46.0",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.47.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -23,7 +25,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "@playwright/test": "^1.47.0"
+    "typescript": "^5"
   }
 }
