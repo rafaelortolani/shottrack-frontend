@@ -42,16 +42,9 @@ export default function DashboardPage() {
           </span>
           <Link
             className="block rounded-md px-3 py-2 text-foreground-muted hover:text-foreground hover:bg-surface transition-colors"
-            href="/modalidades"
+            href="/usuario"
           >
-            <span className="hidden md:inline">Modalidades</span>
-            <span className="md:hidden">○</span>
-          </Link>
-          <Link
-            className="block rounded-md px-3 py-2 text-foreground-muted hover:text-foreground hover:bg-surface transition-colors"
-            href="/perfil"
-          >
-            <span className="hidden md:inline">Perfil</span>
+            <span className="hidden md:inline">Usuário</span>
             <span className="md:hidden">○</span>
           </Link>
         </nav>

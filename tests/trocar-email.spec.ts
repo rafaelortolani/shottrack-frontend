@@ -8,9 +8,9 @@ async function loginAndGoToEmailChange(page: import("@playwright/test").Page, em
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/dashboard/);
 
-  await page.goto("/perfil");
+  await page.goto("/usuario");
   await page.getByRole("link", { name: "Alterar" }).first().click();
-  await expect(page).toHaveURL(/\/perfil\/email/);
+  await expect(page).toHaveURL(/\/usuario\/email/);
 }
 
 async function fillCode(page: import("@playwright/test").Page, code: string) {
@@ -19,7 +19,7 @@ async function fillCode(page: import("@playwright/test").Page, code: string) {
   }
 }
 
-test.describe("Trocar email (FUC04)", () => {
+test.describe("Usuário > Trocar email (FUC04)", () => {
   test("solicita e confirma a troca de email com sucesso", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
@@ -35,7 +35,7 @@ test.describe("Trocar email (FUC04)", () => {
     await fillCode(page, code);
     await page.getByRole("button", { name: "Confirmar" }).click();
 
-    await expect(page).toHaveURL(/\/perfil$/);
+    await expect(page).toHaveURL(/\/usuario$/);
     await expect(page.getByText(newEmail)).toBeVisible();
   });
 
@@ -50,7 +50,7 @@ test.describe("Trocar email (FUC04)", () => {
     await page.getByRole("button", { name: "Enviar código" }).click();
 
     await expect(page.getByText(/já está em uso/i)).toBeVisible();
-    await expect(page).toHaveURL(/\/perfil\/email/);
+    await expect(page).toHaveURL(/\/usuario\/email/);
   });
 
   test("mostra erro ao confirmar com código incorreto", async ({ page }) => {
@@ -67,6 +67,6 @@ test.describe("Trocar email (FUC04)", () => {
     await page.getByRole("button", { name: "Confirmar" }).click();
 
     await expect(page.getByText(/código incorreto/i)).toBeVisible();
-    await expect(page).toHaveURL(/\/perfil\/email/);
+    await expect(page).toHaveURL(/\/usuario\/email/);
   });
 });

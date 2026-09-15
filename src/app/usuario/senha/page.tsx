@@ -60,7 +60,7 @@ export default function AlterarSenhaPage() {
       return;
     }
 
-    router.push("/perfil?senha=alterada");
+    router.push("/usuario?senha=alterada");
   }
 
   return (
@@ -124,7 +124,7 @@ export default function AlterarSenhaPage() {
             >
               {saving ? "Alterando..." : "Alterar senha"}
             </button>
-            <Link href="/perfil" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
+            <Link href="/usuario" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
               Cancelar
             </Link>
           </div>

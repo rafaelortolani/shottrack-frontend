@@ -1,7 +1,12 @@
-# FUC06 - Modalidades praticadas
+# FUC06 - Usuário > Modalidades praticadas
 
 ## Objetivo
-Permitir que o atleta veja e gerencie quais modalidades pratica.
+Permitir que o atleta veja e gerencie quais modalidades pratica, na aba
+"Modalidades" da seção "Usuário" (irmã da aba "Perfil", FUC03).
+
+## Estrutura de navegação
+Rota: `/usuario/modalidades`, acessada pela aba "Modalidades" (mesmo
+padrão de abas do Acervo) ou pelo link "Editar" no resumo do FUC03.
 
 ## Referência backend
 - UC11 (catálogo de modalidades) — `GET /api/modality-catalog`
@@ -9,10 +14,15 @@ Permitir que o atleta veja e gerencie quais modalidades pratica.
   `DELETE /api/practiced-modalities/{modalityId}`
 
 ## Layout
-- Lista das modalidades já praticadas, cada uma com um "x" pra remover
-- Abaixo (ou num modal/dropdown), lista do catálogo completo — clicar numa
-  modalidade ainda não adicionada, adiciona ela
-- Modalidades já praticadas não aparecem mais como opção pra adicionar de novo
+Grade de chips (um por modalidade do catálogo), cada um num estado
+marcado (praticada) ou desmarcado (não praticada). Tocar num chip
+desmarcado adiciona; tocar num chip marcado remove. Sem lista separada
+de "já praticadas" — o catálogo inteiro aparece sempre, só o estado visual
+muda.
+
+- Chip marcado: fundo `accent-target`, ícone de check, texto claro
+- Chip desmarcado: borda `border`, sem preenchimento, texto `foreground-muted`
+- Contador no rodapé: "X modalidades selecionadas"
 
 ## Estados da tela
 - Carregando: enquanto busca catálogo + praticadas
@@ -22,11 +32,6 @@ Permitir que o atleta veja e gerencie quais modalidades pratica.
   que confirmada, sem precisar recarregar a tela)
 - Removendo: idem, remove da lista imediatamente
 - Erro ao adicionar/remover: mensagem inline, sem travar o resto da tela
-
-## Navegação
-- Acessível a partir do `/perfil` (FUC03) ou item próprio na navegação —
-  decidir na implementação, mantendo consistência com o padrão de nav já
-  estabelecido no dashboard
 
 ## Definição de pronto
 - [ ] Tela reflete o padrão visual já estabelecido

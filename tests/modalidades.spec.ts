@@ -15,36 +15,41 @@ async function login(page: Page, email: string, password = "senha12345") {
   await expect(page).toHaveURL(/\/dashboard/);
 }
 
-test.describe("Modalidades praticadas (FUC06)", () => {
-  test("mostra o estado vazio quando não há modalidade praticada", async ({ page }) => {
+test.describe("Usuário > Modalidades (FUC06)", () => {
+  test("mostra o estado inicial sem nenhuma modalidade marcada", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     await login(page, email);
 
-    await page.goto("/modalidades");
+    await page.goto("/usuario/modalidades");
 
-    await expect(page.getByText(/ainda não registrou nenhuma modalidade/i)).toBeVisible();
+    await expect(page.getByText(/toque numa modalidade/i)).toBeVisible();
+    await expect(page.getByText("0 modalidades selecionadas")).toBeVisible();
+
+    const chips = page.getByRole("button", { pressed: false });
+    expect(await chips.count()).toBeGreaterThanOrEqual(2);
   });
 
-  test("adiciona uma modalidade e reflete na lista imediatamente", async ({ page }) => {
+  test("marca um chip e reflete no contador imediatamente", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
+    const token = await loginAndGetToken(email);
+    const catalog = await getModalityCatalog(token);
+    const [first] = catalog;
+
     await login(page, email);
+    await page.goto("/usuario/modalidades");
 
-    await page.goto("/modalidades");
+    const chip = page.getByRole("button", { name: first.name });
+    await expect(chip).toHaveAttribute("aria-pressed", "false");
 
-    const addButton = page.getByRole("button", { name: /^Adicionar /i }).first();
-    const label = await addButton.getAttribute("aria-label");
-    const name = label!.replace(/^Adicionar /, "");
+    await chip.click();
 
-    await addButton.click();
-
-    await expect(page.getByRole("button", { name: `Remover ${name}` })).toBeVisible();
-    await expect(page.getByRole("button", { name: `Adicionar ${name}` })).not.toBeVisible();
-    await expect(page.getByText(/ainda não registrou nenhuma modalidade/i)).not.toBeVisible();
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByText("1 modalidade selecionada")).toBeVisible();
   });
 
-  test("remove uma modalidade sem afetar as demais", async ({ page }) => {
+  test("desmarca um chip sem afetar os demais", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     const token = await loginAndGetToken(email);
@@ -54,16 +59,17 @@ test.describe("Modalidades praticadas (FUC06)", () => {
     await addPracticedModality(token, second.id);
 
     await login(page, email);
-    await page.goto("/modalidades");
+    await page.goto("/usuario/modalidades");
 
-    await expect(page.getByText(first.name)).toBeVisible();
-    await expect(page.getByText(second.name)).toBeVisible();
+    const firstChip = page.getByRole("button", { name: first.name });
+    const secondChip = page.getByRole("button", { name: second.name });
+    await expect(firstChip).toHaveAttribute("aria-pressed", "true");
+    await expect(secondChip).toHaveAttribute("aria-pressed", "true");
 
-    await page.getByRole("button", { name: `Remover ${first.name}` }).click();
+    await firstChip.click();
 
-    await expect(page.getByRole("button", { name: `Remover ${first.name}` })).not.toBeVisible();
-    await expect(page.getByText(second.name)).toBeVisible();
-    await expect(page.getByRole("button", { name: `Remover ${second.name}` })).toBeVisible();
-    await expect(page.getByRole("button", { name: `Adicionar ${first.name}` })).toBeVisible();
+    await expect(firstChip).toHaveAttribute("aria-pressed", "false");
+    await expect(secondChip).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByText("1 modalidade selecionada")).toBeVisible();
   });
 });
