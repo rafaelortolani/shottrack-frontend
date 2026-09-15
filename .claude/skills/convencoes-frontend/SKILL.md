@@ -19,15 +19,31 @@ comunicação com o backend passa por um Route Handler em `src/app/api/`, que
 ## Sistema de design
 - Cores: sempre via tokens Tailwind definidos em `globals.css`
   (`bg-background`, `bg-surface`, `text-foreground`, `text-foreground-muted`,
-  `text-accent-target`, `text-accent-brass`, `border-border`) — nunca hex
-  direto num componente.
+  `border-border`) — nunca hex direto num componente.
+- Três acentos, cada um com um papel fixo — nunca usar um no lugar do outro:
+  - `accent-target` (vermelho) — ação primária / categoria "Armas" ou
+    desempenho principal.
+  - `accent-brass` (latão) — ação secundária / categoria "Munições" ou
+    informação complementar.
+  - `accent-sage` (verde-sálvia) — categoria "Acessórios" / terceiro dado
+    numa comparação (ex: terceira linha de um gráfico).
+  - Botões e ações usam a variante sólida (`bg-accent-target`). Ícones e
+    texto de destaque sobre fundo escuro usam a variante `-soft`
+    (`text-accent-target-soft`). Fundos tintados (chip, badge, ícone com
+    fundo colorido) usam a variante sólida com opacidade via Tailwind:
+    `bg-accent-target/15`.
+  - Os acentos devem aparecer com presença real (ícones de categoria,
+    tags, linhas de gráfico) — não só como detalhe raro num botão. Ao
+    mesmo tempo, cada uso precisa ter significado (categoria, estado,
+    destaque) — nunca decoração sem propósito.
 - Tipografia: `font-display` (Space Grotesk) pra títulos e números de
   destaque; `font-sans` (IBM Plex Sans, padrão do body) pro resto.
 - Motivo dos anéis concêntricos (`TargetRings`): no máximo uma vez por tela,
   sempre como textura de fundo de baixa opacidade — nunca como ícone
   literal, nunca em primeiro plano.
-- Evitar grid de cards idênticos com sombra — preferir números em destaque
-  sem caixa, estatísticas secundárias em linha (número + rótulo).
+- Cards com leve fundo (`bg-surface`, sem sombra) são aceitáveis pra
+  agrupar estatísticas com ícone de categoria — evitar é a sombra e o
+  contorno idênticos em todo canto, não o card em si.
 
 ## Consistência entre mobile e desktop — regra inegociável
 Não existe "tema mobile" separado. Os breakpoints (`md:`, `lg:`, etc.)

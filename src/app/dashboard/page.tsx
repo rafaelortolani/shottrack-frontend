@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AppNav } from "@/components/AppNav";
 import { TargetRings } from "@/components/TargetRings";
 
 const stats = [
@@ -8,52 +8,20 @@ const stats = [
 ];
 
 const recentVisits = [
-  { local: "Clube de Tiro Alvorada", data: "12 set", modalidades: "Precisão, IPSC" },
-  { local: "Estande Sul", data: "05 set", modalidades: "Precisão" },
-  { local: "Clube de Tiro Alvorada", data: "29 ago", modalidades: "Steel Challenge" },
+  { local: "Clube de Tiro Alvorada", data: "12 set", modalidades: ["Precisão", "IPSC"] },
+  { local: "Estande Sul", data: "05 set", modalidades: ["Precisão"] },
+  { local: "Clube de Tiro Alvorada", data: "29 ago", modalidades: ["Steel Challenge"] },
 ];
 
 export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex">
-      {/* nav lateral fina */}
-      <aside className="w-16 md:w-56 border-r border-border flex flex-col py-6 px-3 md:px-5 shrink-0">
-        <span className="font-display font-semibold text-lg mb-10 hidden md:block">
-          ShotTrack
-        </span>
-        <nav className="space-y-1 text-sm">
-          <Link className="block rounded-md px-3 py-2 bg-surface text-foreground" href="/dashboard">
-            <span className="hidden md:inline">Dashboard</span>
-            <span className="md:hidden">●</span>
-          </Link>
-          <span
-            className="block rounded-md px-3 py-2 text-foreground-muted/60 cursor-not-allowed"
-            title="Em breve"
-          >
-            <span className="hidden md:inline">Treinos</span>
-            <span className="md:hidden">○</span>
-          </span>
-          <span
-            className="block rounded-md px-3 py-2 text-foreground-muted/60 cursor-not-allowed"
-            title="Em breve"
-          >
-            <span className="hidden md:inline">Acervo</span>
-            <span className="md:hidden">○</span>
-          </span>
-          <Link
-            className="block rounded-md px-3 py-2 text-foreground-muted hover:text-foreground hover:bg-surface transition-colors"
-            href="/usuario"
-          >
-            <span className="hidden md:inline">Usuário</span>
-            <span className="md:hidden">○</span>
-          </Link>
-        </nav>
-      </aside>
+      <AppNav />
 
       <main className="flex-1 relative overflow-hidden">
         <TargetRings className="absolute -right-32 -top-32 w-[420px] h-[420px] text-accent-brass pointer-events-none" />
 
-        <div className="relative max-w-4xl px-6 md:px-10 py-10">
+        <div className="relative max-w-4xl px-6 md:px-10 py-10 pb-24 md:pb-10">
           <p className="text-foreground-muted mb-1">Bem-vindo de volta</p>
           <h1 className="font-display text-2xl font-semibold mb-10">
             Sua evolução
@@ -92,8 +60,17 @@ export default function DashboardPage() {
                 className="flex items-center justify-between py-3 border-b border-border last:border-0"
               >
                 <div>
-                  <p className="text-foreground">{v.local}</p>
-                  <p className="text-sm text-foreground-muted">{v.modalidades}</p>
+                  <p className="text-foreground mb-1.5">{v.local}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {v.modalidades.map((modalidade) => (
+                      <span
+                        key={modalidade}
+                        className="text-xs rounded-full bg-accent-brass/15 text-accent-brass-soft px-2 py-0.5"
+                      >
+                        {modalidade}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <span className="text-sm text-foreground-muted">{v.data}</span>
               </li>
