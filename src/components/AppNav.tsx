@@ -23,7 +23,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard, color: "text-accent-target-soft", enabled: true },
   { href: "/treinos", label: "Treinos", icon: IconTarget, color: "text-accent-brass-soft", enabled: false },
-  { href: "/acervo", label: "Acervo", icon: IconBriefcase, color: "text-accent-sage-soft", enabled: false },
+  { href: "/acervo", label: "Acervo", icon: IconBriefcase, color: "text-accent-sage-soft", enabled: true },
   { href: "/usuario", label: "Usuário", icon: IconUser, color: "text-foreground-muted", enabled: true },
 ];
 
