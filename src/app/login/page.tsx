@@ -1,11 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { TargetRings } from "@/components/TargetRings";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const registered = searchParams.get("cadastro") === "sucesso";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +52,12 @@ export default function LoginPage() {
           ShotTrack
         </h1>
         <p className="text-foreground-muted mb-10">Treine. Registre. Evolua.</p>
+
+        {registered && (
+          <p className="text-sm text-accent-brass mb-5" role="status">
+            Conta criada com sucesso. Entre com suas credenciais.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -86,6 +103,13 @@ export default function LoginPage() {
             {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
+
+        <p className="text-sm text-foreground-muted mt-6 text-center">
+          Não tem conta?{" "}
+          <Link href="/cadastro" className="text-foreground hover:text-accent-target transition-colors">
+            Cadastre-se
+          </Link>
+        </p>
       </div>
     </main>
   );
