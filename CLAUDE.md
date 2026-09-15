@@ -32,8 +32,9 @@ hexadecimal direto num componente, sempre pelas classes Tailwind geradas a
 partir desses tokens (`bg-background`, `text-accent-target`, etc.).
 
 Motivo gráfico: anéis concêntricos (`src/components/TargetRings.tsx`), usado
-como textura decorativa sutil — nunca mais de uma vez por tela, nunca como
-ícone literal de mira.
+como textura decorativa sutil — nunca mais de uma vez por tela. Pode incluir
+duas linhas finas cruzando o centro (mira sutil), na mesma opacidade baixa
+do anel mais externo — nunca um ícone de mira óbvio ou em primeiro plano.
 
 ## Onde estão as coisas
 - `docs/use-cases/` — cada tela/fluxo formalizado antes de implementar
