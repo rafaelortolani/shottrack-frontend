@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
  * A validação real do token acontece no backend a cada chamada — isso aqui
  * é só a primeira barreira, pra não renderizar a tela antes de checar.
  */
-const PROTECTED_PATHS = ["/dashboard", "/usuario"];
+const PROTECTED_PATHS = ["/dashboard", "/usuario", "/acervo"];
 
 export function proxy(request: NextRequest) {
   const hasSession = request.cookies.has("shottrack_access");
@@ -19,5 +19,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/usuario/:path*"],
+  matcher: ["/dashboard/:path*", "/usuario/:path*", "/acervo/:path*"],
 };

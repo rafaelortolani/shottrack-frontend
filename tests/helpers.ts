@@ -60,6 +60,54 @@ export async function addPracticedModality(accessToken: string, modalityId: stri
   return response.json();
 }
 
+export type WeaponCatalogItem = { id: string; name: string };
+
+export async function getWeaponCatalog(accessToken: string) {
+  const [typesRes, brandsRes, calibersRes] = await Promise.all([
+    fetch(`${BACKEND_URL}/api/weapon-catalog/types`, { headers: { Authorization: `Bearer ${accessToken}` } }),
+    fetch(`${BACKEND_URL}/api/weapon-catalog/brands`, { headers: { Authorization: `Bearer ${accessToken}` } }),
+    fetch(`${BACKEND_URL}/api/weapon-catalog/calibers`, { headers: { Authorization: `Bearer ${accessToken}` } }),
+  ]);
+  if (!typesRes.ok || !brandsRes.ok || !calibersRes.ok) {
+    throw new Error("Falha ao buscar catálogo de armas de teste");
+  }
+  const { data: types } = await typesRes.json();
+  const { data: brands } = await brandsRes.json();
+  const { data: calibers } = await calibersRes.json();
+  return { types, brands, calibers } as {
+    types: WeaponCatalogItem[];
+    brands: WeaponCatalogItem[];
+    calibers: WeaponCatalogItem[];
+  };
+}
+
+export async function getWeaponModels(accessToken: string, brandId: string): Promise<WeaponCatalogItem[]> {
+  const response = await fetch(`${BACKEND_URL}/api/weapon-catalog/brands/${brandId}/models`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao buscar modelos de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
+export async function registerWeapon(
+  accessToken: string,
+  weapon: { typeId: string; brandId: string; modelId: string; caliberId: string }
+) {
+  const response = await fetch(`${BACKEND_URL}/api/weapons`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(weapon),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao cadastrar arma de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
 /**
  * Busca a mensagem mais recente no Mailpit (dev) endereçada pro
  * destinatário esperado e extrai o código de verificação de 6 dígitos —
