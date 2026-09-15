@@ -146,6 +146,13 @@ function PerfilForm() {
             <span className="hidden md:inline">Acervo</span>
             <span className="md:hidden">○</span>
           </span>
+          <Link
+            className="block rounded-md px-3 py-2 text-foreground-muted hover:text-foreground hover:bg-surface transition-colors"
+            href="/modalidades"
+          >
+            <span className="hidden md:inline">Modalidades</span>
+            <span className="md:hidden">○</span>
+          </Link>
           <Link className="block rounded-md px-3 py-2 bg-surface text-foreground" href="/perfil">
             <span className="hidden md:inline">Perfil</span>
             <span className="md:hidden">●</span>
