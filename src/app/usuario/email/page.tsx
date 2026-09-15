@@ -120,7 +120,7 @@ export default function TrocarEmailPage() {
       return;
     }
 
-    router.push("/perfil");
+    router.push("/usuario");
   }
 
   async function handleResend() {
@@ -254,7 +254,7 @@ export default function TrocarEmailPage() {
         )}
 
         <p className="text-sm text-foreground-muted mt-6 text-center">
-          <Link href="/perfil" className="hover:text-foreground transition-colors">
+          <Link href="/usuario" className="hover:text-foreground transition-colors">
             Cancelar e voltar pro perfil
           </Link>
         </p>
