@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TargetRings } from "@/components/TargetRings";
 
@@ -16,14 +16,25 @@ const EXPERIENCE_LEVELS: { value: ExperienceLevel; label: string }[] = [
 type FieldErrors = Partial<Record<"name", string>>;
 
 export default function PerfilPage() {
+  return (
+    <Suspense>
+      <PerfilForm />
+    </Suspense>
+  );
+}
+
+function PerfilForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>("BEGINNER");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(
+    searchParams.get("senha") === "alterada" ? "Senha alterada com sucesso" : null
+  );
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -224,12 +235,12 @@ export default function PerfilPage() {
                 <p className="text-sm text-foreground-muted">Senha</p>
                 <p className="text-foreground">••••••••</p>
               </div>
-              <span
-                className="text-sm text-foreground-muted/60 cursor-not-allowed"
-                title="Em breve"
+              <Link
+                href="/perfil/senha"
+                className="text-sm text-foreground-muted hover:text-foreground transition-colors"
               >
                 Alterar
-              </span>
+              </Link>
             </div>
           </div>
         </div>
