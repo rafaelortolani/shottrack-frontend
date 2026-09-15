@@ -51,6 +51,7 @@ function PerfilTabForm() {
     searchParams.get("senha") === "alterada" ? "Senha alterada com sucesso" : null
   );
   const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,6 +130,12 @@ function PerfilTabForm() {
     }
 
     setSuccessMessage("Perfil atualizado");
+  }
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
   }
 
   if (loading) {
@@ -232,6 +239,17 @@ function PerfilTabForm() {
             Alterar
           </Link>
         </div>
+      </div>
+
+      <div className="pt-6 mt-6 border-t border-border">
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="text-sm text-foreground-muted hover:text-accent-target disabled:opacity-60 transition-colors"
+        >
+          {loggingOut ? "Saindo..." : "Sair"}
+        </button>
       </div>
     </>
   );

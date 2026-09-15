@@ -59,4 +59,22 @@ test.describe("Usuário > Perfil (FUC03)", () => {
     await page.getByRole("link", { name: "Editar" }).click();
     await expect(page).toHaveURL(/\/usuario\/modalidades/);
   });
+
+  test("faz logout e bloqueia acesso subsequente às rotas autenticadas", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Senha").fill("senha12345");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    await page.goto("/usuario");
+    await page.getByRole("button", { name: "Sair" }).click();
+    await expect(page).toHaveURL(/\/login/);
+
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL(/\/login/);
+  });
 });
