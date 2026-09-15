@@ -39,8 +39,9 @@ comunicação com o backend passa por um Route Handler em `src/app/api/`, que
 - Tipografia: `font-display` (Space Grotesk) pra títulos e números de
   destaque; `font-sans` (IBM Plex Sans, padrão do body) pro resto.
 - Motivo dos anéis concêntricos (`TargetRings`): no máximo uma vez por tela,
-  sempre como textura de fundo de baixa opacidade — nunca como ícone
-  literal, nunca em primeiro plano.
+  sempre como textura de fundo de baixa opacidade. Pode incluir duas linhas
+  finas cruzando o centro (mira sutil) na mesma opacidade do anel mais
+  externo — nunca um ícone de mira óbvio, nunca em primeiro plano.
 - Cards com leve fundo (`bg-surface`, sem sombra) são aceitáveis pra
   agrupar estatísticas com ícone de categoria — evitar é a sombra e o
   contorno idênticos em todo canto, não o card em si.
