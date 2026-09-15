@@ -40,6 +40,11 @@ como textura decorativa sutil — nunca mais de uma vez por tela, nunca como
 - `docs/adr/` — decisões técnicas
 - `.claude/skills/` — convenções de código
 
+## Definição de pronto
+Nenhuma tela nova (FUCxx) é considerada concluída sem teste E2E (Playwright)
+cobrindo o fluxo principal e pelo menos um erro relevante. Sem teste, a
+tarefa não está terminada — independente de "funcionar manualmente".
+
 ## Regra de ouro
 Mesma do backend: não adicionar documentação especulativa. Documentação
 nasce do código que já existe.
