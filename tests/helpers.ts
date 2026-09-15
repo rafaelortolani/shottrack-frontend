@@ -22,6 +22,44 @@ export async function createUser(email: string, password = "senha12345") {
   return response.json();
 }
 
+export type Modality = { id: string; name: string };
+
+export async function loginAndGetToken(email: string, password = "senha12345") {
+  const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao logar usuário de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data.accessToken as string;
+}
+
+export async function getModalityCatalog(accessToken: string): Promise<Modality[]> {
+  const response = await fetch(`${BACKEND_URL}/api/modality-catalog`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao buscar catálogo de modalidades: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
+export async function addPracticedModality(accessToken: string, modalityId: string) {
+  const response = await fetch(`${BACKEND_URL}/api/practiced-modalities`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ modalityId }),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao adicionar modalidade praticada de teste: ${response.status}`);
+  }
+  return response.json();
+}
+
 /**
  * Busca a mensagem mais recente no Mailpit (dev) endereçada pro
  * destinatário esperado e extrai o código de verificação de 6 dígitos —
