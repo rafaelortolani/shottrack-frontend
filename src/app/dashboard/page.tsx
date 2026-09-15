@@ -1,3 +1,4 @@
+import { AppHeader } from "@/components/AppHeader";
 import { AppNav } from "@/components/AppNav";
 import { TargetRings } from "@/components/TargetRings";
 
@@ -22,6 +23,8 @@ export default function DashboardPage() {
         <TargetRings className="absolute -right-32 -top-32 w-[420px] h-[420px] text-accent-brass pointer-events-none" />
 
         <div className="relative max-w-4xl px-6 md:px-10 py-10 pb-24 md:pb-10">
+          <AppHeader />
+
           <p className="text-foreground-muted mb-1">Bem-vindo de volta</p>
           <h1 className="font-display text-2xl font-semibold mb-10">
             Sua evolução

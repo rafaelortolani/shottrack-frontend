@@ -45,7 +45,7 @@ function LoginForm() {
 
   return (
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background text-foreground">
-      <TargetRings className="absolute -right-32 -top-32 w-[640px] h-[640px] text-accent-target-soft pointer-events-none" />
+      <TargetRings className="absolute top-1/2 -right-20 -translate-y-1/2 w-[680px] h-[680px] text-accent-target-soft pointer-events-none" />
 
       <div className="relative w-full max-w-sm px-6">
         <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
