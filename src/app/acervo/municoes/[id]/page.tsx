@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { BackLink } from "@/components/BackLink";
+import { CancelButton } from "@/components/CancelButton";
 import { TargetRings } from "@/components/TargetRings";
 
 type Catalog = { id: string; name: string };
@@ -245,6 +247,8 @@ export default function EditarMunicaoPage() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
+          <BackLink href="/acervo/municoes" />
+
           <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Editar munição
           </h1>
@@ -384,9 +388,7 @@ export default function EditarMunicaoPage() {
               >
                 {saving ? "Salvando..." : "Salvar"}
               </button>
-              <Link href="/acervo/municoes" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
-                Cancelar
-              </Link>
+              <CancelButton href="/acervo/municoes" />
             </div>
           </form>
 
