@@ -72,6 +72,42 @@ test.describe("Acervo > Armas (FUC07)", () => {
     await expect(page.getByText("Minha Glockinha")).toBeVisible();
   });
 
+  test("filtra a lista por tipo", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { types, brands, calibers } = await getWeaponCatalog(token);
+    const [typeA, typeB] = types;
+    const brand = brands[0];
+    const caliber = calibers[0];
+    const models = await getWeaponModels(token, brand.id);
+    const model = models[0];
+
+    await registerWeapon(token, {
+      typeId: typeA.id,
+      brandId: brand.id,
+      modelId: model.id,
+      caliberId: caliber.id,
+    });
+    await registerWeapon(token, {
+      typeId: typeB.id,
+      brandId: brand.id,
+      modelId: model.id,
+      caliberId: caliber.id,
+    });
+    const name = `${brand.name} ${model.name}`;
+
+    await login(page, email);
+    await page.goto("/acervo");
+
+    // ambas as armas têm o mesmo nome (marca+modelo) — checa pela contagem de linhas
+    await expect(page.getByText(name)).toHaveCount(2);
+
+    await page.getByLabel("Filtrar por tipo").selectOption({ label: typeA.name });
+
+    await expect(page.getByText(name)).toHaveCount(1);
+  });
+
   test("exclui uma arma com sucesso", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);

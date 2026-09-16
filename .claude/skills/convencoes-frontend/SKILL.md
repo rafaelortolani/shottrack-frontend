@@ -39,12 +39,30 @@ comunicação com o backend passa por um Route Handler em `src/app/api/`, que
 - Tipografia: `font-display` (Space Grotesk) pra títulos e números de
   destaque; `font-sans` (IBM Plex Sans, padrão do body) pro resto.
 - Motivo dos anéis concêntricos (`TargetRings`): no máximo uma vez por tela,
-  sempre como textura de fundo de baixa opacidade. Pode incluir duas linhas
-  finas cruzando o centro (mira sutil) na mesma opacidade do anel mais
-  externo — nunca um ícone de mira óbvio, nunca em primeiro plano.
+  sempre como textura de fundo de baixa opacidade — nunca como ícone
+  literal, nunca em primeiro plano.
 - Cards com leve fundo (`bg-surface`, sem sombra) são aceitáveis pra
   agrupar estatísticas com ícone de categoria — evitar é a sombra e o
   contorno idênticos em todo canto, não o card em si.
+
+## Densidade — compacto, não espaçoso
+Erro recorrente a evitar: espaçamento generoso demais entre elementos,
+deixando a tela com sensação de vazio. Referência de escala (Tailwind):
+- Padding de container de tela/card: `p-5`/`p-6` (não `p-8`+).
+- Gap entre campos de formulário empilhados: `gap-2`/`gap-3` (não `gap-5`+).
+- Padding interno de input/botão: `py-2 px-3` (não `py-3`+).
+- Linhas de lista: `py-2` entre itens, divisor fino (`border-border`),
+  nunca card com borda própria por item — ver seção de cor acima
+  (ícone com fundo tintado, sem borda ao redor do item inteiro).
+- Fonte de título de tela: `text-base`/`text-lg` (não `text-xl`+); número
+  de destaque no dashboard é a exceção (esse sim grande).
+
+## Busca e filtro em listas do Acervo
+Toda lista do Acervo (Armas, Munições, Acessórios) inclui busca por texto
+e filtro por atributo relevante (ex: tipo, calibre) assim que houver mais
+de um item — implementado no cliente, filtrando a lista já carregada
+(`GET` sem paginação). Reavaliar para filtro no backend só se o volume
+por atleta crescer muito (centenas de itens) — não é o caso hoje.
 
 ## Consistência entre mobile e desktop — regra inegociável
 Não existe "tema mobile" separado. Os breakpoints (`md:`, `lg:`, etc.)

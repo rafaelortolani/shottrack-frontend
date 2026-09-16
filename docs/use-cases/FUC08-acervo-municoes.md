@@ -22,9 +22,14 @@ Rotas: `/acervo/municoes` (lista), `/acervo/municoes/nova` (cadastro),
 - Fabricante (seleção, opcional) e Apelido (texto, opcional) em destaque,
   com indicador visual "· opcional" — pelo menos um dos dois é obrigatório
   (validação de negócio, não simples required de campo)
-- Seção "Detalhes adicionais (opcional)" recolhida/secundária: Calibre,
-  Peso do projétil, Quantidade de pólvora, Tipo de projétil, Lote,
-  Observações
+- Seção "Detalhes adicionais (opcional)": Calibre, Peso do projétil,
+  Quantidade de pólvora e Lote em **grade 2 colunas** (não empilhados
+  verticalmente); Observações ocupa a linha inteira abaixo da grade
+
+## Lista de munições
+Busca por texto (fabricante/apelido) e filtro por calibre — mesmo padrão
+já aplicado na lista de Armas, client-side, aparecendo só quando há mais
+de um item.
 
 ## Tela de edição
 Mesma estrutura do cadastro, mas **edição parcial** (só os campos

@@ -49,20 +49,20 @@ function LoginForm() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
-          <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
+          <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             ShotTrack
           </h1>
-          <p className="text-foreground-muted mb-10">Treine. Registre. Evolua.</p>
+          <p className="text-foreground-muted mb-6">Treine. Registre. Evolua.</p>
 
           {registered && (
-            <p className="text-sm text-accent-brass mb-5" role="status">
+            <p className="text-sm text-accent-brass mb-3" role="status">
               Conta criada com sucesso. Entre com suas credenciais.
             </p>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label htmlFor="email" className="block text-sm text-foreground-muted mb-1.5">
+              <label htmlFor="email" className="block text-sm text-foreground-muted mb-1">
                 Email
               </label>
               <input
@@ -71,13 +71,13 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+                className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
                 placeholder="voce@email.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm text-foreground-muted mb-1.5">
+              <label htmlFor="password" className="block text-sm text-foreground-muted mb-1">
                 Senha
               </label>
               <input
@@ -86,7 +86,7 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+                className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
               />
             </div>
 
@@ -99,13 +99,13 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 transition-colors"
+              className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 transition-colors"
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
 
-          <p className="text-sm text-foreground-muted mt-6 text-center">
+          <p className="text-sm text-foreground-muted mt-4 text-center">
             Não tem conta?{" "}
             <Link href="/cadastro" className="text-foreground hover:text-accent-target transition-colors">
               Cadastre-se

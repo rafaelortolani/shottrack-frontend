@@ -8,7 +8,7 @@ import { TargetRings } from "@/components/TargetRings";
 type Catalog = { id: string; name: string };
 
 const INPUT_CLASS =
-  "w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
+  "w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
 
 export default function NovaMunicaoPage() {
   const router = useRouter();
@@ -21,7 +21,6 @@ export default function NovaMunicaoPage() {
   const [caliberId, setCaliberId] = useState("");
   const [projectileWeightGrains, setProjectileWeightGrains] = useState("");
   const [powderCharge, setPowderCharge] = useState("");
-  const [projectileType, setProjectileType] = useState("");
   const [lot, setLot] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -85,7 +84,6 @@ export default function NovaMunicaoPage() {
     if (caliberId) payload.caliberId = caliberId;
     if (projectileWeightGrains) payload.projectileWeightGrains = Number(projectileWeightGrains);
     if (powderCharge) payload.powderCharge = Number(powderCharge);
-    if (projectileType.trim()) payload.projectileType = projectileType.trim();
     if (lot.trim()) payload.lot = lot.trim();
     if (notes.trim()) payload.notes = notes.trim();
 
@@ -129,16 +127,16 @@ export default function NovaMunicaoPage() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
-          <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
+          <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Cadastrar munição
           </h1>
-          <p className="text-foreground-muted mb-10">
+          <p className="text-foreground-muted mb-6">
             Informe pelo menos o fabricante ou um apelido pra identificar.
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label htmlFor="manufacturerId" className="block text-sm text-foreground-muted mb-1.5">
+              <label htmlFor="manufacturerId" className="block text-sm text-foreground-muted mb-1">
                 Fabricante <span className="text-foreground-muted/60">· opcional</span>
               </label>
               <select
@@ -155,7 +153,7 @@ export default function NovaMunicaoPage() {
             </div>
 
             <div>
-              <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1.5">
+              <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1">
                 Apelido <span className="text-foreground-muted/60">· opcional</span>
               </label>
               <input
@@ -174,86 +172,74 @@ export default function NovaMunicaoPage() {
               </p>
             )}
 
-            <details className="rounded-md border border-border px-4 py-3">
+            <details className="rounded-md border border-border px-3 py-2">
               <summary className="text-sm text-foreground-muted cursor-pointer select-none">
                 Detalhes adicionais (opcional)
               </summary>
 
-              <div className="space-y-5 mt-4">
-                <div>
-                  <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1.5">
-                    Calibre
-                  </label>
-                  <select
-                    id="caliberId"
-                    value={caliberId}
-                    onChange={(e) => setCaliberId(e.target.value)}
-                    className={INPUT_CLASS}
-                  >
-                    <option value="">Nenhum</option>
-                    {calibers.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+              <div className="mt-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1">
+                      Calibre
+                    </label>
+                    <select
+                      id="caliberId"
+                      value={caliberId}
+                      onChange={(e) => setCaliberId(e.target.value)}
+                      className={INPUT_CLASS}
+                    >
+                      <option value="">Nenhum</option>
+                      {calibers.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="projectileWeightGrains" className="block text-sm text-foreground-muted mb-1">
+                      Peso (grains)
+                    </label>
+                    <input
+                      id="projectileWeightGrains"
+                      type="number"
+                      step="any"
+                      value={projectileWeightGrains}
+                      onChange={(e) => setProjectileWeightGrains(e.target.value)}
+                      className={INPUT_CLASS}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="powderCharge" className="block text-sm text-foreground-muted mb-1">
+                      Pólvora
+                    </label>
+                    <input
+                      id="powderCharge"
+                      type="number"
+                      step="any"
+                      value={powderCharge}
+                      onChange={(e) => setPowderCharge(e.target.value)}
+                      className={INPUT_CLASS}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="lot" className="block text-sm text-foreground-muted mb-1">
+                      Lote
+                    </label>
+                    <input
+                      id="lot"
+                      type="text"
+                      value={lot}
+                      onChange={(e) => setLot(e.target.value)}
+                      className={INPUT_CLASS}
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label htmlFor="projectileWeightGrains" className="block text-sm text-foreground-muted mb-1.5">
-                    Peso do projétil (grains)
-                  </label>
-                  <input
-                    id="projectileWeightGrains"
-                    type="number"
-                    step="any"
-                    value={projectileWeightGrains}
-                    onChange={(e) => setProjectileWeightGrains(e.target.value)}
-                    className={INPUT_CLASS}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="powderCharge" className="block text-sm text-foreground-muted mb-1.5">
-                    Quantidade de pólvora
-                  </label>
-                  <input
-                    id="powderCharge"
-                    type="number"
-                    step="any"
-                    value={powderCharge}
-                    onChange={(e) => setPowderCharge(e.target.value)}
-                    className={INPUT_CLASS}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="projectileType" className="block text-sm text-foreground-muted mb-1.5">
-                    Tipo de projétil
-                  </label>
-                  <input
-                    id="projectileType"
-                    type="text"
-                    value={projectileType}
-                    onChange={(e) => setProjectileType(e.target.value)}
-                    placeholder="Ex: FMJ, JHP..."
-                    className={INPUT_CLASS}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="lot" className="block text-sm text-foreground-muted mb-1.5">
-                    Lote
-                  </label>
-                  <input
-                    id="lot"
-                    type="text"
-                    value={lot}
-                    onChange={(e) => setLot(e.target.value)}
-                    className={INPUT_CLASS}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="notes" className="block text-sm text-foreground-muted mb-1.5">
+                <div className="mt-3">
+                  <label htmlFor="notes" className="block text-sm text-foreground-muted mb-1">
                     Observações
                   </label>
                   <textarea
@@ -273,11 +259,11 @@ export default function NovaMunicaoPage() {
               </p>
             )}
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 px-6 transition-colors"
+                className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
               >
                 {saving ? "Cadastrando..." : "Cadastrar"}
               </button>

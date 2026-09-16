@@ -16,7 +16,7 @@ type Weapon = {
 };
 
 const SELECT_CLASS =
-  "w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors disabled:opacity-60";
+  "w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors disabled:opacity-60";
 
 export default function EditarArmaPage() {
   const router = useRouter();
@@ -224,14 +224,14 @@ export default function EditarArmaPage() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
-          <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
+          <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Editar arma
           </h1>
-          <p className="text-foreground-muted mb-10">Atualize os dados ou exclua essa arma do acervo.</p>
+          <p className="text-foreground-muted mb-6">Atualize os dados ou exclua essa arma do acervo.</p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1.5">
+              <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1">
                 Apelido
               </label>
               <input
@@ -240,12 +240,12 @@ export default function EditarArmaPage() {
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="Opcional"
-                className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+                className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
               />
             </div>
 
             <div>
-              <label htmlFor="typeId" className="block text-sm text-foreground-muted mb-1.5">
+              <label htmlFor="typeId" className="block text-sm text-foreground-muted mb-1">
                 Tipo
               </label>
               <select
@@ -262,7 +262,7 @@ export default function EditarArmaPage() {
             </div>
 
             <div>
-              <label htmlFor="brandId" className="block text-sm text-foreground-muted mb-1.5">
+              <label htmlFor="brandId" className="block text-sm text-foreground-muted mb-1">
                 Marca
               </label>
               <select
@@ -279,7 +279,7 @@ export default function EditarArmaPage() {
             </div>
 
             <div>
-              <label htmlFor="modelId" className="block text-sm text-foreground-muted mb-1.5">
+              <label htmlFor="modelId" className="block text-sm text-foreground-muted mb-1">
                 Modelo
               </label>
               <select
@@ -297,7 +297,7 @@ export default function EditarArmaPage() {
             </div>
 
             <div>
-              <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1.5">
+              <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1">
                 Calibre
               </label>
               <select
@@ -319,11 +319,11 @@ export default function EditarArmaPage() {
               </p>
             )}
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 type="submit"
                 disabled={saving || !canSubmit}
-                className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 px-6 transition-colors"
+                className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
               >
                 {saving ? "Salvando..." : "Salvar"}
               </button>
@@ -333,7 +333,7 @@ export default function EditarArmaPage() {
             </div>
           </form>
 
-          <div className="pt-6 mt-6 border-t border-border">
+          <div className="pt-4 mt-4 border-t border-border">
             {deleteBlocked && (
               <p className="text-sm text-accent-target mb-3" role="alert">
                 Essa arma já foi usada e não pode ser excluída.

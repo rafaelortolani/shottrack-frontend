@@ -7,14 +7,14 @@ export function Tabs({ items }: { items: { href: string; label: string }[] }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex gap-6 border-b border-border mb-8">
+    <div className="flex gap-5 border-b border-border mb-5">
       {items.map((item) => {
         const active = pathname === item.href;
         return (
           <Link
             key={item.href}
             href={item.href}
-            className={`pb-3 text-sm border-b-2 -mb-px transition-colors ${
+            className={`pb-2 text-sm border-b-2 -mb-px transition-colors ${
               active
                 ? "border-accent-target text-foreground"
                 : "border-transparent text-foreground-muted hover:text-foreground"
