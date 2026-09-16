@@ -36,6 +36,24 @@ comunicação com o backend passa por um Route Handler em `src/app/api/`, que
     tags, linhas de gráfico) — não só como detalhe raro num botão. Ao
     mesmo tempo, cada uso precisa ter significado (categoria, estado,
     destaque) — nunca decoração sem propósito.
+
+## Ícones por categoria (fixo — não varia por tipo de item)
+Cada categoria do Acervo usa **um único ícone**, sempre o mesmo, em vez de
+tentar diferenciar por tipo de item dentro dela (ex: não usar ícone
+diferente pra pistola vs. revólver) — biblioteca: `@tabler/icons-react`.
+
+| Categoria | Ícone | Acento |
+|---|---|---|
+| Armas | `IconFocus2` | `accent-target` |
+| Munições | `IconStack2` | `accent-brass` |
+| Acessórios | `IconPlugConnected` | `accent-sage` |
+| Dashboard (nav) | `IconLayoutDashboard` | `accent-target-soft` |
+| Treinos (nav) | `IconTarget` | `accent-brass-soft` |
+| Acervo (nav) | `IconBriefcase` | `accent-sage-soft` |
+| Usuário (nav) | `IconUser` | neutro (`foreground-muted`) |
+
+Nunca usar ícone literal de arma/munição — nem essa biblioteca teria um, e
+a diretriz de identidade visual já pede pra evitar estética tática.
 - Tipografia: `font-display` (Space Grotesk) pra títulos e números de
   destaque; `font-sans` (IBM Plex Sans, padrão do body) pro resto.
 - Motivo dos anéis concêntricos (`TargetRings`): no máximo uma vez por tela,
