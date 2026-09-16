@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { IconArrowLeft } from "@tabler/icons-react";
+import { BackLink } from "@/components/BackLink";
+import { CancelButton } from "@/components/CancelButton";
 import { TargetRings } from "@/components/TargetRings";
 
 const INPUT_CLASS =
@@ -60,13 +60,7 @@ export default function NovoAcessorioPage() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
-          <Link
-            href="/acervo/acessorios"
-            className="inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors mb-3"
-          >
-            <IconArrowLeft size={16} stroke={1.75} />
-            Acervo
-          </Link>
+          <BackLink href="/acervo/acessorios" />
 
           <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Cadastrar acessório
@@ -129,9 +123,7 @@ export default function NovoAcessorioPage() {
               >
                 {saving ? "Cadastrando..." : "Cadastrar"}
               </button>
-              <Link href="/acervo/acessorios" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
-                Cancelar
-              </Link>
+              <CancelButton href="/acervo/acessorios" />
             </div>
           </form>
         </div>

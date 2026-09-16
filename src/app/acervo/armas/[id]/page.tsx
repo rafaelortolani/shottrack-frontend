@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { IconArrowLeft } from "@tabler/icons-react";
+import { BackLink } from "@/components/BackLink";
+import { CancelButton } from "@/components/CancelButton";
 import { TargetRings } from "@/components/TargetRings";
 
 type Catalog = { id: string; name: string };
@@ -225,13 +226,7 @@ export default function EditarArmaPage() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
-          <Link
-            href="/acervo"
-            className="inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors mb-3"
-          >
-            <IconArrowLeft size={16} stroke={1.75} />
-            Acervo
-          </Link>
+          <BackLink href="/acervo" />
 
           <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Editar arma
@@ -336,9 +331,7 @@ export default function EditarArmaPage() {
               >
                 {saving ? "Salvando..." : "Salvar"}
               </button>
-              <Link href="/acervo" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
-                Cancelar
-              </Link>
+              <CancelButton href="/acervo" />
             </div>
           </form>
 

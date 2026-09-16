@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { BackLink } from "@/components/BackLink";
+import { CancelButton } from "@/components/CancelButton";
 import { TargetRings } from "@/components/TargetRings";
 
 type Catalog = { id: string; name: string };
@@ -127,6 +128,8 @@ export default function NovaMunicaoPage() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
+          <BackLink href="/acervo/municoes" />
+
           <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Cadastrar munição
           </h1>
@@ -267,9 +270,7 @@ export default function NovaMunicaoPage() {
               >
                 {saving ? "Cadastrando..." : "Cadastrar"}
               </button>
-              <Link href="/acervo/municoes" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
-                Cancelar
-              </Link>
+              <CancelButton href="/acervo/municoes" />
             </div>
           </form>
         </div>
