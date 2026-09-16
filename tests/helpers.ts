@@ -3,6 +3,8 @@
  * preparar cenários, sem depender da UI pra isso — só a parte que
  * o teste realmente quer validar passa pela interface.
  */
+import { execSync } from "node:child_process";
+
 const BACKEND_URL = "http://localhost:8080";
 const MAILPIT_URL = "http://localhost:8025";
 
@@ -10,16 +12,89 @@ export function randomEmail() {
   return `teste.${Date.now()}.${Math.floor(Math.random() * 10000)}@shottrack.com`;
 }
 
+/**
+ * Busca no Mailpit o token do link de confirmação de cadastro (FUC01/FUC10)
+ * mais recente endereçado pro email dado. Usa a busca filtrada por
+ * destinatário (`to:`), não a última mensagem da caixa inteira — os testes
+ * de cadastro e de completar cadastro rodam em arquivos diferentes e podem
+ * ser escalonados em paralelo por workers distintos, então "a mensagem mais
+ * recente" pode ser de outro teste.
+ */
+export async function getLatestRegistrationToken(recipient: string): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const response = await fetch(
+      `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${recipient}`)}&limit=1`
+    );
+    const { messages } = await response.json();
+    const latest = messages?.[0];
+
+    if (latest) {
+      const match = latest.Snippet?.match(/token=([\w-]+)/);
+      if (match) {
+        return match[1];
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+
+  throw new Error(`Não encontrei o link de cadastro pra ${recipient} no Mailpit`);
+}
+
+/**
+ * Cria um usuário fazendo o fluxo real de cadastro em duas etapas
+ * (FUC01/FUC10): solicita o cadastro, pega o token do link no Mailpit e
+ * completa o cadastro — não existe mais um endpoint de criação direta no
+ * backend (UC01 revisado/UC23).
+ */
 export async function createUser(email: string, password = "senha12345") {
-  const response = await fetch(`${BACKEND_URL}/api/users`, {
+  const registrationResponse = await fetch(`${BACKEND_URL}/api/users/registration`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: "Usuário de Teste", email, password }),
+    body: JSON.stringify({ email }),
   });
-  if (!response.ok) {
-    throw new Error(`Falha ao criar usuário de teste: ${response.status}`);
+  if (!registrationResponse.ok) {
+    throw new Error(`Falha ao solicitar cadastro de teste: ${registrationResponse.status}`);
   }
-  return response.json();
+
+  const token = await getLatestRegistrationToken(email);
+
+  const completionResponse = await fetch(`${BACKEND_URL}/api/users/registration/completion`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, name: "Usuário de Teste", password }),
+  });
+  if (!completionResponse.ok) {
+    throw new Error(`Falha ao completar cadastro de teste: ${completionResponse.status}`);
+  }
+  return completionResponse.json();
+}
+
+/**
+ * Força a expiração de um token de cadastro pendente pra testar o estado de
+ * link expirado (FUC10) sem esperar 24h de verdade — não existe endpoint
+ * pra isso, então ajusta a linha direto no Postgres (mesmo container que já
+ * roda pro backend local), mantendo o teste como integração real e não uma
+ * simulação da API.
+ */
+export function expireRegistrationToken(token: string) {
+  if (!/^[\w-]+$/.test(token)) {
+    throw new Error(`Token de cadastro com formato inesperado: ${token}`);
+  }
+
+  const containerId = execSync(`docker ps --filter "publish=5432" --format "{{.ID}}"`)
+    .toString()
+    .trim()
+    .split("\n")[0];
+
+  if (!containerId) {
+    throw new Error("Não encontrei o container do Postgres (porta 5432) pra simular expiração de token");
+  }
+
+  execSync(
+    `docker exec ${containerId} psql -U shottrack -d shottrack -c "UPDATE pending_registrations SET expires_at = now() - interval '1 day' WHERE token = '${token}'"`,
+    { stdio: "pipe" }
+  );
 }
 
 export type Modality = { id: string; name: string };
