@@ -74,14 +74,14 @@ export default function CadastroPage() {
       <TargetRings className="absolute -right-24 -top-24 w-[500px] h-[500px] text-accent-target pointer-events-none" />
 
       <div className="relative w-full max-w-sm px-6">
-        <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
+        <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
           ShotTrack
         </h1>
-        <p className="text-foreground-muted mb-10">Crie sua conta pra começar a treinar.</p>
+        <p className="text-foreground-muted mb-6">Crie sua conta pra começar a treinar.</p>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="space-y-3">
           <div>
-            <label htmlFor="name" className="block text-sm text-foreground-muted mb-1.5">
+            <label htmlFor="name" className="block text-sm text-foreground-muted mb-1">
               Nome
             </label>
             <input
@@ -89,18 +89,18 @@ export default function CadastroPage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+              className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
               placeholder="Seu nome"
             />
             {fieldErrors.name && (
-              <p className="text-sm text-accent-target mt-1.5" role="alert">
+              <p className="text-sm text-accent-target mt-1" role="alert">
                 {fieldErrors.name}
               </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm text-foreground-muted mb-1.5">
+            <label htmlFor="email" className="block text-sm text-foreground-muted mb-1">
               Email
             </label>
             <input
@@ -108,18 +108,18 @@ export default function CadastroPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+              className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
               placeholder="voce@email.com"
             />
             {fieldErrors.email && (
-              <p className="text-sm text-accent-target mt-1.5" role="alert">
+              <p className="text-sm text-accent-target mt-1" role="alert">
                 {fieldErrors.email}
               </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm text-foreground-muted mb-1.5">
+            <label htmlFor="password" className="block text-sm text-foreground-muted mb-1">
               Senha
             </label>
             <input
@@ -127,10 +127,10 @@ export default function CadastroPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+              className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
             />
             {fieldErrors.password && (
-              <p className="text-sm text-accent-target mt-1.5" role="alert">
+              <p className="text-sm text-accent-target mt-1" role="alert">
                 {fieldErrors.password}
               </p>
             )}
@@ -145,13 +145,13 @@ export default function CadastroPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 transition-colors"
+            className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 transition-colors"
           >
             {loading ? "Criando conta..." : "Criar conta"}
           </button>
         </form>
 
-        <p className="text-sm text-foreground-muted mt-6 text-center">
+        <p className="text-sm text-foreground-muted mt-4 text-center">
           Já tem conta?{" "}
           <Link href="/login" className="text-foreground hover:text-accent-target transition-colors">
             Entrar

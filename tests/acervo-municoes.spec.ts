@@ -4,6 +4,7 @@ import {
   randomEmail,
   loginAndGetToken,
   getAmmunitionManufacturers,
+  getWeaponCatalog,
   registerAmmunition,
 } from "./helpers";
 
@@ -74,6 +75,27 @@ test.describe("Acervo > Munições (FUC08)", () => {
 
     await page.getByText("Atualizado").click();
     await expect(page.getByLabel(/Fabricante/)).toHaveValue(manufacturer.id);
+  });
+
+  test("filtra a lista por calibre", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { calibers } = await getWeaponCatalog(token);
+    const [caliberA, caliberB] = calibers;
+    const ammoA = await registerAmmunition(token, { nickname: "Munição A", caliberId: caliberA.id });
+    const ammoB = await registerAmmunition(token, { nickname: "Munição B", caliberId: caliberB.id });
+
+    await login(page, email);
+    await page.goto("/acervo/municoes");
+
+    await expect(page.getByText(ammoA.nickname)).toBeVisible();
+    await expect(page.getByText(ammoB.nickname)).toBeVisible();
+
+    await page.getByLabel("Filtrar por calibre").selectOption({ label: caliberA.name });
+
+    await expect(page.getByText(ammoA.nickname)).toBeVisible();
+    await expect(page.getByText(ammoB.nickname)).not.toBeVisible();
   });
 
   test("exclui uma munição com sucesso", async ({ page }) => {

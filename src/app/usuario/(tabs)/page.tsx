@@ -137,9 +137,9 @@ function PerfilTabForm() {
 
   return (
     <>
-      <form onSubmit={handleSubmit} noValidate className="space-y-5 mb-10">
+      <form onSubmit={handleSubmit} noValidate className="space-y-3 mb-6">
         <div>
-          <label htmlFor="name" className="block text-sm text-foreground-muted mb-1.5">
+          <label htmlFor="name" className="block text-sm text-foreground-muted mb-1">
             Nome
           </label>
           <input
@@ -147,24 +147,24 @@ function PerfilTabForm() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+            className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
           />
           {fieldErrors.name && (
-            <p className="text-sm text-accent-target mt-1.5" role="alert">
+            <p className="text-sm text-accent-target mt-1" role="alert">
               {fieldErrors.name}
             </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="experienceLevel" className="block text-sm text-foreground-muted mb-1.5">
+          <label htmlFor="experienceLevel" className="block text-sm text-foreground-muted mb-1">
             Nível de experiência
           </label>
           <select
             id="experienceLevel"
             value={experienceLevel}
             onChange={(e) => setExperienceLevel(e.target.value as ExperienceLevel)}
-            className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+            className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
           >
             {EXPERIENCE_LEVELS.map((level) => (
               <option key={level.value} value={level.value}>
@@ -189,13 +189,13 @@ function PerfilTabForm() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 px-6 transition-colors"
+          className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
         >
           {saving ? "Salvando..." : "Salvar"}
         </button>
       </form>
 
-      <div className="space-y-4 pt-6 border-t border-border">
+      <div className="space-y-3 pt-4 border-t border-border">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-foreground-muted">Modalidades</p>

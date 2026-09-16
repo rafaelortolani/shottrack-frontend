@@ -21,14 +21,14 @@ export default function DashboardPage() {
       <main className="flex-1 relative overflow-hidden">
         <TargetRings className="absolute -right-32 -top-32 w-[420px] h-[420px] text-accent-brass pointer-events-none" />
 
-        <div className="relative max-w-4xl px-6 md:px-10 py-10 pb-24 md:pb-10">
+        <div className="relative max-w-4xl px-5 md:px-6 py-6 pb-20 md:pb-6">
           <p className="text-foreground-muted mb-1">Bem-vindo de volta</p>
-          <h1 className="font-display text-2xl font-semibold mb-10">
+          <h1 className="font-display text-lg font-semibold mb-6">
             Sua evolução
           </h1>
 
           {/* hero: número grande, sem card */}
-          <div className="mb-12">
+          <div className="mb-6">
             <p className="text-foreground-muted text-sm mb-1">
               Agrupamento médio (últimos 30 dias)
             </p>
@@ -41,7 +41,7 @@ export default function DashboardPage() {
           </div>
 
           {/* estatísticas secundárias em linha, sem cards */}
-          <div className="flex flex-wrap gap-x-10 gap-y-6 mb-14 pb-14 border-b border-border">
+          <div className="flex flex-wrap gap-x-6 gap-y-4 mb-6 pb-6 border-b border-border">
             {stats.map((s) => (
               <div key={s.label}>
                 <p className="font-display text-2xl font-medium">{s.value}</p>
@@ -50,14 +50,14 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <h2 className="font-display text-lg font-semibold mb-5">
+          <h2 className="font-display text-base font-semibold mb-3">
             Visitas recentes
           </h2>
-          <ul className="space-y-4">
+          <ul className="space-y-2">
             {recentVisits.map((v, i) => (
               <li
                 key={i}
-                className="flex items-center justify-between py-3 border-b border-border last:border-0"
+                className="flex items-center justify-between py-2 border-b border-border last:border-0"
               >
                 <div>
                   <p className="text-foreground mb-1.5">{v.local}</p>

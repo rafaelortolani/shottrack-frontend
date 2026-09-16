@@ -16,8 +16,8 @@ export default function AcervoLayout({ children }: { children: React.ReactNode }
       <main className="flex-1 relative overflow-hidden">
         <TargetRings className="absolute -right-32 -top-32 w-[420px] h-[420px] text-accent-brass pointer-events-none" />
 
-        <div className="relative max-w-lg px-6 md:px-10 py-10 pb-24 md:pb-10">
-          <h1 className="font-display text-2xl font-semibold mb-6">Acervo</h1>
+        <div className="relative max-w-lg px-5 md:px-6 py-6 pb-20 md:pb-6">
+          <h1 className="font-display text-lg font-semibold mb-4">Acervo</h1>
           <Tabs items={ACERVO_TABS} />
           <div>{children}</div>
         </div>

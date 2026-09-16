@@ -103,13 +103,13 @@ export default function ModalidadesTabPage() {
   return (
     <div>
       {error && (
-        <p className="text-sm text-accent-target mb-6" role="alert">
+        <p className="text-sm text-accent-target mb-4" role="alert">
           {error}
         </p>
       )}
 
       {practiced.length === 0 && (
-        <p className="text-foreground-muted mb-6">
+        <p className="text-foreground-muted mb-4">
           Toque numa modalidade abaixo pra registrar que você pratica.
         </p>
       )}
@@ -126,8 +126,8 @@ export default function ModalidadesTabPage() {
               onClick={() => handleToggle(modality, isPracticed)}
               className={
                 isPracticed
-                  ? "inline-flex items-center gap-1.5 rounded-full bg-accent-target text-foreground px-4 py-2 text-sm disabled:opacity-60 transition-colors"
-                  : "inline-flex items-center gap-1.5 rounded-full border border-border text-foreground-muted px-4 py-2 text-sm hover:text-foreground hover:border-accent-target disabled:opacity-60 transition-colors"
+                  ? "inline-flex items-center gap-1.5 rounded-full bg-accent-target text-foreground px-3 py-1.5 text-sm disabled:opacity-60 transition-colors"
+                  : "inline-flex items-center gap-1.5 rounded-full border border-border text-foreground-muted px-3 py-1.5 text-sm hover:text-foreground hover:border-accent-target disabled:opacity-60 transition-colors"
               }
             >
               {isPracticed && <span aria-hidden="true">✓</span>}
@@ -137,7 +137,7 @@ export default function ModalidadesTabPage() {
         })}
       </div>
 
-      <p className="text-sm text-foreground-muted mt-6">
+      <p className="text-sm text-foreground-muted mt-4">
         {practiced.length} modalidade{practiced.length === 1 ? "" : "s"} selecionada
         {practiced.length === 1 ? "" : "s"}
       </p>

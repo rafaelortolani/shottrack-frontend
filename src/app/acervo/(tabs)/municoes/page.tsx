@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IconCapsule } from "@tabler/icons-react";
@@ -27,11 +27,18 @@ function formatAmmoSummary(ammo: Ammunition) {
   return { primary, secondary: secondaryParts.join(" · ") };
 }
 
+function distinctById(items: Catalog[]): Catalog[] {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  return Array.from(byId.values());
+}
+
 export default function MunicoesTabPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [ammunitions, setAmmunitions] = useState<Ammunition[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [caliberFilter, setCaliberFilter] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -65,13 +72,25 @@ export default function MunicoesTabPage() {
     };
   }, [router]);
 
+  const calibers = useMemo(
+    () => distinctById(ammunitions.map((a) => a.caliber).filter((c): c is Catalog => c !== null)),
+    [ammunitions]
+  );
+
+  const filteredAmmunitions = ammunitions.filter((ammo) => {
+    const { primary } = formatAmmoSummary(ammo);
+    const matchesSearch = primary.toLowerCase().includes(search.trim().toLowerCase());
+    const matchesCaliber = !caliberFilter || ammo.caliber?.id === caliberFilter;
+    return matchesSearch && matchesCaliber;
+  });
+
   if (loading) {
     return <p className="text-foreground-muted">Carregando munições...</p>;
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-foreground-muted">
           {ammunitions.length} {ammunitions.length === 1 ? "munição" : "munições"} no acervo
         </p>
@@ -84,27 +103,53 @@ export default function MunicoesTabPage() {
       </div>
 
       {error && (
-        <p className="text-sm text-accent-target mb-6" role="alert">
+        <p className="text-sm text-accent-target mb-4" role="alert">
           {error}
         </p>
+      )}
+
+      {ammunitions.length > 1 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por fabricante ou apelido"
+            aria-label="Buscar munição"
+            className="flex-1 min-w-[160px] rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+          />
+          <select
+            value={caliberFilter}
+            onChange={(e) => setCaliberFilter(e.target.value)}
+            aria-label="Filtrar por calibre"
+            className="rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+          >
+            <option value="">Todos os calibres</option>
+            {calibers.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
       )}
 
       {ammunitions.length === 0 ? (
         <p className="text-foreground-muted">
           Seu acervo de munições está vazio. Cadastre a primeira acima.
         </p>
+      ) : filteredAmmunitions.length === 0 ? (
+        <p className="text-foreground-muted">Nenhuma munição encontrada com esses filtros.</p>
       ) : (
-        <ul className="space-y-3">
-          {ammunitions.map((ammo) => {
+        <ul>
+          {filteredAmmunitions.map((ammo) => {
             const { primary, secondary } = formatAmmoSummary(ammo);
             return (
-              <li key={ammo.id}>
+              <li key={ammo.id} className="border-b border-border last:border-0">
                 <Link
                   href={`/acervo/municoes/${ammo.id}`}
-                  className="flex items-center gap-3.5 rounded-md bg-surface border border-border px-4 py-3.5 hover:border-accent-brass transition-colors"
+                  className="flex items-center gap-3 py-2 -mx-2 px-2 rounded-md hover:bg-surface transition-colors"
                 >
-                  <span className="flex items-center justify-center w-10 h-10 rounded-full bg-accent-brass/15 shrink-0">
-                    <IconCapsule size={20} stroke={1.75} className="text-accent-brass-soft" />
+                  <span className="flex items-center justify-center w-9 h-9 rounded-full bg-accent-brass/15 shrink-0">
+                    <IconCapsule size={18} stroke={1.75} className="text-accent-brass-soft" />
                   </span>
                   <div>
                     <p className="text-foreground">{primary}</p>
