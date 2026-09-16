@@ -108,6 +108,30 @@ export async function registerWeapon(
   return data;
 }
 
+export async function getAmmunitionManufacturers(accessToken: string): Promise<WeaponCatalogItem[]> {
+  const response = await fetch(`${BACKEND_URL}/api/ammunition-catalog/manufacturers`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao buscar fabricantes de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
+export async function registerAmmunition(accessToken: string, payload: Record<string, unknown>) {
+  const response = await fetch(`${BACKEND_URL}/api/ammunitions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao cadastrar munição de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
 /**
  * Busca a mensagem mais recente no Mailpit (dev) endereçada pro
  * destinatário esperado e extrai o código de verificação de 6 dígitos —
