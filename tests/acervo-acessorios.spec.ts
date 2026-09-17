@@ -8,6 +8,7 @@ import {
   registerWeapon,
   registerAccessory,
   associateAccessoryWeapon,
+  getAccessoryTypes,
 } from "./helpers";
 
 async function login(page: Page, email: string, password = "senha12345") {
@@ -42,6 +43,9 @@ test.describe("Acervo > Acessórios (FUC09)", () => {
   test("mostra o estado vazio e cadastra um acessório com sucesso", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
+    const token = await loginAndGetToken(email);
+    const types = await getAccessoryTypes(token);
+    const type = types[0];
 
     await login(page, email);
     await page.goto("/acervo/acessorios");
@@ -51,12 +55,12 @@ test.describe("Acervo > Acessórios (FUC09)", () => {
     await expect(page).toHaveURL(/\/acervo\/acessorios\/novo/);
 
     await page.getByLabel("Nome").fill("Coldre");
-    await page.getByLabel(/Tipo/).fill("Coldre de perna");
+    await page.getByLabel(/Tipo/).selectOption({ label: type.name });
     await page.getByRole("button", { name: "Cadastrar" }).click();
 
     await expect(page).toHaveURL(/\/acervo\/acessorios$/);
     await expect(page.getByText("Coldre", { exact: true })).toBeVisible();
-    await expect(page.getByText("Coldre de perna")).toBeVisible();
+    await expect(page.getByText(type.name)).toBeVisible();
   });
 
   test("associa a duas armas (N:N) e desassocia uma sem afetar a outra", async ({ page }) => {
@@ -64,7 +68,8 @@ test.describe("Acervo > Acessórios (FUC09)", () => {
     await createUser(email);
     const token = await loginAndGetToken(email);
     const { brand, model } = await registerTwoWeapons(token);
-    const accessory = await registerAccessory(token, { name: "Bipé" });
+    const types = await getAccessoryTypes(token);
+    const accessory = await registerAccessory(token, { name: "Bipé", typeId: types[0].id });
 
     await login(page, email);
     await page.goto(`/acervo/acessorios/${accessory.id}`);
@@ -96,17 +101,21 @@ test.describe("Acervo > Acessórios (FUC09)", () => {
     const email = randomEmail();
     await createUser(email);
     const token = await loginAndGetToken(email);
-    const accessory = await registerAccessory(token, { name: "Mira", type: "Óptica" });
+    const types = await getAccessoryTypes(token);
+    const [typeA, typeB] = types;
+    const accessory = await registerAccessory(token, { name: "Mira", typeId: typeA.id });
 
     await login(page, email);
     await page.goto(`/acervo/acessorios/${accessory.id}`);
 
     await page.getByLabel("Nome").fill("Mira holográfica");
+    await page.getByLabel(/Tipo/).selectOption({ label: typeB.name });
     await page.getByLabel(/Observações/).fill("Zerada a 25m");
     await page.getByRole("button", { name: "Salvar" }).click();
 
     await expect(page).toHaveURL(/\/acervo\/acessorios$/);
     await expect(page.getByText("Mira holográfica")).toBeVisible();
+    await expect(page.getByText(typeB.name)).toBeVisible();
   });
 
   test("exclui um acessório e remove as associações junto, sem afetar a arma", async ({ page }) => {
@@ -114,7 +123,8 @@ test.describe("Acervo > Acessórios (FUC09)", () => {
     await createUser(email);
     const token = await loginAndGetToken(email);
     const { weaponA, brand, model } = await registerTwoWeapons(token);
-    const accessory = await registerAccessory(token, { name: "Suporte" });
+    const types = await getAccessoryTypes(token);
+    const accessory = await registerAccessory(token, { name: "Suporte", typeId: types[0].id });
     await associateAccessoryWeapon(token, accessory.id, weaponA.id);
 
     await login(page, email);

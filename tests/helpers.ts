@@ -207,6 +207,17 @@ export async function registerAmmunition(accessToken: string, payload: Record<st
   return data;
 }
 
+export async function getAccessoryTypes(accessToken: string): Promise<WeaponCatalogItem[]> {
+  const response = await fetch(`${BACKEND_URL}/api/accessory-catalog/types`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao buscar tipos de acessório de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
 export async function registerAccessory(accessToken: string, payload: Record<string, unknown>) {
   const response = await fetch(`${BACKEND_URL}/api/accessories`, {
     method: "POST",

@@ -17,9 +17,12 @@ Rotas: `/acervo/acessorios` (lista), `/acervo/acessorios/novo` (cadastro),
   `DELETE /api/accessories/{accessoryId}/weapons/{weaponId}`
 - UC20 (editar) — `PATCH /api/accessories/{id}`
 - UC21 (excluir) — `DELETE /api/accessories/{id}`
+- UC28 (catálogo de tipos) — `GET /api/accessory-catalog/types` (conferir
+  rota exata no Swagger)
 
 ## Tela de cadastro
-- Nome (obrigatório), Tipo (texto livre, opcional), Observações (opcional)
+- Nome (obrigatório), Tipo (seleção — catálogo fechado, UC28, obrigatório;
+  revisão do ADR-0008: deixou de ser texto livre), Observações (opcional)
 - Cadastro rápido — sem seleção de arma nesse momento (associação é uma
   ação separada, feita depois, na tela de edição)
 
@@ -30,7 +33,8 @@ Rotas: `/acervo/acessorios` (lista), `/acervo/acessorios/novo` (cadastro),
 - Estado vazio: convite pra cadastrar o primeiro acessório
 
 ## Tela de edição
-- Campos de nome/tipo/observações (mesma estrutura do cadastro)
+- Campos de nome/tipo (seleção, catálogo)/observações (mesma estrutura do
+  cadastro)
 - Seção "Armas associadas": lista das armas já associadas (com opção de
   desassociar) + seletor pra associar uma arma nova do acervo
 - Botão "Excluir acessório" — remove o acessório e as associações junto
@@ -44,10 +48,11 @@ Rotas: `/acervo/acessorios` (lista), `/acervo/acessorios/novo` (cadastro),
 - [ ] Associar uma arma a um acessório funciona (e um acessório pode ter
   mais de uma arma associada — N:N)
 - [ ] Desassociar funciona sem afetar outras associações
-- [ ] Edição de nome/tipo/observações funciona
+- [ ] Edição de nome/tipo (seleção)/observações funciona
+- [ ] Erro de tipo não encontrado no catálogo exibido corretamente
 - [ ] Exclusão bem-sucedida remove as associações junto
 - [ ] Teste E2E (Playwright) cobrindo: cadastro, associar a 2 armas,
   desassociar uma, editar, excluir
 
 ## Referências
-- Backend: UC17, UC18, UC19, UC20, UC21, ADR-0006, ADR-0008
+- Backend: UC17, UC18, UC19, UC20, UC21, UC28, ADR-0006, ADR-0008

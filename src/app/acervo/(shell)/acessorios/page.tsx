@@ -6,18 +6,19 @@ import Link from "next/link";
 import { IconBackpack } from "@tabler/icons-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 
+type Catalog = { id: string; name: string };
 type Weapon = { id: string };
 type Accessory = {
   id: string;
   name: string;
-  type: string | null;
+  type: Catalog | null;
   notes: string | null;
   weapons: Weapon[];
 };
 
 function formatAccessorySummary(accessory: Accessory) {
   const parts: string[] = [];
-  if (accessory.type) parts.push(accessory.type);
+  if (accessory.type) parts.push(accessory.type.name);
   if (accessory.weapons.length > 0) {
     parts.push(`${accessory.weapons.length} ${accessory.weapons.length === 1 ? "arma" : "armas"}`);
   }
@@ -68,7 +69,7 @@ export default function AcessoriosTabPage() {
     if (!query) return true;
     return (
       accessory.name.toLowerCase().includes(query) ||
-      (accessory.type ?? "").toLowerCase().includes(query)
+      (accessory.type?.name ?? "").toLowerCase().includes(query)
     );
   });
 
