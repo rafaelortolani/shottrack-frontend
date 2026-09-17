@@ -11,10 +11,13 @@ import {
   IconLogout,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
+  IconChevronDown,
   type TablerIcon,
 } from "@tabler/icons-react";
 
 const NAV_COLLAPSED_KEY = "shottrack:nav-collapsed";
+
+type NavChild = { href: string; label: string };
 
 type NavItem = {
   href: string;
@@ -22,13 +25,35 @@ type NavItem = {
   icon: TablerIcon;
   color: string;
   enabled: boolean;
+  children?: NavChild[];
 };
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard, color: "text-accent-target-soft", enabled: true },
   { href: "/treinos", label: "Treinos", icon: IconTarget, color: "text-accent-brass-soft", enabled: true },
-  { href: "/acervo", label: "Acervo", icon: IconBriefcase, color: "text-accent-sage-soft", enabled: true },
-  { href: "/usuario", label: "Usuário", icon: IconUser, color: "text-foreground-muted", enabled: true },
+  {
+    href: "/acervo",
+    label: "Acervo",
+    icon: IconBriefcase,
+    color: "text-accent-sage-soft",
+    enabled: true,
+    children: [
+      { href: "/acervo", label: "Armas" },
+      { href: "/acervo/municoes", label: "Munições" },
+      { href: "/acervo/acessorios", label: "Acessórios" },
+    ],
+  },
+  {
+    href: "/usuario",
+    label: "Usuário",
+    icon: IconUser,
+    color: "text-foreground-muted",
+    enabled: true,
+    children: [
+      { href: "/usuario", label: "Perfil" },
+      { href: "/usuario/modalidades", label: "Modalidades" },
+    ],
+  },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -39,12 +64,16 @@ function isActive(pathname: string, href: string) {
  * Nav principal do app — mesmos itens/ícones/cores no desktop (sidebar
  * lateral) e no mobile (barra inferior fixa); só a posição/layout muda
  * (regra de consistência mobile/desktop da skill convencoes-frontend).
+ * Submenu (Acervo, Usuário) só existe na sidebar — a barra inferior não
+ * tem espaço pra isso, então no mobile a troca entre sub-telas continua
+ * pelas abas já existentes dentro de cada tela.
  */
 export function AppNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [manualGroups, setManualGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     // Só dá pra ler localStorage depois de montar (SSR não tem window) —
@@ -67,6 +96,10 @@ export function AppNav() {
     } catch {
       // preferência só não persiste entre sessões
     }
+  }
+
+  function toggleGroup(href: string, expanded: boolean) {
+    setManualGroups((prev) => ({ ...prev, [href]: expanded }));
   }
 
   async function handleLogout() {
@@ -99,9 +132,21 @@ export function AppNav() {
         </div>
 
         <nav className="space-y-1 text-sm">
-          {NAV_ITEMS.map((item) => (
-            <DesktopNavLink key={item.href} item={item} active={isActive(pathname, item.href)} collapsed={collapsed} />
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(pathname, item.href);
+            const expanded = manualGroups[item.href] ?? active;
+            return (
+              <DesktopNavLink
+                key={item.href}
+                item={item}
+                pathname={pathname}
+                active={active}
+                collapsed={collapsed}
+                expanded={expanded}
+                onToggle={(next) => toggleGroup(item.href, next)}
+              />
+            );
+          })}
         </nav>
         <div className="mt-auto pt-4 border-t border-border">
           <button
@@ -139,7 +184,21 @@ export function AppNav() {
   );
 }
 
-function DesktopNavLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
+function DesktopNavLink({
+  item,
+  pathname,
+  active,
+  collapsed,
+  expanded,
+  onToggle,
+}: {
+  item: NavItem;
+  pathname: string;
+  active: boolean;
+  collapsed: boolean;
+  expanded: boolean;
+  onToggle: (next: boolean) => void;
+}) {
   const Icon = item.icon;
 
   if (!item.enabled) {
@@ -156,17 +215,64 @@ function DesktopNavLink({ item, active, collapsed }: { item: NavItem; active: bo
     );
   }
 
+  const hasChildren = !collapsed && Boolean(item.children?.length);
+
+  if (!hasChildren) {
+    return (
+      <Link
+        href={item.href}
+        title={collapsed ? item.label : undefined}
+        className={`flex items-center gap-2.5 rounded-md px-3 py-2 transition-colors ${collapsed ? "justify-center" : ""} ${
+          active ? "bg-surface text-foreground" : "text-foreground-muted hover:text-foreground hover:bg-surface"
+        }`}
+      >
+        <Icon size={18} stroke={1.75} className={item.color} />
+        {!collapsed && item.label}
+      </Link>
+    );
+  }
+
   return (
-    <Link
-      href={item.href}
-      title={collapsed ? item.label : undefined}
-      className={`flex items-center gap-2.5 rounded-md px-3 py-2 transition-colors ${collapsed ? "justify-center" : ""} ${
-        active ? "bg-surface text-foreground" : "text-foreground-muted hover:text-foreground hover:bg-surface"
-      }`}
-    >
-      <Icon size={18} stroke={1.75} className={item.color} />
-      {!collapsed && item.label}
-    </Link>
+    <div>
+      <div
+        className={`flex items-center rounded-md transition-colors ${
+          active ? "bg-surface text-foreground" : "text-foreground-muted hover:text-foreground hover:bg-surface"
+        }`}
+      >
+        <Link href={item.href} className="flex items-center gap-2.5 px-3 py-2 flex-1">
+          <Icon size={18} stroke={1.75} className={item.color} />
+          {item.label}
+        </Link>
+        <button
+          type="button"
+          onClick={() => onToggle(!expanded)}
+          aria-expanded={expanded}
+          title={expanded ? `Recolher ${item.label}` : `Expandir ${item.label}`}
+          className="px-2.5 py-2 text-foreground-muted hover:text-foreground transition-colors"
+        >
+          <IconChevronDown size={14} stroke={1.75} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="mt-0.5 ml-4 pl-3 border-l border-border space-y-0.5">
+          {item.children!.map((child) => {
+            const childActive = pathname === child.href;
+            return (
+              <Link
+                key={child.href}
+                href={child.href}
+                className={`block rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                  childActive ? "text-foreground bg-surface" : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                {child.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
