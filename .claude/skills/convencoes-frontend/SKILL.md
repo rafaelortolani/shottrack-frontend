@@ -45,8 +45,8 @@ diferente pra pistola vs. revólver) — biblioteca: `@tabler/icons-react`.
 | Categoria | Ícone | Acento |
 |---|---|---|
 | Armas | `IconFocus2` | `accent-target` |
-| Munições | `IconStack2` | `accent-brass` |
-| Acessórios | `IconPlugConnected` | `accent-sage` |
+| Munições | `IconCapsuleHorizontal` | `accent-brass` |
+| Acessórios | `IconBackpack` | `accent-sage` |
 | Dashboard (nav) | `IconLayoutDashboard` | `accent-target-soft` |
 | Treinos (nav) | `IconTarget` | `accent-brass-soft` |
 | Acervo (nav) | `IconBriefcase` | `accent-sage-soft` |

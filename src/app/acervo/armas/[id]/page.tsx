@@ -221,11 +221,10 @@ export default function EditarArmaPage() {
   const canSubmit = Boolean(typeId && brandId && modelId && caliberId);
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden pb-20 md:pb-0">
-      <div className="relative w-full max-w-sm px-6">
-        <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
+    <div className="relative">
+      <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
-        <div className="relative z-10">
+      <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
           <Breadcrumb
             items={[
               { href: "/acervo", label: "Acervo" },
@@ -356,7 +355,6 @@ export default function EditarArmaPage() {
               {deleting ? "Excluindo..." : "Excluir arma"}
             </button>
           </div>
-        </div>
       </div>
     </div>
   );

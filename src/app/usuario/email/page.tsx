@@ -148,10 +148,10 @@ export default function TrocarEmailPage() {
   const codeComplete = code.every((digit) => digit !== "");
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden pb-20 md:pb-0">
+    <div className="relative">
       <TargetRings className="absolute -right-24 -top-24 w-[500px] h-[500px] text-accent-target pointer-events-none" />
 
-      <div className="relative w-full max-w-sm px-6">
+      <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
         <Breadcrumb items={[{ href: "/usuario", label: "Usuário" }, { href: "/usuario/perfil", label: "Perfil" }, { label: "Trocar email" }]} />
         <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
           Trocar email

@@ -13,6 +13,7 @@ export default function ModalidadesTabPage() {
   const [catalog, setCatalog] = useState<Modality[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +55,7 @@ export default function ModalidadesTabPage() {
 
   async function handleToggle(modality: Modality, isPracticed: boolean) {
     setError(null);
+    setFeedback(null);
     setPendingId(modality.id);
 
     if (isPracticed) {
@@ -72,6 +74,7 @@ export default function ModalidadesTabPage() {
       }
 
       setPracticed((prev) => prev.filter((m) => m.id !== modality.id));
+      setFeedback(`${modality.name} removida`);
       return;
     }
 
@@ -95,6 +98,7 @@ export default function ModalidadesTabPage() {
 
     const { data } = await response.json();
     setPracticed((prev) => [...prev, data]);
+    setFeedback(`${modality.name} adicionada`);
   }
 
   if (loading) {
@@ -141,10 +145,17 @@ export default function ModalidadesTabPage() {
         })}
       </div>
 
-      <p className="text-sm text-foreground-muted mt-4">
-        {practiced.length} modalidade{practiced.length === 1 ? "" : "s"} selecionada
-        {practiced.length === 1 ? "" : "s"}
-      </p>
+      <div className="mt-4 space-y-1">
+        {feedback && (
+          <p className="text-sm text-accent-brass" role="status">
+            {feedback}
+          </p>
+        )}
+        <p className="text-sm text-foreground-muted">
+          {practiced.length} modalidade{practiced.length === 1 ? "" : "s"} selecionada
+          {practiced.length === 1 ? "" : "s"}
+        </p>
+      </div>
     </div>
   );
 }
