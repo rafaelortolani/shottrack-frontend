@@ -17,7 +17,7 @@ export default function UsuarioLayout({ children }: { children: React.ReactNode 
 
         <div className="relative max-w-lg px-5 md:px-6 py-6 pb-20 md:pb-6">
           <h1 className="font-display text-lg font-semibold mb-4">Usuário</h1>
-          <Tabs items={USUARIO_TABS} />
+          <Tabs items={USUARIO_TABS} className="md:hidden" />
           <div>{children}</div>
         </div>
       </main>
