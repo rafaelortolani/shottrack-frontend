@@ -44,6 +44,20 @@ function toFormValues(ammo: Ammunition): FormValues {
   };
 }
 
+function formatAmmoSummary(ammo: Ammunition): { primary: string; secondary: string } {
+  const primary = ammo.nickname || ammo.manufacturer?.name || "Munição";
+
+  const secondaryParts: string[] = [];
+  if (ammo.nickname && ammo.manufacturer) {
+    secondaryParts.push(ammo.manufacturer.name);
+  }
+  if (ammo.caliber) {
+    secondaryParts.push(ammo.caliber.name);
+  }
+
+  return { primary, secondary: secondaryParts.join(" · ") };
+}
+
 function buildDiff(initial: FormValues, current: FormValues): Record<string, unknown> {
   const diff: Record<string, unknown> = {};
 
@@ -83,6 +97,7 @@ export default function EditarMunicaoPage() {
   const [calibers, setCalibers] = useState<Catalog[]>([]);
   const [initialValues, setInitialValues] = useState<FormValues | null>(null);
   const [values, setValues] = useState<FormValues | null>(null);
+  const [summary, setSummary] = useState<{ primary: string; secondary: string } | null>(null);
   const [identificationError, setIdentificationError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleteBlocked, setDeleteBlocked] = useState(false);
@@ -132,6 +147,7 @@ export default function EditarMunicaoPage() {
         const formValues = toFormValues(ammo);
         setInitialValues(formValues);
         setValues(formValues);
+        setSummary(formatAmmoSummary(ammo));
         setLoading(false);
       }
     }
@@ -246,22 +262,28 @@ export default function EditarMunicaoPage() {
       <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
       <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-          <Breadcrumb
-            items={[
-              { href: "/acervo", label: "Acervo" },
-              { href: "/acervo/municoes", label: "Munições" },
-              { label: "Editar munição" },
-            ]}
-          />
+        <Breadcrumb
+          items={[
+            { href: "/acervo", label: "Acervo" },
+            { href: "/acervo/municoes", label: "Munições" },
+            { label: "Editar munição" },
+          ]}
+        />
 
-          <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
-            Editar munição
-          </h1>
-          <p className="text-foreground-muted mb-6">
-            Só os campos alterados são salvos.
+        <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
+          Editar munição
+        </h1>
+        {summary && (
+          <p className="text-sm text-foreground-muted mb-1">
+            <span className="text-foreground">{summary.primary}</span>
+            {summary.secondary && <> · {summary.secondary}</>}
           </p>
+        )}
+        <p className="text-foreground-muted mb-6">
+          Só os campos alterados são salvos.
+        </p>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label htmlFor="manufacturerId" className="block text-sm text-foreground-muted mb-1">
                 Fabricante <span className="text-foreground-muted/60">· opcional</span>

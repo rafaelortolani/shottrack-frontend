@@ -37,6 +37,7 @@ export default function EditarArmaPage() {
   const [modelId, setModelId] = useState("");
   const [caliberId, setCaliberId] = useState("");
   const [nickname, setNickname] = useState("");
+  const [summary, setSummary] = useState<{ primary: string; secondary: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleteBlocked, setDeleteBlocked] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -90,6 +91,10 @@ export default function EditarArmaPage() {
         setModelId(weapon.model.id);
         setCaliberId(weapon.caliber.id);
         setNickname(weapon.nickname ?? "");
+        setSummary({
+          primary: weapon.nickname || `${weapon.brand.name} ${weapon.model.name}`,
+          secondary: `${weapon.type.name} · ${weapon.caliber.name}`,
+        });
         setLoading(false);
       }
     }
@@ -225,20 +230,24 @@ export default function EditarArmaPage() {
       <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
       <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-          <Breadcrumb
-            items={[
-              { href: "/acervo", label: "Acervo" },
-              { href: "/acervo/armas", label: "Armas" },
-              { label: "Editar arma" },
-            ]}
-          />
+        <Breadcrumb
+          items={[
+            { href: "/acervo", label: "Acervo" },
+            { href: "/acervo/armas", label: "Armas" },
+            { label: "Editar arma" },
+          ]}
+        />
 
-          <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
-            Editar arma
-          </h1>
-          <p className="text-foreground-muted mb-6">Atualize os dados ou exclua essa arma do acervo.</p>
+        <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
+          Editar arma
+        </h1>
+        {summary && (
+          <p className="text-sm text-foreground-muted mb-6">
+            <span className="text-foreground">{summary.primary}</span> · {summary.secondary}
+          </p>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1">
                 Apelido

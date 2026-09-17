@@ -15,12 +15,12 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { name, type, notes } = await request.json();
+  const { name, typeId, notes } = await request.json();
 
   const { status, body } = await backendFetch(`/api/accessories/${id}`, {
     method: "PATCH",
     accessToken,
-    body: JSON.stringify({ name, type, notes }),
+    body: JSON.stringify({ name, typeId, notes }),
   });
 
   if (status !== 200 || body.error) {
