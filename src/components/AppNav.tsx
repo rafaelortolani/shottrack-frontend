@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -9,8 +9,12 @@ import {
   IconBriefcase,
   IconUser,
   IconLogout,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
   type TablerIcon,
 } from "@tabler/icons-react";
+
+const NAV_COLLAPSED_KEY = "shottrack:nav-collapsed";
 
 type NavItem = {
   href: string;
@@ -40,6 +44,30 @@ export function AppNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    // Só dá pra ler localStorage depois de montar (SSR não tem window) —
+    // por isso lê aqui em vez de inicializar o useState direto, senão o
+    // HTML do servidor (sempre expandido) diverge do primeiro render do
+    // cliente e o React acusa mismatch de hidratação.
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCollapsed(localStorage.getItem(NAV_COLLAPSED_KEY) === "1");
+    } catch {
+      // modo privado ou storage bloqueado — mantém expandido
+    }
+  }, []);
+
+  function toggleCollapsed() {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem(NAV_COLLAPSED_KEY, next ? "1" : "0");
+    } catch {
+      // preferência só não persiste entre sessões
+    }
+  }
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -49,11 +77,30 @@ export function AppNav() {
 
   return (
     <>
-      <aside className="hidden md:flex w-56 border-r border-border flex-col py-6 px-5 shrink-0">
-        <span className="font-display font-semibold text-lg mb-10">ShotTrack</span>
+      <aside
+        className={`hidden md:flex flex-col py-6 shrink-0 border-r border-border transition-[width] duration-150 ${
+          collapsed ? "w-16 px-3" : "w-56 px-5"
+        }`}
+      >
+        <div className={`flex items-center mb-10 ${collapsed ? "justify-center" : "justify-between"}`}>
+          {!collapsed && <span className="font-display font-semibold text-lg">ShotTrack</span>}
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            title={collapsed ? "Expandir menu" : "Recolher menu"}
+            className="text-foreground-muted hover:text-foreground transition-colors shrink-0"
+          >
+            {collapsed ? (
+              <IconLayoutSidebarLeftExpand size={20} stroke={1.75} />
+            ) : (
+              <IconLayoutSidebarLeftCollapse size={20} stroke={1.75} />
+            )}
+          </button>
+        </div>
+
         <nav className="space-y-1 text-sm">
           {NAV_ITEMS.map((item) => (
-            <DesktopNavLink key={item.href} item={item} active={isActive(pathname, item.href)} />
+            <DesktopNavLink key={item.href} item={item} active={isActive(pathname, item.href)} collapsed={collapsed} />
           ))}
         </nav>
         <div className="mt-auto pt-4 border-t border-border">
@@ -61,10 +108,13 @@ export function AppNav() {
             type="button"
             onClick={handleLogout}
             disabled={loggingOut}
-            className="flex items-center gap-2.5 rounded-md px-3 py-2 w-full text-sm text-foreground-muted hover:text-accent-target disabled:opacity-60 transition-colors"
+            title="Sair"
+            className={`flex items-center gap-2.5 rounded-md px-3 py-2 w-full text-sm text-foreground-muted hover:text-accent-target disabled:opacity-60 transition-colors ${
+              collapsed ? "justify-center" : ""
+            }`}
           >
             <IconLogout size={18} stroke={1.75} />
-            {loggingOut ? "Saindo..." : "Sair"}
+            {!collapsed && (loggingOut ? "Saindo..." : "Sair")}
           </button>
         </div>
       </aside>
@@ -89,17 +139,19 @@ export function AppNav() {
   );
 }
 
-function DesktopNavLink({ item, active }: { item: NavItem; active: boolean }) {
+function DesktopNavLink({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
   const Icon = item.icon;
 
   if (!item.enabled) {
     return (
       <span
-        className="flex items-center gap-2.5 rounded-md px-3 py-2 text-foreground-muted/60 cursor-not-allowed"
+        className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-foreground-muted/60 cursor-not-allowed ${
+          collapsed ? "justify-center" : ""
+        }`}
         title="Em breve"
       >
         <Icon size={18} stroke={1.75} className={item.color} />
-        {item.label}
+        {!collapsed && item.label}
       </span>
     );
   }
@@ -107,12 +159,13 @@ function DesktopNavLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <Link
       href={item.href}
-      className={`flex items-center gap-2.5 rounded-md px-3 py-2 transition-colors ${
+      title={collapsed ? item.label : undefined}
+      className={`flex items-center gap-2.5 rounded-md px-3 py-2 transition-colors ${collapsed ? "justify-center" : ""} ${
         active ? "bg-surface text-foreground" : "text-foreground-muted hover:text-foreground hover:bg-surface"
       }`}
     >
       <Icon size={18} stroke={1.75} className={item.color} />
-      {item.label}
+      {!collapsed && item.label}
     </Link>
   );
 }
