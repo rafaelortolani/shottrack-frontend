@@ -12,7 +12,7 @@ test.describe("Usuário > Perfil (FUC03)", () => {
     await page.getByRole("button", { name: "Entrar" }).click();
     await expect(page).toHaveURL(/\/dashboard/);
 
-    await page.goto("/usuario");
+    await page.goto("/usuario/perfil");
     await expect(page.getByLabel("Nome")).toHaveValue("Usuário de Teste");
     await expect(page.getByText(email)).toBeVisible();
     await expect(page.getByText("Nenhuma modalidade selecionada")).toBeVisible();
@@ -55,7 +55,7 @@ test.describe("Usuário > Perfil (FUC03)", () => {
     await page.getByRole("button", { name: "Entrar" }).click();
     await expect(page).toHaveURL(/\/dashboard/);
 
-    await page.goto("/usuario");
+    await page.goto("/usuario/perfil");
     await page.getByRole("link", { name: "Editar" }).click();
     await expect(page).toHaveURL(/\/usuario\/modalidades/);
   });

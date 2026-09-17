@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BackLink } from "@/components/BackLink";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { TargetRings } from "@/components/TargetRings";
 
@@ -60,7 +60,13 @@ export default function NovoAcessorioPage() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
-          <BackLink href="/acervo/acessorios" />
+          <Breadcrumb
+            items={[
+              { href: "/acervo", label: "Acervo" },
+              { href: "/acervo/acessorios", label: "Acessórios" },
+              { label: "Cadastrar acessório" },
+            ]}
+          />
 
           <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Cadastrar acessório

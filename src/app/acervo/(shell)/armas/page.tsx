@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IconFocus2 } from "@tabler/icons-react";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 type Catalog = { id: string; name: string };
 type Weapon = {
@@ -78,6 +79,9 @@ export default function ArmasTabPage() {
 
   return (
     <div>
+      <Breadcrumb items={[{ href: "/acervo", label: "Acervo" }, { label: "Armas" }]} />
+      <h1 className="font-display text-lg font-semibold mb-4">Armas</h1>
+
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-foreground-muted">
           {weapons.length} {weapons.length === 1 ? "arma" : "armas"} no acervo

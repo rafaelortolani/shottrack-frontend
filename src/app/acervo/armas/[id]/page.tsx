@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { BackLink } from "@/components/BackLink";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { TargetRings } from "@/components/TargetRings";
 
@@ -167,7 +167,7 @@ export default function EditarArmaPage() {
       return;
     }
 
-    router.push("/acervo");
+    router.push("/acervo/armas");
   }
 
   async function handleDelete() {
@@ -194,7 +194,7 @@ export default function EditarArmaPage() {
       return;
     }
 
-    router.push("/acervo");
+    router.push("/acervo/armas");
   }
 
   if (loading) {
@@ -210,7 +210,7 @@ export default function EditarArmaPage() {
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <p className="text-foreground-muted mb-4">Arma não encontrada.</p>
-          <Link href="/acervo" className="text-sm text-accent-target hover:text-accent-target-hover transition-colors">
+          <Link href="/acervo/armas" className="text-sm text-accent-target hover:text-accent-target-hover transition-colors">
             Voltar pro acervo
           </Link>
         </div>
@@ -226,7 +226,13 @@ export default function EditarArmaPage() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
-          <BackLink href="/acervo" />
+          <Breadcrumb
+            items={[
+              { href: "/acervo", label: "Acervo" },
+              { href: "/acervo/armas", label: "Armas" },
+              { label: "Editar arma" },
+            ]}
+          />
 
           <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Editar arma
@@ -331,7 +337,7 @@ export default function EditarArmaPage() {
               >
                 {saving ? "Salvando..." : "Salvar"}
               </button>
-              <CancelButton href="/acervo" />
+              <CancelButton href="/acervo/armas" />
             </div>
           </form>
 

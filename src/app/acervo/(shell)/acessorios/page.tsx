@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IconPlugConnected } from "@tabler/icons-react";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 type Weapon = { id: string };
 type Accessory = {
@@ -77,6 +78,9 @@ export default function AcessoriosTabPage() {
 
   return (
     <div>
+      <Breadcrumb items={[{ href: "/acervo", label: "Acervo" }, { label: "Acessórios" }]} />
+      <h1 className="font-display text-lg font-semibold mb-4">Acessórios</h1>
+
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-foreground-muted">
           {accessories.length} {accessories.length === 1 ? "acessório" : "acessórios"} no acervo

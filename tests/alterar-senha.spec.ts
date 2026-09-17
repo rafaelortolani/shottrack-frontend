@@ -14,7 +14,7 @@ test.describe("Usuário > Alterar senha (FUC05)", () => {
     await page.getByRole("button", { name: "Entrar" }).click();
     await expect(page).toHaveURL(/\/dashboard/);
 
-    await page.goto("/usuario");
+    await page.goto("/usuario/perfil");
     await page.getByRole("link", { name: "Alterar" }).nth(1).click();
     await expect(page).toHaveURL(/\/usuario\/senha/);
 
@@ -22,7 +22,7 @@ test.describe("Usuário > Alterar senha (FUC05)", () => {
     await page.getByLabel("Nova senha").fill(newPassword);
     await page.getByRole("button", { name: "Alterar senha" }).click();
 
-    await expect(page).toHaveURL(/\/usuario\?senha=alterada/);
+    await expect(page).toHaveURL(/\/usuario\/perfil\?senha=alterada/);
     await expect(page.getByText(/senha alterada com sucesso/i)).toBeVisible();
 
     // sem botão de logout na UI ainda — desloga direto pela rota do BFF

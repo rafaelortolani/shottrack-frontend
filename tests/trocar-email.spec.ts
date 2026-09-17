@@ -8,7 +8,7 @@ async function loginAndGoToEmailChange(page: import("@playwright/test").Page, em
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/dashboard/);
 
-  await page.goto("/usuario");
+  await page.goto("/usuario/perfil");
   await page.getByRole("link", { name: "Alterar" }).first().click();
   await expect(page).toHaveURL(/\/usuario\/email/);
 }
@@ -35,7 +35,7 @@ test.describe("Usuário > Trocar email (FUC04)", () => {
     await fillCode(page, code);
     await page.getByRole("button", { name: "Confirmar" }).click();
 
-    await expect(page).toHaveURL(/\/usuario$/);
+    await expect(page).toHaveURL(/\/usuario\/perfil$/);
     await expect(page.getByText(newEmail)).toBeVisible();
   });
 

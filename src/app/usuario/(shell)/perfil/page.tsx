@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 type ExperienceLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 type Modality = { id: string; name: string };
@@ -137,6 +138,9 @@ function PerfilTabForm() {
 
   return (
     <>
+      <Breadcrumb items={[{ href: "/usuario", label: "Usuário" }, { label: "Perfil" }]} />
+      <h1 className="font-display text-lg font-semibold mb-4">Perfil</h1>
+
       <form onSubmit={handleSubmit} noValidate className="space-y-3 mb-6">
         <div>
           <label htmlFor="name" className="block text-sm text-foreground-muted mb-1">
