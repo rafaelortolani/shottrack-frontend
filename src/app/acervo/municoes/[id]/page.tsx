@@ -242,7 +242,7 @@ export default function EditarMunicaoPage() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden pb-20 md:pb-0">
       <div className="relative w-full max-w-sm px-6">
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
@@ -409,6 +409,6 @@ export default function EditarMunicaoPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
