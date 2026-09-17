@@ -220,6 +220,19 @@ export async function registerAccessory(accessToken: string, payload: Record<str
   return data;
 }
 
+export async function registerTrainingLocation(accessToken: string, payload: Record<string, unknown>) {
+  const response = await fetch(`${BACKEND_URL}/api/training-locations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao cadastrar local de treino de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
 export async function associateAccessoryWeapon(accessToken: string, accessoryId: string, weaponId: string) {
   const response = await fetch(`${BACKEND_URL}/api/accessories/${accessoryId}/weapons`, {
     method: "POST",
