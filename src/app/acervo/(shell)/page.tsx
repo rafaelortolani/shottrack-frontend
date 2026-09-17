@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IconFocus2, IconStack2, IconPlugConnected } from "@tabler/icons-react";
+import { IconFocus2, IconCapsuleHorizontal, IconBackpack } from "@tabler/icons-react";
 
 const SECTIONS = [
   {
@@ -14,7 +14,7 @@ const SECTIONS = [
     href: "/acervo/municoes",
     label: "Munições",
     description: "Cartuchos e recarregas",
-    icon: IconStack2,
+    icon: IconCapsuleHorizontal,
     bg: "bg-accent-brass/15",
     color: "text-accent-brass-soft",
   },
@@ -22,7 +22,7 @@ const SECTIONS = [
     href: "/acervo/acessorios",
     label: "Acessórios",
     description: "Coldres, miras e outros",
-    icon: IconPlugConnected,
+    icon: IconBackpack,
     bg: "bg-accent-sage/15",
     color: "text-accent-sage-soft",
   },

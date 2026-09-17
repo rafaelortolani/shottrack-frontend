@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IconPlugConnected } from "@tabler/icons-react";
+import { IconBackpack } from "@tabler/icons-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 
 type Weapon = { id: string };
@@ -129,7 +129,7 @@ export default function AcessoriosTabPage() {
                   className="flex items-center gap-3 py-2 -mx-2 px-2 rounded-md hover:bg-surface transition-colors"
                 >
                   <span className="flex items-center justify-center w-9 h-9 rounded-full bg-accent-sage/15 shrink-0">
-                    <IconPlugConnected size={18} stroke={1.75} className="text-accent-sage-soft" />
+                    <IconBackpack size={18} stroke={1.75} className="text-accent-sage-soft" />
                   </span>
                   <div>
                     <p className="text-foreground">{accessory.name}</p>
