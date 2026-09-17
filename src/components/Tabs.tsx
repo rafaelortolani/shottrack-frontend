@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function Tabs({ items }: { items: { href: string; label: string }[] }) {
+export function Tabs({ items, className = "" }: { items: { href: string; label: string }[]; className?: string }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex gap-5 border-b border-border mb-5">
+    <div className={`flex gap-5 border-b border-border mb-5 ${className}`}>
       {items.map((item) => {
         const active = pathname === item.href;
         return (

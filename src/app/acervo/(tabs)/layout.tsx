@@ -14,7 +14,7 @@ export default function AcervoTabsLayout({ children }: { children: React.ReactNo
 
       <div className="relative max-w-lg px-5 md:px-6 py-6 pb-20 md:pb-6">
         <h1 className="font-display text-lg font-semibold mb-4">Acervo</h1>
-        <Tabs items={ACERVO_TABS} />
+        <Tabs items={ACERVO_TABS} className="md:hidden" />
         <div>{children}</div>
       </div>
     </div>
