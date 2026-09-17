@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IconStack2 } from "@tabler/icons-react";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 type Catalog = { id: string; name: string };
 type Ammunition = {
@@ -90,6 +91,9 @@ export default function MunicoesTabPage() {
 
   return (
     <div>
+      <Breadcrumb items={[{ href: "/acervo", label: "Acervo" }, { label: "Munições" }]} />
+      <h1 className="font-display text-lg font-semibold mb-4">Munições</h1>
+
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-foreground-muted">
           {ammunitions.length} {ammunitions.length === 1 ? "munição" : "munições"} no acervo

@@ -38,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
     color: "text-accent-sage-soft",
     enabled: true,
     children: [
-      { href: "/acervo", label: "Armas" },
+      { href: "/acervo/armas", label: "Armas" },
       { href: "/acervo/municoes", label: "Munições" },
       { href: "/acervo/acessorios", label: "Acessórios" },
     ],
@@ -50,7 +50,7 @@ const NAV_ITEMS: NavItem[] = [
     color: "text-foreground-muted",
     enabled: true,
     children: [
-      { href: "/usuario", label: "Perfil" },
+      { href: "/usuario/perfil", label: "Perfil" },
       { href: "/usuario/modalidades", label: "Modalidades" },
     ],
   },

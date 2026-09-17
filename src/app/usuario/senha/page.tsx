@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { TargetRings } from "@/components/TargetRings";
 
 type FieldErrors = Partial<Record<"currentPassword" | "newPassword", string>>;
@@ -60,14 +61,15 @@ export default function AlterarSenhaPage() {
       return;
     }
 
-    router.push("/usuario?senha=alterada");
+    router.push("/usuario/perfil?senha=alterada");
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden pb-20 md:pb-0">
       <TargetRings className="absolute -right-24 -top-24 w-[500px] h-[500px] text-accent-target pointer-events-none" />
 
       <div className="relative w-full max-w-sm px-6">
+        <Breadcrumb items={[{ href: "/usuario", label: "Usuário" }, { href: "/usuario/perfil", label: "Perfil" }, { label: "Alterar senha" }]} />
         <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
           Alterar senha
         </h1>
@@ -124,12 +126,12 @@ export default function AlterarSenhaPage() {
             >
               {saving ? "Alterando..." : "Alterar senha"}
             </button>
-            <Link href="/usuario" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
+            <Link href="/usuario/perfil" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
               Cancelar
             </Link>
           </div>
         </form>
       </div>
-    </main>
+    </div>
   );
 }

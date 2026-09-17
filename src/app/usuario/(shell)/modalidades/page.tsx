@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 type Modality = { id: string; name: string };
 
@@ -102,6 +103,9 @@ export default function ModalidadesTabPage() {
 
   return (
     <div>
+      <Breadcrumb items={[{ href: "/usuario", label: "Usuário" }, { label: "Modalidades" }]} />
+      <h1 className="font-display text-lg font-semibold mb-4">Modalidades</h1>
+
       {error && (
         <p className="text-sm text-accent-target mb-4" role="alert">
           {error}

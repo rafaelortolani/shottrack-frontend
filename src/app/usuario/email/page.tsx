@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { TargetRings } from "@/components/TargetRings";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -120,7 +121,7 @@ export default function TrocarEmailPage() {
       return;
     }
 
-    router.push("/usuario");
+    router.push("/usuario/perfil");
   }
 
   async function handleResend() {
@@ -147,10 +148,11 @@ export default function TrocarEmailPage() {
   const codeComplete = code.every((digit) => digit !== "");
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden pb-20 md:pb-0">
       <TargetRings className="absolute -right-24 -top-24 w-[500px] h-[500px] text-accent-target pointer-events-none" />
 
       <div className="relative w-full max-w-sm px-6">
+        <Breadcrumb items={[{ href: "/usuario", label: "Usuário" }, { href: "/usuario/perfil", label: "Perfil" }, { label: "Trocar email" }]} />
         <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
           Trocar email
         </h1>
@@ -254,11 +256,11 @@ export default function TrocarEmailPage() {
         )}
 
         <p className="text-sm text-foreground-muted mt-6 text-center">
-          <Link href="/usuario" className="hover:text-foreground transition-colors">
+          <Link href="/usuario/perfil" className="hover:text-foreground transition-colors">
             Cancelar e voltar pro perfil
           </Link>
         </p>
       </div>
-    </main>
+    </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BackLink } from "@/components/BackLink";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { TargetRings } from "@/components/TargetRings";
 
@@ -128,7 +128,13 @@ export default function NovaMunicaoPage() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
         <div className="relative z-10">
-          <BackLink href="/acervo/municoes" />
+          <Breadcrumb
+            items={[
+              { href: "/acervo", label: "Acervo" },
+              { href: "/acervo/municoes", label: "Munições" },
+              { label: "Cadastrar munição" },
+            ]}
+          />
 
           <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Cadastrar munição

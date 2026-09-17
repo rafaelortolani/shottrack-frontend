@@ -29,7 +29,7 @@ test.describe("Acervo > Armas (FUC07)", () => {
     const model = models[0];
 
     await login(page, email);
-    await page.goto("/acervo");
+    await page.goto("/acervo/armas");
     await expect(page.getByText(/acervo de armas está vazio/i)).toBeVisible();
 
     await page.getByRole("link", { name: "+ Cadastrar arma" }).click();
@@ -41,7 +41,7 @@ test.describe("Acervo > Armas (FUC07)", () => {
     await page.getByLabel("Calibre").selectOption({ label: caliber.name });
     await page.getByRole("button", { name: "Cadastrar" }).click();
 
-    await expect(page).toHaveURL(/\/acervo$/);
+    await expect(page).toHaveURL(/\/acervo\/armas$/);
     await expect(page.getByText(`${brand.name} ${model.name}`)).toBeVisible();
     await expect(page.getByText(`${type.name} · ${caliber.name}`)).toBeVisible();
   });
@@ -68,7 +68,7 @@ test.describe("Acervo > Armas (FUC07)", () => {
     await page.getByLabel("Apelido").fill("Minha Glockinha");
     await page.getByRole("button", { name: "Salvar" }).click();
 
-    await expect(page).toHaveURL(/\/acervo$/);
+    await expect(page).toHaveURL(/\/acervo\/armas$/);
     await expect(page.getByText("Minha Glockinha")).toBeVisible();
   });
 
@@ -98,7 +98,7 @@ test.describe("Acervo > Armas (FUC07)", () => {
     const name = `${brand.name} ${model.name}`;
 
     await login(page, email);
-    await page.goto("/acervo");
+    await page.goto("/acervo/armas");
 
     // ambas as armas têm o mesmo nome (marca+modelo) — checa pela contagem de linhas
     await expect(page.getByText(name)).toHaveCount(2);
@@ -129,7 +129,7 @@ test.describe("Acervo > Armas (FUC07)", () => {
     await page.goto(`/acervo/armas/${weapon.id}`);
     await page.getByRole("button", { name: "Excluir arma" }).click();
 
-    await expect(page).toHaveURL(/\/acervo$/);
+    await expect(page).toHaveURL(/\/acervo\/armas$/);
     await expect(page.getByText(/acervo de armas está vazio/i)).toBeVisible();
   });
 });

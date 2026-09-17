@@ -125,7 +125,7 @@ test.describe("Acervo > Acessórios (FUC09)", () => {
     await expect(page.getByText("Suporte")).not.toBeVisible();
 
     // a arma associada não foi excluída junto — continua no acervo de Armas
-    await page.goto("/acervo");
+    await page.goto("/acervo/armas");
     await expect(page.getByText(`${brand.name} ${model.name}`).first()).toBeVisible();
   });
 });
