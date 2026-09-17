@@ -51,6 +51,7 @@ diferente pra pistola vs. revólver) — biblioteca: `@tabler/icons-react`.
 | Treinos (nav) | `IconTarget` | `accent-brass-soft` |
 | Acervo (nav) | `IconBriefcase` | `accent-sage-soft` |
 | Usuário (nav) | `IconUser` | neutro (`foreground-muted`) |
+| Locais de treino | `IconMapPin` | `accent-target` |
 
 Nunca usar ícone literal de arma/munição — nem essa biblioteca teria um, e
 a diretriz de identidade visual já pede pra evitar estética tática.
