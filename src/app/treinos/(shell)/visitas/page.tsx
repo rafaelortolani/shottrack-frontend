@@ -47,6 +47,8 @@ export default function VisitasTabPage() {
   const [closingVisit, setClosingVisit] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
   const [historyModalityFilter, setHistoryModalityFilter] = useState("");
+  const [historyDateFrom, setHistoryDateFrom] = useState("");
+  const [historyDateTo, setHistoryDateTo] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -280,6 +282,10 @@ export default function VisitasTabPage() {
         onSearchChange={setHistorySearch}
         modalityFilter={historyModalityFilter}
         onModalityFilterChange={setHistoryModalityFilter}
+        dateFrom={historyDateFrom}
+        onDateFromChange={setHistoryDateFrom}
+        dateTo={historyDateTo}
+        onDateToChange={setHistoryDateTo}
       />
 
       {confirmingCloseVisit && activeVisit && (
@@ -481,6 +487,16 @@ function ConfirmCloseVisitModal({
   );
 }
 
+function isOnOrAfter(startedAt: string, dateFrom: string): boolean {
+  if (!dateFrom) return true;
+  return new Date(startedAt) >= new Date(`${dateFrom}T00:00:00`);
+}
+
+function isOnOrBefore(startedAt: string, dateTo: string): boolean {
+  if (!dateTo) return true;
+  return new Date(startedAt) <= new Date(`${dateTo}T23:59:59.999`);
+}
+
 function HistorySection({
   visits,
   locationsById,
@@ -488,6 +504,10 @@ function HistorySection({
   onSearchChange,
   modalityFilter,
   onModalityFilterChange,
+  dateFrom,
+  onDateFromChange,
+  dateTo,
+  onDateToChange,
 }: {
   visits: Visit[];
   locationsById: Map<string, TrainingLocation>;
@@ -495,6 +515,10 @@ function HistorySection({
   onSearchChange: (value: string) => void;
   modalityFilter: string;
   onModalityFilterChange: (value: string) => void;
+  dateFrom: string;
+  onDateFromChange: (value: string) => void;
+  dateTo: string;
+  onDateToChange: (value: string) => void;
 }) {
   const query = search.trim().toLowerCase();
   const modalityNames = Array.from(new Set(visits.flatMap((v) => v.trainings.map((t) => t.modalityName)))).sort();
@@ -503,7 +527,8 @@ function HistorySection({
     const matchesSearch = !query || Boolean(location && location.name.toLowerCase().includes(query));
     const matchesModality =
       !modalityFilter || visit.trainings.some((t) => t.modalityName === modalityFilter);
-    return matchesSearch && matchesModality;
+    const matchesDate = isOnOrAfter(visit.startedAt, dateFrom) && isOnOrBefore(visit.startedAt, dateTo);
+    return matchesSearch && matchesModality && matchesDate;
   });
 
   return (
@@ -534,6 +559,30 @@ function HistorySection({
                   <option key={name} value={name}>{name}</option>
                 ))}
               </select>
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="history-date-from" className="text-sm text-foreground-muted">
+                  De
+                </label>
+                <input
+                  id="history-date-from"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => onDateFromChange(e.target.value)}
+                  className="rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="history-date-to" className="text-sm text-foreground-muted">
+                  Até
+                </label>
+                <input
+                  id="history-date-to"
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => onDateToChange(e.target.value)}
+                  className="rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+                />
+              </div>
             </div>
           )}
 

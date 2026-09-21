@@ -123,4 +123,50 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     await expect(page.getByText(locationA.name)).toBeVisible();
     await expect(page.getByText(locationB.name)).toBeVisible();
   });
+
+  test("filtra o histórico por data inicial e final", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+
+    const location = await registerTrainingLocation(token, {
+      name: "Clube de Tiro Alvorada",
+      city: "Curitiba",
+      state: "PR",
+    });
+    const visit = await startVisit(token, location.id);
+    await closeVisit(token, visit.id);
+
+    // Os filtros só aparecem com mais de uma visita no histórico (mesmo
+    // padrão do Acervo) — essa segunda visita só serve pra isso.
+    const otherLocation = await registerTrainingLocation(token, { name: "Outro local", city: "Curitiba", state: "PR" });
+    const otherVisit = await startVisit(token, otherLocation.id);
+    await closeVisit(token, otherVisit.id);
+
+    await login(page, email);
+    await page.goto("/treinos/visitas");
+
+    await expect(page.getByText(location.name)).toBeVisible();
+
+    const toDateInput = (d: Date) => d.toISOString().slice(0, 10);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Fora do período: data final antes de hoje
+    await page.getByLabel("Até", { exact: true }).fill(toDateInput(yesterday));
+    await expect(page.getByText("Nenhuma visita encontrada com esses filtros.")).toBeVisible();
+
+    // Fora do período: data inicial depois de hoje
+    await page.getByLabel("Até", { exact: true }).fill("");
+    await page.getByLabel("De", { exact: true }).fill(toDateInput(tomorrow));
+    await expect(page.getByText("Nenhuma visita encontrada com esses filtros.")).toBeVisible();
+
+    // Dentro do período: hoje está entre ontem e amanhã
+    await page.getByLabel("De", { exact: true }).fill(toDateInput(yesterday));
+    await page.getByLabel("Até", { exact: true }).fill(toDateInput(tomorrow));
+    await expect(page.getByText(location.name)).toBeVisible();
+  });
 });
