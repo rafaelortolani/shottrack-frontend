@@ -82,4 +82,31 @@ test.describe("Navegação — hub e breadcrumb", () => {
     await expect(page).toHaveURL(/\/treinos$/);
     await expect(page.getByRole("heading", { name: "Treinos" })).toBeVisible();
   });
+
+  test("sidebar mostra ícone em cada item de submenu (Acervo, Usuário, Treinos)", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    await login(page, email);
+
+    await page.goto("/acervo/armas");
+    for (const label of ["Armas", "Munições", "Acessórios"]) {
+      const link = page.getByRole("link", { name: label, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link.locator("svg")).toBeVisible();
+    }
+
+    await page.goto("/usuario/perfil");
+    for (const label of ["Perfil", "Modalidades"]) {
+      const link = page.getByRole("link", { name: label, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link.locator("svg")).toBeVisible();
+    }
+
+    await page.goto("/treinos/visitas");
+    for (const label of ["Visitas", "Locais"]) {
+      const link = page.getByRole("link", { name: label, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link.locator("svg")).toBeVisible();
+    }
+  });
 });

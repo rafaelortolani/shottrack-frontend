@@ -14,12 +14,25 @@ import {
   IconChevronDown,
   IconClipboardList,
   IconMapPin,
+  IconFocus2,
+  IconCapsuleHorizontal,
+  IconBackpack,
+  IconIdBadge2,
+  IconCategory2,
   type TablerIcon,
 } from "@tabler/icons-react";
 
 const NAV_COLLAPSED_KEY = "shottrack:nav-collapsed";
 
-type NavChild = { href: string; label: string; icon?: TablerIcon; color?: string };
+/**
+ * icon/color são obrigatórios (não opcionais) de propósito — a tabela da
+ * skill convencoes-frontend exige ícone fixo em todo item de submenu, e
+ * deixar opcional já causou um item de submenu "sumido" sem que o
+ * TypeScript acusasse nada. Com o campo obrigatório, esquecer o ícone
+ * num novo item quebra o build em vez de silenciosamente renderizar sem
+ * ícone.
+ */
+type NavChild = { href: string; label: string; icon: TablerIcon; color: string };
 
 type NavItem = {
   href: string;
@@ -50,9 +63,9 @@ const NAV_ITEMS: NavItem[] = [
     color: "text-accent-sage-soft",
     enabled: true,
     children: [
-      { href: "/acervo/armas", label: "Armas" },
-      { href: "/acervo/municoes", label: "Munições" },
-      { href: "/acervo/acessorios", label: "Acessórios" },
+      { href: "/acervo/armas", label: "Armas", icon: IconFocus2, color: "text-accent-target-soft" },
+      { href: "/acervo/municoes", label: "Munições", icon: IconCapsuleHorizontal, color: "text-accent-brass-soft" },
+      { href: "/acervo/acessorios", label: "Acessórios", icon: IconBackpack, color: "text-accent-sage-soft" },
     ],
   },
   {
@@ -62,8 +75,8 @@ const NAV_ITEMS: NavItem[] = [
     color: "text-foreground-muted",
     enabled: true,
     children: [
-      { href: "/usuario/perfil", label: "Perfil" },
-      { href: "/usuario/modalidades", label: "Modalidades" },
+      { href: "/usuario/perfil", label: "Perfil", icon: IconIdBadge2, color: "text-foreground-muted" },
+      { href: "/usuario/modalidades", label: "Modalidades", icon: IconCategory2, color: "text-foreground-muted" },
     ],
   },
 ];
@@ -279,7 +292,7 @@ function DesktopNavLink({
                   childActive ? "text-foreground bg-surface" : "text-foreground-muted hover:text-foreground"
                 }`}
               >
-                {ChildIcon && <ChildIcon size={15} stroke={1.75} className={child.color} />}
+                <ChildIcon size={15} stroke={1.75} className={child.color} />
                 {child.label}
               </Link>
             );
