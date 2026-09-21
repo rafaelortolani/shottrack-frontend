@@ -11,3 +11,19 @@ export function resultTypeKind(name: string): ResultTypeKind {
   if (name === "Anotação livre") return "text";
   return "number";
 }
+
+/**
+ * Unidade de medida por tipo de resultado — só pros tipos numéricos cuja
+ * unidade não é óbvia sem ela (Tempo, Agrupamento). Os demais tipos
+ * numéricos (Pontuação, Acertos, Erros, Penalidades, Fator de
+ * desempenho) variam de escala por modalidade/competição, então uma
+ * unidade fixa aqui seria arriscar informação errada — melhor sem.
+ */
+const RESULT_TYPE_UNITS: Record<string, { label: string; suffix: string }> = {
+  "Tempo": { label: "segundos", suffix: "s" },
+  "Agrupamento": { label: "cm", suffix: "cm" },
+};
+
+export function resultTypeUnit(name: string): { label: string; suffix: string } | null {
+  return RESULT_TYPE_UNITS[name] ?? null;
+}

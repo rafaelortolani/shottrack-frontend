@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconChevronDown } from "@tabler/icons-react";
-import { resultTypeKind } from "@/lib/resultTypeFormat";
+import { resultTypeKind, resultTypeUnit } from "@/lib/resultTypeFormat";
 
 type Catalog = { id: string; name: string };
 type Weapon = { id: string; nickname: string | null; type: Catalog; brand: Catalog; model: Catalog; caliber: Catalog };
@@ -49,7 +49,13 @@ function formatSeriesSummary(series: Series, weaponsById: Map<string, Weapon>): 
   const parts: string[] = [];
   const filled = series.results.filter((r) => !r.notApplicable && r.value !== null && r.value !== "");
 
-  parts.push(filled.length > 0 ? filled.map((r) => `${r.resultTypeName}: ${r.value}`).join(", ") : "Sem dados ainda");
+  parts.push(
+    filled.length > 0
+      ? filled
+          .map((r) => `${r.resultTypeName}: ${r.value}${resultTypeUnit(r.resultTypeName)?.suffix ?? ""}`)
+          .join(", ")
+      : "Sem dados ainda"
+  );
 
   if (series.weaponId) {
     const weapon = weaponsById.get(series.weaponId);
@@ -510,11 +516,13 @@ function SeriesForm({
 
       {resultTypes.map((resultType) => {
         const kind = resultTypeKind(resultType.name);
+        const unit = resultTypeUnit(resultType.name);
         const rv = results[resultType.id] ?? { value: "", notApplicable: false };
         return (
           <div key={resultType.id}>
             <label htmlFor={`${idPrefix}-result-${resultType.id}`} className="block text-sm text-foreground-muted mb-1">
               {resultType.name}
+              {unit && ` (${unit.label})`}
             </label>
             <div className="flex items-center gap-2">
               {kind === "boolean" ? (

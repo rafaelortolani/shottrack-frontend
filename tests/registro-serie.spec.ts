@@ -86,7 +86,7 @@ test.describe("Registro rápido de série (FUC14)", () => {
     const naButton = page.getByRole("button", { name: `${agrupamento.name} não aplicável` });
     await naButton.click();
     await expect(naButton).toHaveAttribute("aria-pressed", "true");
-    await expect(page.getByLabel(agrupamento.name, { exact: true })).toBeDisabled();
+    await expect(page.getByLabel(`${agrupamento.name} (cm)`, { exact: true })).toBeDisabled();
 
     // Edita um campo (quantidade de disparos)
     await page.getByLabel("Quantidade de disparos").fill("5");
