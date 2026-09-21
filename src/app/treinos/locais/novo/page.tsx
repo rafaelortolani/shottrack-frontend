@@ -69,7 +69,7 @@ export default function NovoLocalTreinoPage() {
       return;
     }
 
-    router.push("/treinos");
+    router.push("/treinos/locais");
   }
 
   return (
@@ -77,7 +77,13 @@ export default function NovoLocalTreinoPage() {
       <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
       <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-          <Breadcrumb items={[{ href: "/treinos", label: "Treinos" }, { label: "Cadastrar local" }]} />
+          <Breadcrumb
+            items={[
+              { href: "/treinos", label: "Treinos" },
+              { href: "/treinos/locais", label: "Locais" },
+              { label: "Cadastrar local" },
+            ]}
+          />
 
           <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Cadastrar local
@@ -159,7 +165,7 @@ export default function NovoLocalTreinoPage() {
               >
                 {saving ? "Cadastrando..." : "Cadastrar"}
               </button>
-              <CancelButton href="/treinos" />
+              <CancelButton href="/treinos/locais" />
             </div>
           </form>
       </div>

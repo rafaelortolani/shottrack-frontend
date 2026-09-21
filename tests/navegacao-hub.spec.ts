@@ -54,4 +54,59 @@ test.describe("Navegação — hub e breadcrumb", () => {
     await expect(page).toHaveURL(/\/acervo$/);
     await expect(page.getByRole("heading", { name: "Acervo" })).toBeVisible();
   });
+
+  test("hub de Treinos mostra os cards e navega pra Visitas", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    await login(page, email);
+
+    await page.goto("/treinos");
+    const main = page.getByRole("main");
+    await expect(main.getByRole("heading", { name: "Treinos" })).toBeVisible();
+    await expect(main.getByRole("link", { name: /Visitas/ })).toBeVisible();
+    await expect(main.getByRole("link", { name: /Locais/ })).toBeVisible();
+
+    await main.getByRole("link", { name: /Visitas/ }).click();
+    await expect(page).toHaveURL(/\/treinos\/visitas$/);
+    await expect(page.getByRole("heading", { name: "Visitas" })).toBeVisible();
+  });
+
+  test("breadcrumb volta pro hub de Treinos", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    await login(page, email);
+
+    await page.goto("/treinos/locais");
+    await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Treinos" }).click();
+
+    await expect(page).toHaveURL(/\/treinos$/);
+    await expect(page.getByRole("heading", { name: "Treinos" })).toBeVisible();
+  });
+
+  test("sidebar mostra ícone em cada item de submenu (Acervo, Usuário, Treinos)", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    await login(page, email);
+
+    await page.goto("/acervo/armas");
+    for (const label of ["Armas", "Munições", "Acessórios"]) {
+      const link = page.getByRole("link", { name: label, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link.locator("svg")).toBeVisible();
+    }
+
+    await page.goto("/usuario/perfil");
+    for (const label of ["Perfil", "Modalidades"]) {
+      const link = page.getByRole("link", { name: label, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link.locator("svg")).toBeVisible();
+    }
+
+    await page.goto("/treinos/visitas");
+    for (const label of ["Visitas", "Locais"]) {
+      const link = page.getByRole("link", { name: label, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link.locator("svg")).toBeVisible();
+    }
+  });
 });
