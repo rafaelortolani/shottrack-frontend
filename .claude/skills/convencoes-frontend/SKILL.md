@@ -52,6 +52,13 @@ diferente pra pistola vs. revólver) — biblioteca: `@tabler/icons-react`.
 | Acervo (nav) | `IconBriefcase` | `accent-sage-soft` |
 | Usuário (nav) | `IconUser` | neutro (`foreground-muted`) |
 | Locais de treino | `IconMapPin` | `accent-target` |
+| Visitas (submenu de Treinos) | `IconClipboardList` | `accent-brass-soft` |
+| Perfil (submenu de Usuário) | `IconIdBadge2` | neutro (`foreground-muted`) |
+| Modalidades (submenu de Usuário) | `IconCategory2` | neutro (`foreground-muted`) |
+
+Itens de submenu (ex: Armas/Munições/Acessórios dentro de Acervo; Perfil/
+Modalidades dentro de Usuário) também levam ícone — o mesmo ícone fixo já
+definido acima pra cada um, não um ícone genérico de "item de lista".
 
 Nunca usar ícone literal de arma/munição — nem essa biblioteca teria um, e
 a diretriz de identidade visual já pede pra evitar estética tática.
