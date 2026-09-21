@@ -2,17 +2,35 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IconAdjustments, IconX } from "@tabler/icons-react";
+import { IconX } from "@tabler/icons-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 
 type Modality = { id: string; name: string };
 type ResultType = { id: string; name: string };
+
+function formatResultTypesSummary(types: ResultType[] | undefined): string {
+  if (!types) {
+    return "Carregando...";
+  }
+  if (types.length === 0) {
+    return "Nenhum tipo configurado";
+  }
+
+  const [first, second, ...rest] = types;
+  if (!second) {
+    return first.name;
+  }
+
+  const shown = `${first.name}, ${second.name}`;
+  return rest.length > 0 ? `${shown} +${rest.length}` : shown;
+}
 
 export default function ModalidadesTabPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [practiced, setPracticed] = useState<Modality[]>([]);
   const [catalog, setCatalog] = useState<Modality[]>([]);
+  const [resultTypesByModality, setResultTypesByModality] = useState<Record<string, ResultType[]>>({});
   const [error, setError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -48,6 +66,18 @@ export default function ModalidadesTabPage() {
         setCatalog(catalogData);
         setLoading(false);
       }
+
+      const resultTypesEntries = await Promise.all(
+        practicedData.map(async (modality: Modality) => {
+          const response = await fetch(`/api/practiced-modalities/${modality.id}/result-types`);
+          const resultTypes = response.ok ? (await response.json()).data : [];
+          return [modality.id, resultTypes] as const;
+        })
+      );
+
+      if (!cancelled) {
+        setResultTypesByModality(Object.fromEntries(resultTypesEntries));
+      }
     }
 
     loadData();
@@ -77,6 +107,11 @@ export default function ModalidadesTabPage() {
       }
 
       setPracticed((prev) => prev.filter((m) => m.id !== modality.id));
+      setResultTypesByModality((prev) => {
+        const next = { ...prev };
+        delete next[modality.id];
+        return next;
+      });
       setFeedback(`${modality.name} removida`);
       return;
     }
@@ -102,6 +137,12 @@ export default function ModalidadesTabPage() {
     const { data } = await response.json();
     setPracticed((prev) => [...prev, data]);
     setFeedback(`${modality.name} adicionada`);
+
+    const resultTypesRes = await fetch(`/api/practiced-modalities/${data.id}/result-types`);
+    if (resultTypesRes.ok) {
+      const { data: resultTypesData } = await resultTypesRes.json();
+      setResultTypesByModality((prev) => ({ ...prev, [data.id]: resultTypesData }));
+    }
   }
 
   if (loading) {
@@ -128,46 +169,22 @@ export default function ModalidadesTabPage() {
       <div className="flex flex-wrap gap-2">
         {catalog.map((modality) => {
           const isPracticed = practiced.some((p) => p.id === modality.id);
-
-          if (!isPracticed) {
-            return (
-              <button
-                key={modality.id}
-                type="button"
-                aria-pressed={false}
-                disabled={pendingId === modality.id}
-                onClick={() => handleToggle(modality, false)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border text-foreground-muted px-3 py-1.5 text-sm hover:text-foreground hover:border-accent-target disabled:opacity-60 transition-colors"
-              >
-                {modality.name}
-              </button>
-            );
-          }
-
           return (
-            <div
+            <button
               key={modality.id}
-              className="inline-flex items-center gap-1 rounded-full bg-accent-target text-foreground pl-3 pr-1.5 py-1.5 text-sm"
+              type="button"
+              aria-pressed={isPracticed}
+              disabled={pendingId === modality.id}
+              onClick={() => handleToggle(modality, isPracticed)}
+              className={
+                isPracticed
+                  ? "inline-flex items-center gap-1.5 rounded-full bg-accent-target text-foreground px-3 py-1.5 text-sm disabled:opacity-60 transition-colors"
+                  : "inline-flex items-center gap-1.5 rounded-full border border-border text-foreground-muted px-3 py-1.5 text-sm hover:text-foreground hover:border-accent-target disabled:opacity-60 transition-colors"
+              }
             >
-              <button
-                type="button"
-                aria-pressed={true}
-                disabled={pendingId === modality.id}
-                onClick={() => handleToggle(modality, true)}
-                className="inline-flex items-center gap-1.5 disabled:opacity-60"
-              >
-                <span aria-hidden="true">✓</span>
-                {modality.name}
-              </button>
-              <button
-                type="button"
-                aria-label={`Configurar tipos de resultado de ${modality.name}`}
-                onClick={() => setConfigModality(modality)}
-                className="p-1 rounded-full text-foreground/80 hover:text-foreground hover:bg-black/10 transition-colors"
-              >
-                <IconAdjustments size={15} stroke={1.75} />
-              </button>
-            </div>
+              {isPracticed && <span aria-hidden="true">✓</span>}
+              {modality.name}
+            </button>
           );
         })}
       </div>
@@ -184,14 +201,50 @@ export default function ModalidadesTabPage() {
         </p>
       </div>
 
+      {practiced.length > 0 && (
+        <div className="mt-6 pt-4 border-t border-border space-y-3">
+          <h2 className="text-sm text-foreground-muted">Resultados por modalidade</h2>
+          {practiced.map((modality) => (
+            <div key={modality.id} className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-foreground-muted">{modality.name}</p>
+                <p className="text-foreground">{formatResultTypesSummary(resultTypesByModality[modality.id])}</p>
+              </div>
+              <button
+                type="button"
+                aria-label={`Configurar tipos de resultado de ${modality.name}`}
+                onClick={() => setConfigModality(modality)}
+                className="text-sm text-foreground-muted hover:text-foreground transition-colors"
+              >
+                Configurar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {configModality && (
-        <ResultTypePanel modality={configModality} onClose={() => setConfigModality(null)} />
+        <ResultTypePanel
+          modality={configModality}
+          onClose={() => setConfigModality(null)}
+          onConfiguredChange={(types) =>
+            setResultTypesByModality((prev) => ({ ...prev, [configModality.id]: types }))
+          }
+        />
       )}
     </div>
   );
 }
 
-function ResultTypePanel({ modality, onClose }: { modality: Modality; onClose: () => void }) {
+function ResultTypePanel({
+  modality,
+  onClose,
+  onConfiguredChange,
+}: {
+  modality: Modality;
+  onClose: () => void;
+  onConfiguredChange: (types: ResultType[]) => void;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [catalog, setCatalog] = useState<ResultType[]>([]);
@@ -228,6 +281,7 @@ function ResultTypePanel({ modality, onClose }: { modality: Modality; onClose: (
         setCatalog(catalogData);
         setConfigured(configuredData);
         setLoading(false);
+        onConfiguredChange(configuredData);
       }
     }
 
@@ -235,6 +289,7 @@ function ResultTypePanel({ modality, onClose }: { modality: Modality; onClose: (
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modality.id, router]);
 
   async function handleToggle(resultType: ResultType, isConfigured: boolean) {
@@ -259,7 +314,9 @@ function ResultTypePanel({ modality, onClose }: { modality: Modality; onClose: (
         return;
       }
 
-      setConfigured((prev) => prev.filter((t) => t.id !== resultType.id));
+      const next = configured.filter((t) => t.id !== resultType.id);
+      setConfigured(next);
+      onConfiguredChange(next);
       return;
     }
 
@@ -282,7 +339,9 @@ function ResultTypePanel({ modality, onClose }: { modality: Modality; onClose: (
     }
 
     const { data } = await response.json();
-    setConfigured((prev) => [...prev, data]);
+    const next = [...configured, data];
+    setConfigured(next);
+    onConfiguredChange(next);
   }
 
   return (

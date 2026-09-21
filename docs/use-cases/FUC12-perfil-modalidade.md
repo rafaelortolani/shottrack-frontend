@@ -6,11 +6,13 @@ acompanhar em cada modalidade que pratica (Perfil de Modalidade).
 
 ## Estrutura de navegação
 Não é uma tela nova — se integra na aba "Modalidades" já existente
-(FUC06, `/usuario/modalidades`). Cada chip de modalidade **marcada**
-(praticada) ganha um ícone de engrenagem (`IconAdjustments`), que abre um
-painel (modal/sheet) com a configuração de tipos de resultado daquela
-modalidade. Chips desmarcadas não têm esse ícone — só faz sentido
-configurar resultado de algo que o atleta pratica.
+(FUC06, `/usuario/modalidades`). Abaixo dos chips de seleção (marcar/
+desmarcar modalidade praticada), uma seção separada e sempre visível,
+**"Resultados por modalidade"**: uma lista (mesmo padrão visual do resumo
+de Email/Senha na tela de Perfil), um item por modalidade **praticada**,
+cada um mostrando um resumo dos tipos já configurados (ex: "Pontuação,
+Agrupamento") e um link "Configurar" que abre o painel de ajuste. Item
+some da lista automaticamente quando a modalidade é desmarcada nos chips.
 
 ## Referência backend
 - UC29 (catálogo de tipos de resultado) — `GET /api/result-type-catalog`
@@ -36,13 +38,16 @@ configurar resultado de algo que o atleta pratica.
 - Erro ao adicionar/remover: mensagem inline, sem fechar o painel
 
 ## Definição de pronto
-- [ ] Ícone de configurar aparece só em modalidades marcadas
+- [ ] Lista "Resultados por modalidade" mostra só as modalidades marcadas,
+  com resumo dos tipos configurados
+- [ ] Item some da lista quando a modalidade correspondente é desmarcada
+  nos chips
 - [ ] Painel abre mostrando a sugestão padrão já aplicada (não vazio)
-- [ ] Marcar um tipo de resultado novo funciona
-- [ ] Desmarcar um tipo funciona sem afetar os demais
+- [ ] Marcar um tipo de resultado novo funciona, resumo na lista atualiza
+- [ ] Desmarcar um tipo funciona sem afetar os demais, resumo atualiza
 - [ ] Teste E2E (Playwright) cobrindo: adicionar modalidade praticada,
-  abrir configuração e confirmar que a sugestão padrão já veio marcada,
-  adicionar um tipo, remover um tipo
+  confirmar que ela aparece na lista de resultados com a sugestão padrão
+  já resumida, abrir configuração, adicionar um tipo, remover um tipo
 
 ## Referências
 - Backend: UC29, UC30, ADR-0011
