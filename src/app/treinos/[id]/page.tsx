@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { SeriesAccordion } from "@/components/SeriesAccordion";
 import { TargetRings } from "@/components/TargetRings";
 import { formatDateTime } from "@/lib/datetime";
 
@@ -153,20 +154,24 @@ export default function DetalheVisitaPage() {
         ) : (
           <ul className="space-y-1">
             {visit.trainings.map((training) => (
-              <li
-                key={training.id}
-                className="flex items-center justify-between py-2 border-b border-border last:border-0"
-              >
-                <p className="text-foreground">{training.modalityName}</p>
-                <span
-                  className={
-                    training.status === "IN_PROGRESS"
-                      ? "text-sm text-accent-brass-soft"
-                      : "text-sm text-foreground-muted"
-                  }
-                >
-                  {training.status === "IN_PROGRESS" ? "Em andamento" : "Encerrado"}
-                </span>
+              <li key={training.id} className="py-2 border-b border-border last:border-0">
+                <div className="flex items-center justify-between">
+                  <p className="text-foreground">{training.modalityName}</p>
+                  <span
+                    className={
+                      training.status === "IN_PROGRESS"
+                        ? "text-sm text-accent-brass-soft"
+                        : "text-sm text-foreground-muted"
+                    }
+                  >
+                    {training.status === "IN_PROGRESS" ? "Em andamento" : "Encerrado"}
+                  </span>
+                </div>
+                <SeriesAccordion
+                  trainingId={training.id}
+                  trainingOpen={training.status === "IN_PROGRESS"}
+                  modalityId={training.modalityId}
+                />
               </li>
             ))}
           </ul>

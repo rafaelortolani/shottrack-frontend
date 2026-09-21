@@ -258,6 +258,57 @@ export async function registerAccessory(accessToken: string, payload: Record<str
   return data;
 }
 
+export async function startVisit(accessToken: string, trainingLocationId: string) {
+  const response = await fetch(`${BACKEND_URL}/api/visits`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ trainingLocationId }),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao iniciar visita de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
+export async function openTraining(accessToken: string, visitId: string, modalityId: string) {
+  const response = await fetch(`${BACKEND_URL}/api/trainings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ visitId, modalityId }),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao abrir treino de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
+export async function closeTraining(accessToken: string, trainingId: string) {
+  const response = await fetch(`${BACKEND_URL}/api/trainings/${trainingId}/closure`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao encerrar treino de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
+export async function registerSeries(accessToken: string, payload: Record<string, unknown>) {
+  const response = await fetch(`${BACKEND_URL}/api/series`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao registrar série de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
 export async function registerTrainingLocation(accessToken: string, payload: Record<string, unknown>) {
   const response = await fetch(`${BACKEND_URL}/api/training-locations`, {
     method: "POST",
