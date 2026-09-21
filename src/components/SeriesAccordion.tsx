@@ -477,12 +477,51 @@ function SeriesForm({
     return map;
   });
 
+  const [formError, setFormError] = useState<string | null>(null);
+
   function updateResult(id: string, patch: Partial<ResultFormValue>) {
     setResults((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   }
 
+  function numericResultValue(resultTypeId: string | undefined): number {
+    if (!resultTypeId) return 0;
+    const rv = results[resultTypeId];
+    if (!rv || rv.notApplicable || rv.value === "") return 0;
+    return Number(rv.value) || 0;
+  }
+
+  /**
+   * Acertos + Erros não pode passar da quantidade de disparos — cada
+   * disparo só pode contar pra um dos dois, então a soma nunca excede o
+   * total. Só valida quando quantidade de disparos está preenchida (sem
+   * ela não há o que comparar, e a tela permite completar depois).
+   */
+  function validateShotCounts(): string | null {
+    const shots = shotCount === "" ? null : Number(shotCount);
+    if (shots === null) return null;
+
+    const acertosType = resultTypes.find((rt) => rt.name === "Acertos");
+    const errosType = resultTypes.find((rt) => rt.name === "Erros");
+    if (!acertosType && !errosType) return null;
+
+    const total = numericResultValue(acertosType?.id) + numericResultValue(errosType?.id);
+    if (total > shots) {
+      return `Acertos + Erros (${total}) não pode passar da quantidade de disparos (${shots}).`;
+    }
+
+    return null;
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    const validationError = validateShotCounts();
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
+
+    setFormError(null);
     onSubmit({ weaponId, ammunitionId, distanceMeters, target, shotCount, notes, results });
   }
 
@@ -633,9 +672,9 @@ function SeriesForm({
         </button>
       )}
 
-      {error && (
+      {(formError || error) && (
         <p className="text-sm text-accent-target" role="alert">
-          {error}
+          {formError ?? error}
         </p>
       )}
 
