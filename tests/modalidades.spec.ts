@@ -40,7 +40,7 @@ test.describe("Usuário > Modalidades (FUC06)", () => {
     await login(page, email);
     await page.goto("/usuario/modalidades");
 
-    const chip = page.getByRole("button", { name: first.name });
+    const chip = page.getByRole("button", { name: first.name, exact: true });
     await expect(chip).toHaveAttribute("aria-pressed", "false");
 
     await chip.click();
@@ -61,8 +61,8 @@ test.describe("Usuário > Modalidades (FUC06)", () => {
     await login(page, email);
     await page.goto("/usuario/modalidades");
 
-    const firstChip = page.getByRole("button", { name: first.name });
-    const secondChip = page.getByRole("button", { name: second.name });
+    const firstChip = page.getByRole("button", { name: first.name, exact: true });
+    const secondChip = page.getByRole("button", { name: second.name, exact: true });
     await expect(firstChip).toHaveAttribute("aria-pressed", "true");
     await expect(secondChip).toHaveAttribute("aria-pressed", "true");
 

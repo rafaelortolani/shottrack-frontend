@@ -123,6 +123,33 @@ export async function getModalityCatalog(accessToken: string): Promise<Modality[
   return data;
 }
 
+export async function getResultTypeCatalog(accessToken: string): Promise<Modality[]> {
+  const response = await fetch(`${BACKEND_URL}/api/result-type-catalog`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao buscar catálogo de tipos de resultado: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
+/**
+ * Tipos de resultado já configurados pra uma modalidade praticada —
+ * inclui a sugestão padrão aplicada automaticamente pelo backend
+ * (ADR-0011) assim que a modalidade é praticada pela primeira vez.
+ */
+export async function getConfiguredResultTypes(accessToken: string, modalityId: string): Promise<Modality[]> {
+  const response = await fetch(`${BACKEND_URL}/api/practiced-modalities/${modalityId}/result-types`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao buscar tipos de resultado configurados de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
 export async function addPracticedModality(accessToken: string, modalityId: string) {
   const response = await fetch(`${BACKEND_URL}/api/practiced-modalities`, {
     method: "POST",
