@@ -84,7 +84,7 @@ export default function IniciarVisitaPage() {
       return;
     }
 
-    router.push("/treinos");
+    router.push("/treinos/visitas");
   }
 
   return (
@@ -92,7 +92,13 @@ export default function IniciarVisitaPage() {
       <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
       <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-        <Breadcrumb items={[{ href: "/treinos", label: "Treinos" }, { label: "Iniciar visita" }]} />
+        <Breadcrumb
+          items={[
+            { href: "/treinos", label: "Treinos" },
+            { href: "/treinos/visitas", label: "Visitas" },
+            { label: "Iniciar visita" },
+          ]}
+        />
 
         <h1 className="font-display text-lg font-semibold tracking-tight mb-1">Iniciar visita</h1>
         <p className="text-foreground-muted mb-6">Selecione o local de treino.</p>
@@ -151,7 +157,7 @@ export default function IniciarVisitaPage() {
               >
                 {saving ? "Iniciando..." : "Iniciar"}
               </button>
-              <CancelButton href="/treinos" />
+              <CancelButton href="/treinos/visitas" />
             </div>
           </form>
         )}

@@ -39,7 +39,7 @@ const NAV_ITEMS: NavItem[] = [
     color: "text-accent-brass-soft",
     enabled: true,
     children: [
-      { href: "/treinos", label: "Visitas", icon: IconClipboardList, color: "text-accent-brass-soft" },
+      { href: "/treinos/visitas", label: "Visitas", icon: IconClipboardList, color: "text-accent-brass-soft" },
       { href: "/treinos/locais", label: "Locais", icon: IconMapPin, color: "text-accent-target-soft" },
     ],
   },

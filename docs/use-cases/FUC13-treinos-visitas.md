@@ -5,13 +5,17 @@ Permitir iniciar uma visita, abrir/encerrar treinos dentro dela (múltiplos
 simultâneos), encerrar a visita, e consultar o histórico.
 
 ## Estrutura de navegação
-Reestrutura a seção "Treinos" pra abas — mesmo padrão já usado em
-Usuário/Acervo:
-- **Visitas** (aba padrão) — este use case
+Reestrutura a seção "Treinos" pro mesmo padrão hub-com-cards já usado em
+Usuário/Acervo (não abas visíveis — esse padrão foi removido nessas duas
+seções, ver commit `0482b43`):
+- `/treinos` — hub: título "Treinos" + cards (Visitas, Locais), sem
+  breadcrumb, igual `/acervo` e `/usuario`
+- **Visitas** — este use case, `/treinos/visitas`
 - **Locais** — conteúdo do FUC11, movido de `/treinos` (tela única) pra
-  `/treinos/locais` (aba); nenhuma mudança de funcionalidade, só de rota
+  `/treinos/locais`; nenhuma mudança de funcionalidade, só de rota
 
-Rotas: `/treinos` (aba Visitas), `/treinos/locais` (aba Locais, era
+Rotas: `/treinos` (hub), `/treinos/visitas` (breadcrumb "Treinos /
+Visitas"), `/treinos/locais` (breadcrumb "Treinos / Locais", era
 `/treinos` antes), `/treinos/nova` (iniciar visita), `/treinos/[id]`
 (detalhe de uma visita — ativa ou do histórico).
 
@@ -22,7 +26,7 @@ Rotas: `/treinos` (aba Visitas), `/treinos/locais` (aba Locais, era
 - UC34 (encerrar visita) — `PATCH /api/visits/{id}/close`
 - UC35 (listar visitas) — `GET /api/visits`
 
-## Tela "Visitas" (aba padrão)
+## Tela "Visitas"
 - **Se há visita em andamento**: card destacado no topo, "Visita em
   andamento" — local, horário de início, lista dos treinos dela (cada um
   com modalidade e status), botão "Abrir novo treino" (seleciona uma

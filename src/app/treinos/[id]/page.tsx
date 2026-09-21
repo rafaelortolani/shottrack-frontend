@@ -97,7 +97,7 @@ export default function DetalheVisitaPage() {
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <p className="text-foreground-muted mb-4">Visita não encontrada.</p>
-          <Link href="/treinos" className="text-sm text-accent-target hover:text-accent-target-hover transition-colors">
+          <Link href="/treinos/visitas" className="text-sm text-accent-target hover:text-accent-target-hover transition-colors">
             Voltar pros treinos
           </Link>
         </div>
@@ -110,7 +110,13 @@ export default function DetalheVisitaPage() {
       <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
       <div className="relative max-w-lg px-5 md:px-6 py-6 pb-20 md:pb-6">
-        <Breadcrumb items={[{ href: "/treinos", label: "Treinos" }, { label: "Visita" }]} />
+        <Breadcrumb
+          items={[
+            { href: "/treinos", label: "Treinos" },
+            { href: "/treinos/visitas", label: "Visitas" },
+            { label: "Visita" },
+          ]}
+        />
 
         <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
           {location ? location.name : "Visita"}

@@ -31,7 +31,7 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     await addPracticedModality(token, modality.id);
 
     await login(page, email);
-    await page.goto("/treinos");
+    await page.goto("/treinos/visitas");
 
     await expect(page.getByText("Nenhuma visita em andamento.")).toBeVisible();
 
@@ -40,7 +40,7 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     await page.getByLabel("Local de treino").selectOption({ label: `${location.name} · ${location.city}/${location.state}` });
     await page.getByRole("button", { name: "Iniciar" }).click();
 
-    await expect(page).toHaveURL(/\/treinos$/);
+    await expect(page).toHaveURL(/\/treinos\/visitas$/);
     await expect(page.getByText("Visita em andamento", { exact: true })).toBeVisible();
     await expect(page.getByText(location.name)).toBeVisible();
 
