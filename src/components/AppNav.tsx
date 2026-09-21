@@ -12,12 +12,14 @@ import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
   IconChevronDown,
+  IconClipboardList,
+  IconMapPin,
   type TablerIcon,
 } from "@tabler/icons-react";
 
 const NAV_COLLAPSED_KEY = "shottrack:nav-collapsed";
 
-type NavChild = { href: string; label: string };
+type NavChild = { href: string; label: string; icon?: TablerIcon; color?: string };
 
 type NavItem = {
   href: string;
@@ -30,7 +32,17 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard, color: "text-accent-target-soft", enabled: true },
-  { href: "/treinos", label: "Treinos", icon: IconTarget, color: "text-accent-brass-soft", enabled: true },
+  {
+    href: "/treinos",
+    label: "Treinos",
+    icon: IconTarget,
+    color: "text-accent-brass-soft",
+    enabled: true,
+    children: [
+      { href: "/treinos", label: "Visitas", icon: IconClipboardList, color: "text-accent-brass-soft" },
+      { href: "/treinos/locais", label: "Locais", icon: IconMapPin, color: "text-accent-target-soft" },
+    ],
+  },
   {
     href: "/acervo",
     label: "Acervo",
@@ -258,14 +270,16 @@ function DesktopNavLink({
         <div className="mt-0.5 ml-4 pl-3 border-l border-border space-y-0.5">
           {item.children!.map((child) => {
             const childActive = pathname === child.href;
+            const ChildIcon = child.icon;
             return (
               <Link
                 key={child.href}
                 href={child.href}
-                className={`block rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
                   childActive ? "text-foreground bg-surface" : "text-foreground-muted hover:text-foreground"
                 }`}
               >
+                {ChildIcon && <ChildIcon size={15} stroke={1.75} className={child.color} />}
                 {child.label}
               </Link>
             );

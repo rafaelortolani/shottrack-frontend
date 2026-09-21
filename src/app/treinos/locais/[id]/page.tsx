@@ -140,7 +140,7 @@ export default function EditarLocalTreinoPage() {
     const diff = buildDiff(initialValues, values);
 
     if (Object.keys(diff).length === 0) {
-      router.push("/treinos");
+      router.push("/treinos/locais");
       return;
     }
 
@@ -165,7 +165,7 @@ export default function EditarLocalTreinoPage() {
       return;
     }
 
-    router.push("/treinos");
+    router.push("/treinos/locais");
   }
 
   async function handleDelete() {
@@ -192,7 +192,7 @@ export default function EditarLocalTreinoPage() {
       return;
     }
 
-    router.push("/treinos");
+    router.push("/treinos/locais");
   }
 
   if (loading || !values) {
@@ -208,7 +208,7 @@ export default function EditarLocalTreinoPage() {
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <p className="text-foreground-muted mb-4">Local de treino não encontrado.</p>
-          <Link href="/treinos" className="text-sm text-accent-target hover:text-accent-target-hover transition-colors">
+          <Link href="/treinos/locais" className="text-sm text-accent-target hover:text-accent-target-hover transition-colors">
             Voltar pros treinos
           </Link>
         </div>
@@ -221,7 +221,13 @@ export default function EditarLocalTreinoPage() {
       <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
 
       <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-          <Breadcrumb items={[{ href: "/treinos", label: "Treinos" }, { label: "Editar local" }]} />
+          <Breadcrumb
+            items={[
+              { href: "/treinos", label: "Treinos" },
+              { href: "/treinos/locais", label: "Locais" },
+              { label: "Editar local" },
+            ]}
+          />
 
           <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
             Editar local
@@ -301,7 +307,7 @@ export default function EditarLocalTreinoPage() {
               >
                 {saving ? "Salvando..." : "Salvar"}
               </button>
-              <CancelButton href="/treinos" />
+              <CancelButton href="/treinos/locais" />
             </div>
           </form>
 

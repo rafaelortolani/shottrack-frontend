@@ -15,7 +15,7 @@ test.describe("Treinos > Locais (FUC11)", () => {
     await createUser(email);
 
     await login(page, email);
-    await page.goto("/treinos");
+    await page.goto("/treinos/locais");
     await expect(page.getByText(/não cadastrou nenhum local de treino/i)).toBeVisible();
 
     await page.getByRole("link", { name: "+ Cadastrar local" }).click();
@@ -26,7 +26,7 @@ test.describe("Treinos > Locais (FUC11)", () => {
     await page.getByLabel("Estado").selectOption({ label: "Paraná" });
     await page.getByRole("button", { name: "Cadastrar" }).click();
 
-    await expect(page).toHaveURL(/\/treinos$/);
+    await expect(page).toHaveURL(/\/treinos\/locais$/);
     await expect(page.getByText("Clube de Tiro Alvorada")).toBeVisible();
     await expect(page.getByText("Curitiba · PR")).toBeVisible();
   });
@@ -39,7 +39,7 @@ test.describe("Treinos > Locais (FUC11)", () => {
     const locationB = await registerTrainingLocation(token, { name: "Clube Norte", city: "Manaus", state: "AM" });
 
     await login(page, email);
-    await page.goto("/treinos");
+    await page.goto("/treinos/locais");
 
     await expect(page.getByText(locationA.name)).toBeVisible();
     await expect(page.getByText(locationB.name)).toBeVisible();
@@ -70,7 +70,7 @@ test.describe("Treinos > Locais (FUC11)", () => {
     await page.getByLabel("Cidade").fill("São José dos Pinhais");
     await page.getByRole("button", { name: "Salvar" }).click();
 
-    await expect(page).toHaveURL(/\/treinos$/);
+    await expect(page).toHaveURL(/\/treinos\/locais$/);
     await expect(page.getByText("São José dos Pinhais · PR")).toBeVisible();
     await expect(page.getByText("Clube de Tiro Alvorada")).toBeVisible();
 
@@ -93,7 +93,7 @@ test.describe("Treinos > Locais (FUC11)", () => {
     await page.goto(`/treinos/locais/${location.id}`);
     await page.getByRole("button", { name: "Excluir local" }).click();
 
-    await expect(page).toHaveURL(/\/treinos$/);
+    await expect(page).toHaveURL(/\/treinos\/locais$/);
     await expect(page.getByText(/não cadastrou nenhum local de treino/i)).toBeVisible();
   });
 });
