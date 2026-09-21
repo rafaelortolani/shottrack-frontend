@@ -149,4 +149,45 @@ test.describe("Registro rápido de série (FUC14)", () => {
     await page.getByRole("button", { name: /^Série 1/ }).click();
     await expect(page.getByLabel("Quantidade de disparos")).toHaveValue("3");
   });
+
+  test("bloqueia acertos + erros maior que a quantidade de disparos", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+
+    const location = await registerTrainingLocation(token, {
+      name: "Clube de Tiro Alvorada",
+      city: "Curitiba",
+      state: "PR",
+    });
+
+    const modalityCatalog = await getModalityCatalog(token);
+    const trap = modalityCatalog.find((m) => m.name === "Trap")!;
+    await addPracticedModality(token, trap.id);
+    const configured = await getConfiguredResultTypes(token, trap.id);
+    const acertos = configured.find((r) => r.name === "Acertos")!;
+    const erros = configured.find((r) => r.name === "Erros")!;
+
+    const visit = await startVisit(token, location.id);
+    await openTraining(token, visit.id, trap.id);
+
+    await login(page, email);
+    await page.goto("/treinos/visitas");
+
+    await page.getByRole("button", { name: "Séries" }).click();
+    await page.getByRole("button", { name: "+ Registrar série" }).click();
+
+    await page.getByLabel("Quantidade de disparos").fill("50");
+    await page.getByLabel(acertos.name, { exact: true }).fill("10");
+    await page.getByLabel(erros.name, { exact: true }).fill("50");
+    await page.getByRole("button", { name: "Salvar série" }).click();
+
+    await expect(page.getByText(/não pode passar da quantidade de disparos/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Série 1/ })).not.toBeVisible();
+
+    // Corrige e confirma que passa a salvar
+    await page.getByLabel(erros.name, { exact: true }).fill("30");
+    await page.getByRole("button", { name: "Salvar série" }).click();
+    await expect(page.getByRole("button", { name: /^Série 1/ })).toBeVisible();
+  });
 });
