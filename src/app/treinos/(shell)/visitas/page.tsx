@@ -46,6 +46,7 @@ export default function VisitasTabPage() {
   const [confirmingCloseVisit, setConfirmingCloseVisit] = useState(false);
   const [closingVisit, setClosingVisit] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
+  const [historyModalityFilter, setHistoryModalityFilter] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -277,6 +278,8 @@ export default function VisitasTabPage() {
         locationsById={locationsById}
         search={historySearch}
         onSearchChange={setHistorySearch}
+        modalityFilter={historyModalityFilter}
+        onModalityFilterChange={setHistoryModalityFilter}
       />
 
       {confirmingCloseVisit && activeVisit && (
@@ -483,17 +486,24 @@ function HistorySection({
   locationsById,
   search,
   onSearchChange,
+  modalityFilter,
+  onModalityFilterChange,
 }: {
   visits: Visit[];
   locationsById: Map<string, TrainingLocation>;
   search: string;
   onSearchChange: (value: string) => void;
+  modalityFilter: string;
+  onModalityFilterChange: (value: string) => void;
 }) {
   const query = search.trim().toLowerCase();
+  const modalityNames = Array.from(new Set(visits.flatMap((v) => v.trainings.map((t) => t.modalityName)))).sort();
   const filtered = visits.filter((visit) => {
-    if (!query) return true;
     const location = locationsById.get(visit.trainingLocationId);
-    return Boolean(location && location.name.toLowerCase().includes(query));
+    const matchesSearch = !query || Boolean(location && location.name.toLowerCase().includes(query));
+    const matchesModality =
+      !modalityFilter || visit.trainings.some((t) => t.modalityName === modalityFilter);
+    return matchesSearch && matchesModality;
   });
 
   return (
@@ -504,18 +514,31 @@ function HistorySection({
       ) : (
         <>
           {visits.length > 1 && (
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Buscar por local"
-              aria-label="Buscar visita por local"
-              className="w-full mb-3 rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
-            />
+            <div className="flex flex-wrap gap-2 mb-3">
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Buscar por local"
+                aria-label="Buscar visita por local"
+                className="flex-1 min-w-[160px] rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+              />
+              <select
+                value={modalityFilter}
+                onChange={(e) => onModalityFilterChange(e.target.value)}
+                aria-label="Filtrar por modalidade"
+                className="rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+              >
+                <option value="">Todas as modalidades</option>
+                {modalityNames.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+            </div>
           )}
 
           {filtered.length === 0 ? (
-            <p className="text-foreground-muted">Nenhuma visita encontrada com esse local.</p>
+            <p className="text-foreground-muted">Nenhuma visita encontrada com esses filtros.</p>
           ) : (
             <ul>
               {filtered.map((visit) => {
