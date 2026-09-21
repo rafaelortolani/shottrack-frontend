@@ -271,6 +271,18 @@ export async function startVisit(accessToken: string, trainingLocationId: string
   return data;
 }
 
+export async function closeVisit(accessToken: string, visitId: string) {
+  const response = await fetch(`${BACKEND_URL}/api/visits/${visitId}/closure`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao encerrar visita de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
 export async function openTraining(accessToken: string, visitId: string, modalityId: string) {
   const response = await fetch(`${BACKEND_URL}/api/trainings`, {
     method: "POST",

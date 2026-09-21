@@ -6,6 +6,9 @@ import {
   getModalityCatalog,
   addPracticedModality,
   registerTrainingLocation,
+  startVisit,
+  openTraining,
+  closeVisit,
 } from "./helpers";
 
 async function login(page: Page, email: string, password = "senha12345") {
@@ -77,5 +80,47 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     const historyItem = page.locator("li", { hasText: location.name });
     await expect(historyItem).toBeVisible();
     await expect(historyItem.getByText(modality.name)).toBeVisible();
+  });
+
+  test("filtra o histórico por local e por modalidade", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+
+    const locationA = await registerTrainingLocation(token, { name: "Estande Sul", city: "Curitiba", state: "PR" });
+    const locationB = await registerTrainingLocation(token, { name: "Clube Norte", city: "Manaus", state: "AM" });
+    const modalityCatalog = await getModalityCatalog(token);
+    const [modalityA, modalityB] = modalityCatalog;
+    await addPracticedModality(token, modalityA.id);
+    await addPracticedModality(token, modalityB.id);
+
+    const visitA = await startVisit(token, locationA.id);
+    await openTraining(token, visitA.id, modalityA.id);
+    await closeVisit(token, visitA.id);
+
+    const visitB = await startVisit(token, locationB.id);
+    await openTraining(token, visitB.id, modalityB.id);
+    await closeVisit(token, visitB.id);
+
+    await login(page, email);
+    await page.goto("/treinos/visitas");
+
+    await expect(page.getByText(locationA.name)).toBeVisible();
+    await expect(page.getByText(locationB.name)).toBeVisible();
+
+    // Busca por local
+    await page.getByLabel("Buscar visita por local").fill("sul");
+    await expect(page.getByText(locationA.name)).toBeVisible();
+    await expect(page.getByText(locationB.name)).not.toBeVisible();
+
+    // Filtra por modalidade
+    await page.getByLabel("Buscar visita por local").fill("");
+    await page.getByLabel("Filtrar por modalidade").selectOption({ label: modalityB.name });
+    await expect(page.getByText(locationB.name)).toBeVisible();
+    await expect(page.getByText(locationA.name)).not.toBeVisible();
+
+    await page.getByLabel("Filtrar por modalidade").selectOption("");
+    await expect(page.getByText(locationA.name)).toBeVisible();
+    await expect(page.getByText(locationB.name)).toBeVisible();
   });
 });
