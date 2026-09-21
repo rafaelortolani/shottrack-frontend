@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { SeriesAccordion } from "@/components/SeriesAccordion";
 import { formatDate, formatDateTime } from "@/lib/datetime";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string };
@@ -333,25 +334,32 @@ function ActiveVisitCard({
       {visit.trainings.length > 0 && (
         <ul className="space-y-1 mb-3">
           {visit.trainings.map((training) => (
-            <li key={training.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-              <div>
-                <p className="text-foreground">{training.modalityName}</p>
-                <p className="text-sm text-foreground-muted">
-                  {training.status === "IN_PROGRESS"
-                    ? "Em andamento"
-                    : `Encerrado às ${formatDateTime(training.endedAt!)}`}
-                </p>
+            <li key={training.id} className="py-2 border-b border-border last:border-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-foreground">{training.modalityName}</p>
+                  <p className="text-sm text-foreground-muted">
+                    {training.status === "IN_PROGRESS"
+                      ? "Em andamento"
+                      : `Encerrado às ${formatDateTime(training.endedAt!)}`}
+                  </p>
+                </div>
+                {training.status === "IN_PROGRESS" && (
+                  <button
+                    type="button"
+                    onClick={() => onCloseTraining(training.id)}
+                    disabled={closingTrainingId === training.id}
+                    className="text-sm text-accent-target hover:text-accent-target-hover disabled:opacity-60 transition-colors"
+                  >
+                    {closingTrainingId === training.id ? "Encerrando..." : "Encerrar"}
+                  </button>
+                )}
               </div>
-              {training.status === "IN_PROGRESS" && (
-                <button
-                  type="button"
-                  onClick={() => onCloseTraining(training.id)}
-                  disabled={closingTrainingId === training.id}
-                  className="text-sm text-accent-target hover:text-accent-target-hover disabled:opacity-60 transition-colors"
-                >
-                  {closingTrainingId === training.id ? "Encerrando..." : "Encerrar"}
-                </button>
-              )}
+              <SeriesAccordion
+                trainingId={training.id}
+                trainingOpen={training.status === "IN_PROGRESS"}
+                modalityId={training.modalityId}
+              />
             </li>
           ))}
         </ul>
