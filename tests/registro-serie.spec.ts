@@ -21,7 +21,8 @@ async function login(page: Page, email: string, password = "senha12345") {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Senha").fill(password);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  // Todo cenário aqui loga já com visita em andamento → landing em Visitas (FUC15)
+  await expect(page).toHaveURL(/\/treinos\/visitas/);
 }
 
 test.describe("Registro rápido de série (FUC14)", () => {

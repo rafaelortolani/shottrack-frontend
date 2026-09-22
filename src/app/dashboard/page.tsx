@@ -1,19 +1,70 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { AppNav } from "@/components/AppNav";
 import { TargetRings } from "@/components/TargetRings";
+import { formatDate } from "@/lib/datetime";
 
-const stats = [
-  { label: "Treinos esse mês", value: "9" },
-  { label: "Disparos registrados", value: "412" },
-  { label: "Melhor agrupamento", value: "3,2 cm" },
-];
+type RecentVisit = {
+  visitId: string;
+  trainingLocationName: string | null;
+  startedAt: string;
+  modalityNames: string[];
+};
 
-const recentVisits = [
-  { local: "Clube de Tiro Alvorada", data: "12 set", modalidades: ["Precisão", "IPSC"] },
-  { local: "Estande Sul", data: "05 set", modalidades: ["Precisão"] },
-  { local: "Clube de Tiro Alvorada", data: "29 ago", modalidades: ["Steel Challenge"] },
-];
+type Dashboard = {
+  averageGroupingLast30Days: number | null;
+  trainingsThisMonth: number;
+  shotsThisMonth: number;
+  bestGroupingEver: number | null;
+  recentVisits: RecentVisit[];
+};
+
+function formatNumber(value: number): string {
+  return Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+}
+
+function formatGrouping(value: number | null): string {
+  return value === null ? "—" : `${formatNumber(value)} cm`;
+}
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [dashboard, setDashboard] = useState<Dashboard | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadData() {
+      const response = await fetch("/api/dashboard");
+
+      if (response.status === 401) {
+        router.push("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        if (!cancelled) {
+          setError("Não foi possível carregar o dashboard");
+        }
+        return;
+      }
+
+      const { data } = await response.json();
+      if (!cancelled) {
+        setDashboard(data);
+      }
+    }
+
+    loadData();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex">
       <AppNav />
@@ -27,42 +78,85 @@ export default function DashboardPage() {
             Sua evolução
           </h1>
 
-          {/* hero: número grande, sem card */}
-          <div className="mb-6">
-            <p className="text-foreground-muted text-sm mb-1">
-              Agrupamento médio (últimos 30 dias)
+          {error ? (
+            <p className="text-sm text-accent-target" role="alert">
+              {error}
             </p>
-            <p className="font-display text-6xl md:text-7xl font-semibold tracking-tight">
-              4,1<span className="text-2xl text-foreground-muted ml-2">cm</span>
-            </p>
-            <p className="text-sm text-accent-brass mt-2">
-              ↓ 0,6 cm em relação ao mês anterior
-            </p>
-          </div>
+          ) : !dashboard ? (
+            <p className="text-foreground-muted">Carregando dashboard...</p>
+          ) : (
+            <DashboardContent dashboard={dashboard} />
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
 
-          {/* estatísticas secundárias em linha, sem cards */}
-          <div className="flex flex-wrap gap-x-6 gap-y-4 mb-6 pb-6 border-b border-border">
-            {stats.map((s) => (
-              <div key={s.label}>
-                <p className="font-display text-2xl font-medium">{s.value}</p>
-                <p className="text-sm text-foreground-muted">{s.label}</p>
-              </div>
-            ))}
-          </div>
+function DashboardContent({ dashboard }: { dashboard: Dashboard }) {
+  const stats = [
+    { label: "Treinos esse mês", value: formatNumber(dashboard.trainingsThisMonth) },
+    { label: "Disparos registrados", value: formatNumber(dashboard.shotsThisMonth) },
+    { label: "Melhor agrupamento", value: formatGrouping(dashboard.bestGroupingEver) },
+  ];
+  const average = dashboard.averageGroupingLast30Days;
 
-          <h2 className="font-display text-base font-semibold mb-3">
-            Visitas recentes
-          </h2>
-          <ul className="space-y-2">
-            {recentVisits.map((v, i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between py-2 border-b border-border last:border-0"
+  return (
+    <>
+      {/* hero: número grande, sem card */}
+      <div role="group" aria-label="Agrupamento médio (últimos 30 dias)" className="mb-6">
+        <p className="text-foreground-muted text-sm mb-1">
+          Agrupamento médio (últimos 30 dias)
+        </p>
+        <p className="font-display text-6xl md:text-7xl font-semibold tracking-tight">
+          {average === null ? (
+            "—"
+          ) : (
+            <>
+              {formatNumber(average)}
+              <span className="text-2xl text-foreground-muted ml-2">cm</span>
+            </>
+          )}
+        </p>
+      </div>
+
+      {/* estatísticas secundárias em linha, sem cards */}
+      <div className="flex flex-wrap gap-x-6 gap-y-4 mb-6 pb-6 border-b border-border">
+        {stats.map((s) => (
+          <div key={s.label} role="group" aria-label={s.label}>
+            <p className="font-display text-2xl font-medium">{s.value}</p>
+            <p className="text-sm text-foreground-muted">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <h2 className="font-display text-base font-semibold mb-3">
+        Visitas recentes
+      </h2>
+      {dashboard.recentVisits.length === 0 ? (
+        <div>
+          <p className="text-foreground-muted mb-4">
+            Nenhuma visita registrada ainda. Inicie sua primeira visita pra começar a acompanhar sua evolução.
+          </p>
+          <Link
+            href="/treinos/visitas"
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover text-foreground text-sm font-medium px-4 py-2 transition-colors"
+          >
+            Iniciar primeira visita
+          </Link>
+        </div>
+      ) : (
+        <ul>
+          {dashboard.recentVisits.map((v) => (
+            <li key={v.visitId} className="border-b border-border last:border-0">
+              <Link
+                href={`/treinos/${v.visitId}`}
+                className="flex items-center justify-between py-2 hover:bg-surface/50 transition-colors"
               >
                 <div>
-                  <p className="text-foreground mb-1.5">{v.local}</p>
+                  <p className="text-foreground mb-1.5">{v.trainingLocationName ?? "—"}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {v.modalidades.map((modalidade) => (
+                    {v.modalityNames.map((modalidade) => (
                       <span
                         key={modalidade}
                         className="text-xs rounded-full bg-accent-brass/15 text-accent-brass-soft px-2 py-0.5"
@@ -72,12 +166,12 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 </div>
-                <span className="text-sm text-foreground-muted">{v.data}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </main>
-    </div>
+                <span className="text-sm text-foreground-muted">{formatDate(v.startedAt)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }
