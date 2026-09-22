@@ -6,6 +6,8 @@ import {
   getModalityCatalog,
   getResultTypeCatalog,
   getConfiguredResultTypes,
+  addPracticedModality,
+  addConfiguredResultType,
 } from "./helpers";
 
 async function login(page: Page, email: string, password = "senha12345") {
@@ -92,5 +94,34 @@ test.describe("Usuário > Perfil de modalidade — tipos de resultado (FUC12)", 
     await chip.click();
     await expect(chip).toHaveAttribute("aria-pressed", "false");
     await expect(configureButton).not.toBeVisible();
+  });
+
+  test("erro ao adicionar tipo já configurado mostra mensagem inline sem fechar o painel", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const [modality] = await getModalityCatalog(token);
+    await addPracticedModality(token, modality.id);
+    const resultTypeCatalog = await getResultTypeCatalog(token);
+    const configured = await getConfiguredResultTypes(token, modality.id);
+    const newType = resultTypeCatalog.find((t) => !configured.some((c) => c.id === t.id));
+    expect(newType).toBeTruthy();
+
+    await login(page, email);
+    await page.goto("/usuario/modalidades");
+    await page.getByRole("button", { name: `Configurar tipos de resultado de ${modality.name}` }).click();
+
+    const dialog = page.getByRole("dialog", { name: `${modality.name} — tipos de resultado` });
+    const newChip = dialog.getByRole("button", { name: newType!.name });
+    await expect(newChip).toHaveAttribute("aria-pressed", "false");
+
+    // Configurado por fora com o painel já aberto: o clique vira POST duplicado
+    // e o backend responde RESULT_TYPE_ALREADY_CONFIGURED (409).
+    await addConfiguredResultType(token, modality.id, newType!.id);
+    await newChip.click();
+
+    await expect(dialog.getByRole("alert")).toBeVisible();
+    await expect(dialog).toBeVisible();
+    await expect(newChip).toHaveAttribute("aria-pressed", "false");
   });
 });

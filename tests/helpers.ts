@@ -150,6 +150,18 @@ export async function getConfiguredResultTypes(accessToken: string, modalityId: 
   return data;
 }
 
+export async function addConfiguredResultType(accessToken: string, modalityId: string, resultTypeId: string) {
+  const response = await fetch(`${BACKEND_URL}/api/practiced-modalities/${modalityId}/result-types`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ resultTypeId }),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao configurar tipo de resultado de teste: ${response.status}`);
+  }
+  return response.json();
+}
+
 export async function addPracticedModality(accessToken: string, modalityId: string) {
   const response = await fetch(`${BACKEND_URL}/api/practiced-modalities`, {
     method: "POST",
