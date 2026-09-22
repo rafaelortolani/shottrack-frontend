@@ -333,6 +333,19 @@ export async function registerSeries(accessToken: string, payload: Record<string
   return data;
 }
 
+export async function registerSeriesResult(accessToken: string, seriesId: string, resultTypeId: string, value: string) {
+  const response = await fetch(`${BACKEND_URL}/api/series/${seriesId}/results`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ resultTypeId, value }),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao registrar resultado de série de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
 export async function registerTrainingLocation(accessToken: string, payload: Record<string, unknown>) {
   const response = await fetch(`${BACKEND_URL}/api/training-locations`, {
     method: "POST",

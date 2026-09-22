@@ -40,7 +40,8 @@ function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
+    const { landing } = await response.json();
+    router.push(landing ?? "/dashboard");
   }
 
   return (
