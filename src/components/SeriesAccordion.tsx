@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { IconChevronDown } from "@tabler/icons-react";
+import { IconChevronDown, IconListNumbers } from "@tabler/icons-react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
 import { resultTypeKind, resultTypeUnit } from "@/lib/resultTypeFormat";
 
 type Catalog = { id: string; name: string };
@@ -369,7 +371,18 @@ export function SeriesAccordion({
           ) : (
             <>
               {series.length === 0 ? (
-                <p className="text-sm text-foreground-muted">Nenhuma série registrada ainda.</p>
+                formMode === "closed" &&
+                (trainingOpen ? (
+                  <EmptyState
+                    icon={IconListNumbers}
+                    title="Nenhuma série registrada ainda"
+                    description="Cada série é um disparo ou sequência de disparos."
+                    actionLabel="Registrar série"
+                    onAction={() => setFormMode("new")}
+                  />
+                ) : (
+                  <p className="text-sm text-foreground-muted">Nenhuma série registrada ainda.</p>
+                ))
               ) : (
                 <ul className="space-y-1">
                   {series.map((s, index) => (
@@ -390,7 +403,7 @@ export function SeriesAccordion({
                 </ul>
               )}
 
-              {formMode === "closed" && trainingOpen && (
+              {formMode === "closed" && trainingOpen && series.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setFormMode("new")}
@@ -424,11 +437,16 @@ export function SeriesAccordion({
       )}
 
       {confirmingDeleteId && (
-        <ConfirmDeleteSeriesModal
+        <ConfirmDialog
+          id="confirm-delete-series"
+          title="Excluir série"
+          busy={deletingId === confirmingDeleteId}
+          busyLabel="Excluindo..."
           onCancel={() => setConfirmingDeleteId(null)}
           onConfirm={() => handleDeleteSeries(confirmingDeleteId)}
-          deleting={deletingId === confirmingDeleteId}
-        />
+        >
+          Essa ação não pode ser desfeita. Confirmar?
+        </ConfirmDialog>
       )}
     </div>
   );
@@ -700,45 +718,5 @@ function SeriesForm({
         )}
       </div>
     </form>
-  );
-}
-
-function ConfirmDeleteSeriesModal({
-  onCancel,
-  onConfirm,
-  deleting,
-}: {
-  onCancel: () => void;
-  onConfirm: () => void;
-  deleting: boolean;
-}) {
-  return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-background/80 p-4" onClick={onCancel}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-delete-series-title"
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-md bg-surface p-5"
-      >
-        <h2 id="confirm-delete-series-title" className="font-display text-base font-semibold mb-2">
-          Excluir série
-        </h2>
-        <p className="text-foreground-muted mb-4">Essa ação não pode ser desfeita. Confirmar?</p>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={deleting}
-            className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground text-sm font-medium py-2 px-4 transition-colors"
-          >
-            {deleting ? "Excluindo..." : "Confirmar"}
-          </button>
-          <button type="button" onClick={onCancel} className="text-sm text-foreground-muted hover:text-foreground transition-colors">
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { IconTarget } from "@tabler/icons-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
 import { SeriesAccordion } from "@/components/SeriesAccordion";
 import { formatDate, formatDateTime } from "@/lib/datetime";
 
@@ -45,6 +48,10 @@ export default function VisitasTabPage() {
   const [closingTrainingId, setClosingTrainingId] = useState<string | null>(null);
   const [confirmingCloseVisit, setConfirmingCloseVisit] = useState(false);
   const [closingVisit, setClosingVisit] = useState(false);
+  const [confirmingDeleteTraining, setConfirmingDeleteTraining] = useState<Training | null>(null);
+  const [deletingTraining, setDeletingTraining] = useState(false);
+  const [confirmingDeleteVisit, setConfirmingDeleteVisit] = useState(false);
+  const [deletingVisit, setDeletingVisit] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
   const [historyModalityFilter, setHistoryModalityFilter] = useState("");
   const [historyDateFrom, setHistoryDateFrom] = useState("");
@@ -183,6 +190,56 @@ export default function VisitasTabPage() {
     }));
   }
 
+  async function handleDeleteTraining() {
+    if (!confirmingDeleteTraining) return;
+    const trainingId = confirmingDeleteTraining.id;
+    setError(null);
+    setDeletingTraining(true);
+
+    const response = await fetch(`/api/trainings/${trainingId}`, { method: "DELETE" });
+
+    setDeletingTraining(false);
+    setConfirmingDeleteTraining(null);
+
+    if (response.status === 401) {
+      router.push("/login");
+      return;
+    }
+
+    if (!response.ok) {
+      const { error } = await response.json();
+      setError(error?.message ?? "Não foi possível excluir o treino");
+      return;
+    }
+
+    updateActiveVisit((v) => ({ ...v, trainings: v.trainings.filter((t) => t.id !== trainingId) }));
+  }
+
+  async function handleDeleteVisit() {
+    if (!activeVisit) return;
+    const visitId = activeVisit.id;
+    setError(null);
+    setDeletingVisit(true);
+
+    const response = await fetch(`/api/visits/${visitId}`, { method: "DELETE" });
+
+    setDeletingVisit(false);
+    setConfirmingDeleteVisit(false);
+
+    if (response.status === 401) {
+      router.push("/login");
+      return;
+    }
+
+    if (!response.ok) {
+      const { error } = await response.json();
+      setError(error?.message ?? "Não foi possível excluir a visita");
+      return;
+    }
+
+    setVisits((prev) => prev.filter((v) => v.id !== visitId));
+  }
+
   function handleCloseVisitClick() {
     if (!activeVisit) return;
     const openCount = activeVisit.trainings.filter((t) => t.status === "IN_PROGRESS").length;
@@ -248,8 +305,10 @@ export default function VisitasTabPage() {
           onCancelOpenTraining={handleCancelOpenTraining}
           closingTrainingId={closingTrainingId}
           onCloseTraining={handleCloseTraining}
+          onDeleteTrainingClick={setConfirmingDeleteTraining}
           onCloseVisitClick={handleCloseVisitClick}
           closingVisit={closingVisit}
+          onDeleteVisitClick={() => setConfirmingDeleteVisit(true)}
         />
       ) : locations.length === 0 ? (
         <div className="mb-6">
@@ -296,6 +355,33 @@ export default function VisitasTabPage() {
           closing={closingVisit}
         />
       )}
+
+      {confirmingDeleteTraining && (
+        <ConfirmDialog
+          id="confirm-delete-training"
+          title="Excluir treino"
+          busy={deletingTraining}
+          busyLabel="Excluindo..."
+          onCancel={() => setConfirmingDeleteTraining(null)}
+          onConfirm={handleDeleteTraining}
+        >
+          O treino de {confirmingDeleteTraining.modalityName} e todas as séries dele serão excluídos. Essa ação não
+          pode ser desfeita. Confirmar?
+        </ConfirmDialog>
+      )}
+
+      {confirmingDeleteVisit && activeVisit && (
+        <ConfirmDialog
+          id="confirm-delete-visit"
+          title="Excluir visita"
+          busy={deletingVisit}
+          busyLabel="Excluindo..."
+          onCancel={() => setConfirmingDeleteVisit(false)}
+          onConfirm={handleDeleteVisit}
+        >
+          {deleteVisitMessage(activeVisit.trainings.length)} Essa ação não pode ser desfeita. Confirmar?
+        </ConfirmDialog>
+      )}
     </div>
   );
 }
@@ -314,8 +400,10 @@ function ActiveVisitCard({
   onCancelOpenTraining,
   closingTrainingId,
   onCloseTraining,
+  onDeleteTrainingClick,
   onCloseVisitClick,
   closingVisit,
+  onDeleteVisitClick,
 }: {
   visit: Visit;
   location: TrainingLocation | null;
@@ -330,8 +418,10 @@ function ActiveVisitCard({
   onCancelOpenTraining: () => void;
   closingTrainingId: string | null;
   onCloseTraining: (id: string) => void;
+  onDeleteTrainingClick: (training: Training) => void;
   onCloseVisitClick: () => void;
   closingVisit: boolean;
+  onDeleteVisitClick: () => void;
 }) {
   return (
     <div className="rounded-md bg-surface p-4 mb-6">
@@ -353,16 +443,25 @@ function ActiveVisitCard({
                       : `Encerrado às ${formatDateTime(training.endedAt!)}`}
                   </p>
                 </div>
-                {training.status === "IN_PROGRESS" && (
+                <div className="flex items-center gap-3">
+                  {training.status === "IN_PROGRESS" && (
+                    <button
+                      type="button"
+                      onClick={() => onCloseTraining(training.id)}
+                      disabled={closingTrainingId === training.id}
+                      className="text-sm text-accent-target hover:text-accent-target-hover disabled:opacity-60 transition-colors"
+                    >
+                      {closingTrainingId === training.id ? "Encerrando..." : "Encerrar"}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => onCloseTraining(training.id)}
-                    disabled={closingTrainingId === training.id}
-                    className="text-sm text-accent-target hover:text-accent-target-hover disabled:opacity-60 transition-colors"
+                    onClick={() => onDeleteTrainingClick(training)}
+                    className="text-sm text-foreground-muted hover:text-accent-target transition-colors"
                   >
-                    {closingTrainingId === training.id ? "Encerrando..." : "Encerrar"}
+                    Excluir
                   </button>
-                )}
+                </div>
               </div>
               <SeriesAccordion
                 trainingId={training.id}
@@ -414,6 +513,16 @@ function ActiveVisitCard({
             </button>
           </div>
         </form>
+      ) : visit.trainings.length === 0 ? (
+        <div className="mb-3">
+          <EmptyState
+            icon={IconTarget}
+            title="Nenhum treino aberto ainda"
+            description="Abra um treino pra cada modalidade que for praticar nesta visita — é nele que você registra as séries."
+            actionLabel="Abrir treino"
+            onAction={onToggleOpenTraining}
+          />
+        </div>
       ) : (
         <button
           type="button"
@@ -424,7 +533,7 @@ function ActiveVisitCard({
         </button>
       )}
 
-      <div className="pt-3 border-t border-border">
+      <div className="pt-3 border-t border-border flex items-center gap-3">
         <button
           type="button"
           onClick={onCloseVisitClick}
@@ -433,9 +542,22 @@ function ActiveVisitCard({
         >
           {closingVisit ? "Encerrando..." : "Encerrar visita"}
         </button>
+        <button
+          type="button"
+          onClick={onDeleteVisitClick}
+          className="ml-auto text-sm text-foreground-muted hover:text-accent-target transition-colors"
+        >
+          Excluir visita
+        </button>
       </div>
     </div>
   );
+}
+
+function deleteVisitMessage(trainingCount: number): string {
+  if (trainingCount === 0) return "A visita será excluída.";
+  const trainings = trainingCount === 1 ? "o treino" : `os ${trainingCount} treinos`;
+  return `A visita, ${trainings} dela e todas as séries serão excluídos.`;
 }
 
 function ConfirmCloseVisitModal({
@@ -450,40 +572,17 @@ function ConfirmCloseVisitModal({
   closing: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-background/80 p-4" onClick={onCancel}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-close-visit-title"
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-md bg-surface p-5"
-      >
-        <h2 id="confirm-close-visit-title" className="font-display text-base font-semibold mb-2">
-          Encerrar visita
-        </h2>
-        <p className="text-foreground-muted mb-4">
-          Você tem {openCount} treino{openCount === 1 ? "" : "s"} em andamento. Encerrar a visita vai encerrar{" "}
-          {openCount === 1 ? "ele também" : "eles também"}. Confirmar?
-        </p>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={closing}
-            className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground text-sm font-medium py-2 px-4 transition-colors"
-          >
-            {closing ? "Encerrando..." : "Confirmar"}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-sm text-foreground-muted hover:text-foreground transition-colors"
-          >
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog
+      id="confirm-close-visit"
+      title="Encerrar visita"
+      busy={closing}
+      busyLabel="Encerrando..."
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+    >
+      Você tem {openCount} treino{openCount === 1 ? "" : "s"} em andamento. Encerrar a visita vai encerrar{" "}
+      {openCount === 1 ? "ele também" : "eles também"}. Confirmar?
+    </ConfirmDialog>
   );
 }
 
