@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SeriesAccordion } from "@/components/SeriesAccordion";
-import { TargetRings } from "@/components/TargetRings";
+import { PageContainer } from "@/components/PageContainer";
 import { formatDateTime } from "@/lib/datetime";
 import { deleteTrainingMessage, deleteVisitMessage } from "@/lib/deleteConfirmation";
 
@@ -160,10 +160,8 @@ export default function DetalheVisitaPage() {
   }
 
   return (
-    <div className="relative">
-      <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
-
-      <div className="relative max-w-lg px-5 md:px-6 py-6 pb-20 md:pb-6">
+    <>
+      <PageContainer ringsClassName="text-accent-target-soft">
         <Breadcrumb
           items={[
             { href: "/treinos", label: "Treinos" },
@@ -248,7 +246,7 @@ export default function DetalheVisitaPage() {
             Excluir visita
           </button>
         </div>
-      </div>
+      </PageContainer>
 
       {confirmingDeleteTraining && (
         <ConfirmDialog
@@ -275,6 +273,6 @@ export default function DetalheVisitaPage() {
           {deleteVisitMessage(visit.trainings.length)}
         </ConfirmDialog>
       )}
-    </div>
+    </>
   );
 }

@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
-import { TargetRings } from "@/components/TargetRings";
+import { PageContainer } from "@/components/PageContainer";
 
 type Catalog = { id: string; name: string };
 type Weapon = {
@@ -226,145 +226,141 @@ export default function EditarArmaPage() {
   const canSubmit = Boolean(typeId && brandId && modelId && caliberId);
 
   return (
-    <div className="relative">
-      <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
+    <PageContainer width="form" ringsClassName="text-accent-target-soft">
+      <Breadcrumb
+        items={[
+          { href: "/acervo", label: "Acervo" },
+          { href: "/acervo/armas", label: "Armas" },
+          { label: "Editar arma" },
+        ]}
+      />
 
-      <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-        <Breadcrumb
-          items={[
-            { href: "/acervo", label: "Acervo" },
-            { href: "/acervo/armas", label: "Armas" },
-            { label: "Editar arma" },
-          ]}
-        />
+      <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
+        Editar arma
+      </h1>
+      {summary && (
+        <p className="text-sm text-foreground-muted mb-6">
+          <span className="text-foreground">{summary.primary}</span> · {summary.secondary}
+        </p>
+      )}
 
-        <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
-          Editar arma
-        </h1>
-        {summary && (
-          <p className="text-sm text-foreground-muted mb-6">
-            <span className="text-foreground">{summary.primary}</span> · {summary.secondary}
-          </p>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1">
-                Apelido
-              </label>
-              <input
-                id="nickname"
-                type="text"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder="Opcional"
-                className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="typeId" className="block text-sm text-foreground-muted mb-1">
-                Tipo
-              </label>
-              <select
-                id="typeId"
-                required
-                value={typeId}
-                onChange={(e) => setTypeId(e.target.value)}
-                className={SELECT_CLASS}
-              >
-                {types.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="brandId" className="block text-sm text-foreground-muted mb-1">
-                Marca
-              </label>
-              <select
-                id="brandId"
-                required
-                value={brandId}
-                onChange={(e) => handleBrandChange(e.target.value)}
-                className={SELECT_CLASS}
-              >
-                {brands.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="modelId" className="block text-sm text-foreground-muted mb-1">
-                Modelo
-              </label>
-              <select
-                id="modelId"
-                required
-                disabled={!brandId || loadingModels}
-                value={modelId}
-                onChange={(e) => setModelId(e.target.value)}
-                className={SELECT_CLASS}
-              >
-                {models.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1">
-                Calibre
-              </label>
-              <select
-                id="caliberId"
-                required
-                value={caliberId}
-                onChange={(e) => setCaliberId(e.target.value)}
-                className={SELECT_CLASS}
-              >
-                {calibers.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {error && (
-              <p className="text-sm text-accent-target" role="alert">
-                {error}
-              </p>
-            )}
-
-            <div className="flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={saving || !canSubmit}
-                className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
-              >
-                {saving ? "Salvando..." : "Salvar"}
-              </button>
-              <CancelButton href="/acervo/armas" />
-            </div>
-          </form>
-
-          <div className="pt-4 mt-4 border-t border-border">
-            {deleteBlocked && (
-              <p className="text-sm text-accent-target mb-3" role="alert">
-                Essa arma já foi usada e não pode ser excluída.
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="text-sm text-accent-target hover:text-accent-target-hover disabled:opacity-60 transition-colors"
-            >
-              {deleting ? "Excluindo..." : "Excluir arma"}
-            </button>
+      <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1">
+              Apelido
+            </label>
+            <input
+              id="nickname"
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="Opcional"
+              className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+            />
           </div>
-      </div>
-    </div>
+
+          <div>
+            <label htmlFor="typeId" className="block text-sm text-foreground-muted mb-1">
+              Tipo
+            </label>
+            <select
+              id="typeId"
+              required
+              value={typeId}
+              onChange={(e) => setTypeId(e.target.value)}
+              className={SELECT_CLASS}
+            >
+              {types.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="brandId" className="block text-sm text-foreground-muted mb-1">
+              Marca
+            </label>
+            <select
+              id="brandId"
+              required
+              value={brandId}
+              onChange={(e) => handleBrandChange(e.target.value)}
+              className={SELECT_CLASS}
+            >
+              {brands.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="modelId" className="block text-sm text-foreground-muted mb-1">
+              Modelo
+            </label>
+            <select
+              id="modelId"
+              required
+              disabled={!brandId || loadingModels}
+              value={modelId}
+              onChange={(e) => setModelId(e.target.value)}
+              className={SELECT_CLASS}
+            >
+              {models.map((m) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1">
+              Calibre
+            </label>
+            <select
+              id="caliberId"
+              required
+              value={caliberId}
+              onChange={(e) => setCaliberId(e.target.value)}
+              className={SELECT_CLASS}
+            >
+              {calibers.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {error && (
+            <p className="text-sm text-accent-target" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={saving || !canSubmit}
+              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
+            >
+              {saving ? "Salvando..." : "Salvar"}
+            </button>
+            <CancelButton href="/acervo/armas" />
+          </div>
+        </form>
+
+        <div className="pt-4 mt-4 border-t border-border">
+          {deleteBlocked && (
+            <p className="text-sm text-accent-target mb-3" role="alert">
+              Essa arma já foi usada e não pode ser excluída.
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="text-sm text-accent-target hover:text-accent-target-hover disabled:opacity-60 transition-colors"
+          >
+            {deleting ? "Excluindo..." : "Excluir arma"}
+          </button>
+        </div>
+    </PageContainer>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
-import { TargetRings } from "@/components/TargetRings";
+import { PageContainer } from "@/components/PageContainer";
 
 type Catalog = { id: string; name: string };
 
@@ -123,162 +123,158 @@ export default function NovaMunicaoPage() {
   }
 
   return (
-    <div className="relative">
-      <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
+    <PageContainer width="form" ringsClassName="text-accent-target-soft">
+      <Breadcrumb
+        items={[
+          { href: "/acervo", label: "Acervo" },
+          { href: "/acervo/municoes", label: "Munições" },
+          { label: "Cadastrar munição" },
+        ]}
+      />
 
-      <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-          <Breadcrumb
-            items={[
-              { href: "/acervo", label: "Acervo" },
-              { href: "/acervo/municoes", label: "Munições" },
-              { label: "Cadastrar munição" },
-            ]}
+      <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
+        Cadastrar munição
+      </h1>
+      <p className="text-foreground-muted mb-6">
+        Informe pelo menos o fabricante ou um apelido pra identificar.
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label htmlFor="manufacturerId" className="block text-sm text-foreground-muted mb-1">
+            Fabricante <span className="text-foreground-muted/60">· opcional</span>
+          </label>
+          <select
+            id="manufacturerId"
+            value={manufacturerId}
+            onChange={(e) => setManufacturerId(e.target.value)}
+            className={INPUT_CLASS}
+          >
+            <option value="">Nenhum</option>
+            {manufacturers.map((m) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1">
+            Apelido <span className="text-foreground-muted/60">· opcional</span>
+          </label>
+          <input
+            id="nickname"
+            type="text"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="Ex: Minha recarga"
+            className={INPUT_CLASS}
           />
+        </div>
 
-          <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
-            Cadastrar munição
-          </h1>
-          <p className="text-foreground-muted mb-6">
-            Informe pelo menos o fabricante ou um apelido pra identificar.
+        {identificationError && (
+          <p className="text-sm text-accent-target" role="alert">
+            {identificationError}
           </p>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label htmlFor="manufacturerId" className="block text-sm text-foreground-muted mb-1">
-                Fabricante <span className="text-foreground-muted/60">· opcional</span>
-              </label>
-              <select
-                id="manufacturerId"
-                value={manufacturerId}
-                onChange={(e) => setManufacturerId(e.target.value)}
-                className={INPUT_CLASS}
-              >
-                <option value="">Nenhum</option>
-                {manufacturers.map((m) => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
+        <details className="rounded-md border border-border px-3 py-2">
+          <summary className="text-sm text-foreground-muted cursor-pointer select-none">
+            Detalhes adicionais (opcional)
+          </summary>
+
+          <div className="mt-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1">
+                  Calibre
+                </label>
+                <select
+                  id="caliberId"
+                  value={caliberId}
+                  onChange={(e) => setCaliberId(e.target.value)}
+                  className={INPUT_CLASS}
+                >
+                  <option value="">Nenhum</option>
+                  {calibers.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="projectileWeightGrains" className="block text-sm text-foreground-muted mb-1">
+                  Peso (grains)
+                </label>
+                <input
+                  id="projectileWeightGrains"
+                  type="number"
+                  step="any"
+                  value={projectileWeightGrains}
+                  onChange={(e) => setProjectileWeightGrains(e.target.value)}
+                  className={INPUT_CLASS}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="powderCharge" className="block text-sm text-foreground-muted mb-1">
+                  Pólvora
+                </label>
+                <input
+                  id="powderCharge"
+                  type="number"
+                  step="any"
+                  value={powderCharge}
+                  onChange={(e) => setPowderCharge(e.target.value)}
+                  className={INPUT_CLASS}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="lot" className="block text-sm text-foreground-muted mb-1">
+                  Lote
+                </label>
+                <input
+                  id="lot"
+                  type="text"
+                  value={lot}
+                  onChange={(e) => setLot(e.target.value)}
+                  className={INPUT_CLASS}
+                />
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1">
-                Apelido <span className="text-foreground-muted/60">· opcional</span>
+            <div className="mt-3">
+              <label htmlFor="notes" className="block text-sm text-foreground-muted mb-1">
+                Observações
               </label>
-              <input
-                id="nickname"
-                type="text"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder="Ex: Minha recarga"
+              <textarea
+                id="notes"
+                rows={3}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
                 className={INPUT_CLASS}
               />
             </div>
+          </div>
+        </details>
 
-            {identificationError && (
-              <p className="text-sm text-accent-target" role="alert">
-                {identificationError}
-              </p>
-            )}
+        {error && (
+          <p className="text-sm text-accent-target" role="alert">
+            {error}
+          </p>
+        )}
 
-            <details className="rounded-md border border-border px-3 py-2">
-              <summary className="text-sm text-foreground-muted cursor-pointer select-none">
-                Detalhes adicionais (opcional)
-              </summary>
-
-              <div className="mt-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1">
-                      Calibre
-                    </label>
-                    <select
-                      id="caliberId"
-                      value={caliberId}
-                      onChange={(e) => setCaliberId(e.target.value)}
-                      className={INPUT_CLASS}
-                    >
-                      <option value="">Nenhum</option>
-                      {calibers.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="projectileWeightGrains" className="block text-sm text-foreground-muted mb-1">
-                      Peso (grains)
-                    </label>
-                    <input
-                      id="projectileWeightGrains"
-                      type="number"
-                      step="any"
-                      value={projectileWeightGrains}
-                      onChange={(e) => setProjectileWeightGrains(e.target.value)}
-                      className={INPUT_CLASS}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="powderCharge" className="block text-sm text-foreground-muted mb-1">
-                      Pólvora
-                    </label>
-                    <input
-                      id="powderCharge"
-                      type="number"
-                      step="any"
-                      value={powderCharge}
-                      onChange={(e) => setPowderCharge(e.target.value)}
-                      className={INPUT_CLASS}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="lot" className="block text-sm text-foreground-muted mb-1">
-                      Lote
-                    </label>
-                    <input
-                      id="lot"
-                      type="text"
-                      value={lot}
-                      onChange={(e) => setLot(e.target.value)}
-                      className={INPUT_CLASS}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <label htmlFor="notes" className="block text-sm text-foreground-muted mb-1">
-                    Observações
-                  </label>
-                  <textarea
-                    id="notes"
-                    rows={3}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className={INPUT_CLASS}
-                  />
-                </div>
-              </div>
-            </details>
-
-            {error && (
-              <p className="text-sm text-accent-target" role="alert">
-                {error}
-              </p>
-            )}
-
-            <div className="flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
-              >
-                {saving ? "Cadastrando..." : "Cadastrar"}
-              </button>
-              <CancelButton href="/acervo/municoes" />
-            </div>
-          </form>
-      </div>
-    </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
+          >
+            {saving ? "Cadastrando..." : "Cadastrar"}
+          </button>
+          <CancelButton href="/acervo/municoes" />
+        </div>
+      </form>
+    </PageContainer>
   );
 }
