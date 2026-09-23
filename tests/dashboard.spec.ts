@@ -30,10 +30,11 @@ test.describe("Dashboard com dados reais e landing condicional (FUC15)", () => {
     await submitLogin(page, email);
     await expect(page).toHaveURL(/\/dashboard/);
 
-    await expect(page.getByRole("group", { name: "Agrupamento médio (últimos 30 dias)" })).toContainText("—");
+    await expect(page.getByRole("group", { name: "Destaque" }).getByText("—", { exact: true })).toBeVisible();
     await expect(page.getByRole("group", { name: "Treinos esse mês" }).getByText("0", { exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Disparos registrados" }).getByText("0", { exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Melhor agrupamento" }).getByText("—", { exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Disparos esse mês" }).getByText("0", { exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Modalidades praticadas" }).getByText("—", { exact: true })).toBeVisible();
+    await expect(page.getByText("NaN")).toHaveCount(0);
 
     await page.getByRole("link", { name: "Iniciar primeira visita" }).click();
     await expect(page).toHaveURL(/\/treinos\/visitas/);
@@ -84,11 +85,13 @@ test.describe("Dashboard com dados reais e landing condicional (FUC15)", () => {
     await submitLogin(page, email);
     await expect(page).toHaveURL(/\/dashboard/);
 
-    // média (3,2 + 4,4) / 2 = 3,8; melhor = menor = 3,2; disparos 10 + 15 = 25
-    await expect(page.getByRole("group", { name: "Agrupamento médio (últimos 30 dias)" })).toContainText("3,8");
+    // destaque = Agrupamento (único tipo registrado), melhor = menor = 3,2; disparos 10 + 15 = 25
+    const destaque = page.getByRole("group", { name: "Destaque" });
+    await expect(destaque).toContainText("Melhor Agrupamento");
+    await expect(destaque.getByText("3,2", { exact: true })).toBeVisible();
     await expect(page.getByRole("group", { name: "Treinos esse mês" }).getByText("1", { exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Disparos registrados" }).getByText("25", { exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Melhor agrupamento" }).getByText("3,2 cm", { exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Disparos esse mês" }).getByText("25", { exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Modalidades praticadas" }).getByText("Precisão", { exact: true })).toBeVisible();
 
     const recentVisit = page.getByRole("link", { name: /Clube de Tiro Alvorada/ });
     await expect(recentVisit).toContainText("Precisão");
