@@ -63,8 +63,8 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     const mainAction = page.getByRole("region", { name: "Ação principal" });
     await expect(mainAction.getByText("Pronto pra treinar?")).toBeVisible();
 
-    // Sem resultado registrado, nada de número grande "vazio"
-    await expect(page.getByRole("group", { name: "Destaque" })).toHaveCount(0);
+    // Sem resultado registrado, nenhum recorde "vazio"
+    await expect(page.getByRole("region", { name: "Recordes" })).toHaveCount(0);
     await expect(page.getByRole("group", { name: "Treinos esse mês" }).getByText("0", { exact: true })).toBeVisible();
     await expect(page.getByText("NaN")).toHaveCount(0);
 
@@ -136,7 +136,7 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     await expect(page).toHaveURL(/\/treinos\/visitas/);
   });
 
-  test("últimos treinos com e sem métrica, resumo de modalidades e de acervo", async ({ page }) => {
+  test("recordes em lista, últimos treinos com e sem métrica, resumo de modalidades e de acervo", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     const token = await loginAndGetToken(email);
@@ -147,7 +147,9 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     const outra = catalog.find((m) => m.name !== "Precisão")!;
     await addPracticedModality(token, precisao.id);
     await addPracticedModality(token, outra.id);
-    const agrupamento = (await getConfiguredResultTypes(token, precisao.id)).find((r) => r.name === "Agrupamento")!;
+    const configured = await getConfiguredResultTypes(token, precisao.id);
+    const agrupamento = configured.find((r) => r.name === "Agrupamento")!;
+    const pontuacao = configured.find((r) => r.name === "Pontuação")!;
     await registerAnyWeapon(token, "Minha pistola");
 
     const visit = await startVisit(token, location.id);
@@ -157,6 +159,7 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     await registerSeriesResult(token, serieA.id, agrupamento.id, "4.4");
     const serieB = await registerSeries(token, { trainingId: comMetrica.id, shotCount: 15 });
     await registerSeriesResult(token, serieB.id, agrupamento.id, "3.2");
+    await registerSeriesResult(token, serieB.id, pontuacao.id, "92");
     await closeTraining(token, comMetrica.id);
     // Treino sem nenhum resultado
     const semMetrica = await openTraining(token, visit.id, outra.id);
@@ -167,10 +170,12 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     await submitLogin(page, email);
     await expect(page).toHaveURL(/\/dashboard/);
 
-    // Destaque geral e indicadores
-    const destaque = page.getByRole("group", { name: "Destaque" });
-    await expect(destaque).toContainText("Melhor Agrupamento");
-    await expect(destaque).toContainText("3,2");
+    // Recordes: um por tipo com registro, cada um com o melhor valor
+    const records = page.getByRole("region", { name: "Recordes" }).getByRole("listitem");
+    await expect(records).toHaveCount(2);
+    await expect(records.filter({ hasText: "Agrupamento" })).toContainText("3,2");
+    await expect(records.filter({ hasText: "Agrupamento" })).toContainText("cm");
+    await expect(records.filter({ hasText: "Pontuação" })).toContainText("92");
     await expect(page.getByRole("group", { name: "Disparos esse mês" }).getByText("30", { exact: true })).toBeVisible();
 
     // Últimos treinos: um com métrica, outro só com data/local/modalidade

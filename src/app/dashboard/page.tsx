@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IconCircle, IconFocus2 } from "@tabler/icons-react";
 import { AppNav } from "@/components/AppNav";
+import { EvolutionSection } from "@/components/EvolutionSection";
 import { TargetRings } from "@/components/TargetRings";
 import { formatDate, formatDateTime } from "@/lib/datetime";
 import { resultTypeUnit } from "@/lib/resultTypeFormat";
 
-// UC42: melhor valor do tipo de resultado mais registrado — no atleta
-// inteiro, numa modalidade ou num treino, conforme onde aparece.
+// UC42: melhor valor de um tipo de resultado — um recorde do atleta, ou o
+// destaque de uma modalidade ou de um treino, conforme onde aparece.
 type Highlight = {
   resultTypeName: string;
   value: number;
@@ -51,7 +52,8 @@ type Dashboard = {
   totalTrainings: number;
   modalitySummaries: ModalitySummary[];
   weaponCollection: { weaponCount: number; weaponNames: string[] };
-  highlight: Highlight | null;
+  // um por tipo de resultado com registro (ADR-0016); vazio sem nenhum ainda
+  records: Highlight[];
 };
 
 // Ordem de exibição e destino de cada pendência — "Continuar configuração"
@@ -144,11 +146,20 @@ export default function DashboardPage() {
 }
 
 function DashboardContent({ dashboard }: { dashboard: Dashboard }) {
+  const trainingCountByModality = Object.fromEntries(
+    dashboard.modalitySummaries.map((m) => [m.modalityName, m.trainingCount])
+  );
+
   return (
     <div className="space-y-6">
       {dashboard.onboarding && <OnboardingSection pendingSteps={dashboard.onboarding.pendingSteps} />}
+      <EvolutionSection
+        trainingCountByModality={trainingCountByModality}
+        recordTypeNames={dashboard.records.map((r) => r.resultTypeName)}
+      />
       <MainActionSection mainAction={dashboard.mainAction} />
       <IndicatorsSection dashboard={dashboard} />
+      {dashboard.records.length > 0 && <RecordsSection records={dashboard.records} />}
       <RecentTrainingsSection trainings={dashboard.recentTrainings} totalTrainings={dashboard.totalTrainings} />
       <ModalitiesSection summaries={dashboard.modalitySummaries} />
       <WeaponCollectionSection collection={dashboard.weaponCollection} />
@@ -247,22 +258,9 @@ function IndicatorsSection({ dashboard }: { dashboard: Dashboard }) {
     { label: "Treinos esse mês", value: formatNumber(dashboard.trainingsThisMonth) },
     { label: "Disparos esse mês", value: formatNumber(dashboard.shotsThisMonth) },
   ];
-  const { highlight } = dashboard;
-  const unit = highlight ? resultTypeUnit(highlight.resultTypeName) : null;
 
   return (
     <section aria-label="Indicadores" className="pb-6 border-b border-border">
-      {/* destaque só existe com resultado registrado — atleta novo não vê número artificial */}
-      {highlight && (
-        <div role="group" aria-label="Destaque" className="mb-4">
-          <p className="text-foreground-muted text-sm mb-1">Melhor {highlight.resultTypeName}</p>
-          <p className="font-display text-6xl md:text-7xl font-semibold tracking-tight">
-            {formatNumber(highlight.value)}
-            {unit && <span className="text-2xl text-foreground-muted ml-2">{unit.suffix}</span>}
-          </p>
-        </div>
-      )}
-
       <div className="flex flex-wrap gap-x-6 gap-y-4">
         {stats.map((s) => (
           <div key={s.label} role="group" aria-label={s.label}>
@@ -288,6 +286,28 @@ function IndicatorsSection({ dashboard }: { dashboard: Dashboard }) {
           <p className="text-sm text-foreground-muted">Modalidades praticadas</p>
         </div>
       </div>
+    </section>
+  );
+}
+
+function RecordsSection({ records }: { records: Highlight[] }) {
+  return (
+    <section aria-labelledby="records-title">
+      <SectionHeader id="records-title" title="Recordes" />
+      <ul className="flex flex-wrap gap-x-6 gap-y-3">
+        {records.map((r) => {
+          const unit = resultTypeUnit(r.resultTypeName);
+          return (
+            <li key={r.resultTypeName}>
+              <p className="font-display text-2xl font-medium">
+                {formatNumber(r.value)}
+                {unit && <span className="text-sm text-foreground-muted ml-1">{unit.suffix}</span>}
+              </p>
+              <p className="text-sm text-foreground-muted">{r.resultTypeName}</p>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
