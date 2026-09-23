@@ -112,6 +112,17 @@ export async function loginAndGetToken(email: string, password = "senha12345") {
   return data.accessToken as string;
 }
 
+export async function updateProfile(accessToken: string, payload: { name: string; experienceLevel: string }) {
+  const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao editar perfil de teste: ${response.status}`);
+  }
+}
+
 export async function getModalityCatalog(accessToken: string): Promise<Modality[]> {
   const response = await fetch(`${BACKEND_URL}/api/modality-catalog`, {
     headers: { Authorization: `Bearer ${accessToken}` },

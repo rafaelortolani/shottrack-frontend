@@ -1,50 +1,69 @@
-# FUC15 - Dashboard com dados reais e landing condicional
+# FUC15 - Dashboard com dados reais (Onda 1)
 
 ## Objetivo
-Substituir os dados fictícios do dashboard por dados reais, e fazer a
-página inicial depender do contexto (visita em andamento ou não).
+Substituir os dados fictícios do dashboard por dados reais, com a
+hierarquia de conteúdo que mais ajuda o atleta a responder rápido:
+"como estou evoluindo, o que fiz recentemente, o que faço agora".
+
+Onda 2 (gráfico de evolução por período, recordes plurais) fica pra uma
+sessão de design própria, depois — não faz parte deste use case.
 
 ## Referência backend
-UC42 — `GET /api/dashboard` (conferir rota exata no Swagger)
+UC42 — `GET /api/dashboard`
 
 ## Landing condicional (pós-login)
-Depois do login bem-sucedido:
-- **Se o atleta tem visita `EM_ANDAMENTO`** → redireciona pra `/treinos`
-  (aba Visitas), direto na visita ativa, sem passar pelo Dashboard
-- **Se não tem visita em andamento** → redireciona pra `/dashboard`,
-  como já era antes
+Mantido como já definido: visita em andamento → `/treinos`; senão →
+`/dashboard`.
 
-`/dashboard` continua existindo como item de menu próprio, sempre
-acessível a qualquer momento — a mudança é só qual tela aparece
-automaticamente depois de logar.
+## Hierarquia da tela (topo pro fim)
 
-## Tela do Dashboard
-Substitui os dados fictícios (hoje hardcoded no componente) pelos dados
-reais de `GET /api/dashboard`:
-- Destaque dinâmico (UC42) — número grande: melhor valor do tipo de
-  resultado mais registrado pelo atleta ("Melhor <tipo>"); "—" enquanto
-  não houver resultado numérico registrado
-- Treinos esse mês, Disparos esse mês, Modalidades praticadas —
-  estatísticas secundárias
-- Visitas recentes — lista, já existente, agora com dados reais (local,
-  modalidades, data)
+1. **Onboarding** (só se a API retornar pendência) — lista de até 3
+   itens, cada um com check (feito) ou círculo vazio (pendente):
+   "Criar perfil", "Configurar modalidades", "Cadastrar arma". Botão
+   "Continuar configuração" leva pro primeiro item pendente. Some da
+   tela sozinho assim que as 3 estiverem completas.
+
+2. **Ação principal** — card em destaque:
+   - Com visita ativa: "Continuar treino" + local/modalidade, botão leva
+     pra `/treinos`
+   - Sem visita ativa: "Pronto pra treinar?" + botão "Iniciar treino",
+     mesmo destino
+
+3. **Indicadores universais** — os 3 já existentes (treinos/mês,
+   disparos/mês, modalidades praticadas) + o destaque dinâmico geral, no
+   mesmo formato que já está implementado
+
+4. **Últimos treinos** — lista compacta (até 5), cada linha: data, local,
+   modalidade, métrica de destaque daquele treino (se houver). Tocar uma
+   linha leva pro detalhe do treino (dentro da visita correspondente,
+   `/treinos/[visitId]`). Link "Ver todos" no fim, se houver mais de 5.
+
+5. **Modalidades** — resumo compacto: nome, contagem de treinos, melhor
+   valor. Link "Ver modalidades" leva pra `/usuario/modalidades`.
+
+6. **Acervo** — resumo compacto: contagem de armas + até 3 nomes. Link
+   "Gerenciar acervo" leva pra `/acervo`. Fica deliberadamente pequeno —
+   o dashboard não vira tela de gerenciar arma.
 
 ## Estados
+- Atleta sem nenhum dado ainda: onboarding completo (3 pendências),
+  ação principal mostra "Pronto pra treinar?", demais seções tratadas
+  como estado vazio real (ex: "Ainda não há treinos" com o mesmo convite
+  da ação principal, não um card vazio duplicado) — sem gráfico vazio,
+  sem indicador artificial
 - Carregando: enquanto busca `GET /api/dashboard`
-- Atleta sem nenhum dado ainda: números aparecem como "—" ou "0", lista
-  de visitas recentes mostra um estado vazio convidando a iniciar a
-  primeira visita (link pra `/treinos`), em vez de card vazio sem
-  explicação
 
 ## Definição de pronto
-- [ ] Landing condicional funciona (visita ativa → Treinos, senão → Dashboard)
-- [ ] Dashboard exibe destaque e estatísticas reais, vindos da API
-- [ ] Visitas recentes exibidas com dados reais
-- [ ] Estado de atleta sem dados tratado com convite pra ação, não card vazio
-- [ ] Teste E2E (Playwright) cobrindo: login sem visita ativa cai no
-  Dashboard, login com visita ativa cai em Treinos, números do dashboard
-  batem com dados reais criados no teste
+- [ ] Onboarding aparece só com pendência, some quando completo
+- [ ] Ação principal reflete visita ativa ou convite genérico
+- [ ] Últimos treinos exibidos com métrica por treino (ou sem métrica,
+  se o treino não tiver resultado)
+- [ ] Resumo de modalidades e de acervo exibidos corretamente
+- [ ] Estado de atleta novo tratado sem gráfico/indicador vazio
+- [ ] Teste E2E (Playwright) cobrindo: atleta novo vê onboarding completo,
+  completar uma pendência faz ela sumir da lista, ação principal muda ao
+  iniciar uma visita, últimos treinos aparecem depois de registrar um
 
 ## Referências
-- Backend: UC42
-- FUC13 (Visitas — destino da landing condicional)
+- Backend: UC42 (revisado)
+- FUC13 (Visitas — destino da ação principal e dos itens de "últimos treinos")
