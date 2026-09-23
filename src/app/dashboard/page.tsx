@@ -14,20 +14,24 @@ type RecentVisit = {
   modalityNames: string[];
 };
 
+// UC42: destaque dinâmico — melhor valor do tipo de resultado mais
+// registrado pelo atleta; ausente (null) enquanto não houver registro
+// numérico elegível.
+type Highlight = {
+  resultTypeName: string;
+  value: number;
+};
+
 type Dashboard = {
-  averageGroupingLast30Days: number | null;
   trainingsThisMonth: number;
   shotsThisMonth: number;
-  bestGroupingEver: number | null;
+  practicedModalities: string[];
   recentVisits: RecentVisit[];
+  highlight: Highlight | null;
 };
 
 function formatNumber(value: number): string {
   return Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-}
-
-function formatGrouping(value: number | null): string {
-  return value === null ? "—" : `${formatNumber(value)} cm`;
 }
 
 export default function DashboardPage() {
@@ -96,28 +100,25 @@ export default function DashboardPage() {
 function DashboardContent({ dashboard }: { dashboard: Dashboard }) {
   const stats = [
     { label: "Treinos esse mês", value: formatNumber(dashboard.trainingsThisMonth) },
-    { label: "Disparos registrados", value: formatNumber(dashboard.shotsThisMonth) },
-    { label: "Melhor agrupamento", value: formatGrouping(dashboard.bestGroupingEver) },
+    { label: "Disparos esse mês", value: formatNumber(dashboard.shotsThisMonth) },
   ];
-  const average = dashboard.averageGroupingLast30Days;
+  const { highlight } = dashboard;
 
   return (
     <>
       {/* hero: número grande, sem card */}
-      <div role="group" aria-label="Agrupamento médio (últimos 30 dias)" className="mb-6">
+      <div role="group" aria-label="Destaque" className="mb-6">
         <p className="text-foreground-muted text-sm mb-1">
-          Agrupamento médio (últimos 30 dias)
+          {highlight ? `Melhor ${highlight.resultTypeName}` : "Destaque"}
         </p>
         <p className="font-display text-6xl md:text-7xl font-semibold tracking-tight">
-          {average === null ? (
-            "—"
-          ) : (
-            <>
-              {formatNumber(average)}
-              <span className="text-2xl text-foreground-muted ml-2">cm</span>
-            </>
-          )}
+          {highlight ? formatNumber(highlight.value) : "—"}
         </p>
+        {!highlight && (
+          <p className="text-sm text-foreground-muted mt-1">
+            Registre resultados nas suas séries pra ver seu melhor aqui.
+          </p>
+        )}
       </div>
 
       {/* estatísticas secundárias em linha, sem cards */}
@@ -128,6 +129,23 @@ function DashboardContent({ dashboard }: { dashboard: Dashboard }) {
             <p className="text-sm text-foreground-muted">{s.label}</p>
           </div>
         ))}
+        <div role="group" aria-label="Modalidades praticadas">
+          <div className="flex flex-wrap gap-1.5 min-h-8 items-center">
+            {dashboard.practicedModalities.length === 0 ? (
+              <p className="font-display text-2xl font-medium">—</p>
+            ) : (
+              dashboard.practicedModalities.map((modalidade) => (
+                <span
+                  key={modalidade}
+                  className="text-xs rounded-full bg-accent-brass/15 text-accent-brass-soft px-2 py-0.5"
+                >
+                  {modalidade}
+                </span>
+              ))
+            )}
+          </div>
+          <p className="text-sm text-foreground-muted">Modalidades praticadas</p>
+        </div>
       </div>
 
       <h2 className="font-display text-base font-semibold mb-3">

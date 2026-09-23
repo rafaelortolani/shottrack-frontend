@@ -21,9 +21,11 @@ automaticamente depois de logar.
 ## Tela do Dashboard
 Substitui os dados fictícios (hoje hardcoded no componente) pelos dados
 reais de `GET /api/dashboard`:
-- Agrupamento médio (30 dias) — número grande em destaque, já existente
-- Treinos esse mês, Disparos registrados, Melhor agrupamento — cards
-  secundários, já existentes
+- Destaque dinâmico (UC42) — número grande: melhor valor do tipo de
+  resultado mais registrado pelo atleta ("Melhor <tipo>"); "—" enquanto
+  não houver resultado numérico registrado
+- Treinos esse mês, Disparos esse mês, Modalidades praticadas —
+  estatísticas secundárias
 - Visitas recentes — lista, já existente, agora com dados reais (local,
   modalidades, data)
 
@@ -36,7 +38,7 @@ reais de `GET /api/dashboard`:
 
 ## Definição de pronto
 - [ ] Landing condicional funciona (visita ativa → Treinos, senão → Dashboard)
-- [ ] Dashboard exibe os 4 números reais, vindos da API
+- [ ] Dashboard exibe destaque e estatísticas reais, vindos da API
 - [ ] Visitas recentes exibidas com dados reais
 - [ ] Estado de atleta sem dados tratado com convite pra ação, não card vazio
 - [ ] Teste E2E (Playwright) cobrindo: login sem visita ativa cai no
