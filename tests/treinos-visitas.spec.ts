@@ -62,6 +62,10 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     await expect(page.locator("li", { hasText: modality.name })).toHaveCount(1);
     await expect(emptyState).not.toBeVisible();
 
+    // Treino recém-aberto já mostra o estado vazio de série, sem expandir nada
+    await expect(page.getByRole("group", { name: "Nenhuma série registrada ainda" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Registrar série", exact: true })).toBeVisible();
+
     // Com treino aberto, volta o link discreto — abre mais dois, mesma modalidade
     for (const expectedCount of [2, 3]) {
       await page.getByRole("button", { name: "+ Abrir novo treino" }).click();

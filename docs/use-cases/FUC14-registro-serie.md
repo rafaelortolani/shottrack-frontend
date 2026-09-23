@@ -9,7 +9,9 @@ depois" do produto.
 Sem rota própria — vive dentro da tela de Visitas (FUC13). Cada treino
 (na visita ativa, ou num treino de uma visita do histórico) é expansível
 (accordion): ao tocar, mostra a lista compacta de séries já registradas e
-o card de registro rápido de nova série.
+o card de registro rápido de nova série. Na visita ativa, treino em
+andamento já abre expandido — treino recém-aberto mostra direto o estado
+vazio abaixo; treino encerrado e treinos do histórico começam recolhidos.
 
 Treino encerrado continua permitindo **editar** séries existentes
 (completar dados depois é legítimo mesmo após o treino acabar), mas não
