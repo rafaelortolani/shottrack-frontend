@@ -16,6 +16,17 @@ Treino encerrado continua permitindo **editar** séries existentes
 permite **registrar série nova** (mesma regra do UC36 — precisa do treino
 `EM_ANDAMENTO`).
 
+## Estado vazio: treino sem nenhuma série
+Enquanto um treino recém-aberto não tem nenhuma série, em vez de mostrar
+direto o card de registro rápido (que pode passar despercebido pra quem
+não sabe que precisa disso), mostra um bloco de estado vazio primeiro:
+ícone, título "Nenhuma série registrada ainda", texto curto ("cada série
+é um disparo ou sequência de disparos"), e um **botão** "Registrar série"
+em destaque, que revela o card de registro rápido ao ser tocado. Assim
+que existir pelo menos uma série, volta o link discreto "+ Registrar
+série" (a pessoa já entendeu o padrão). Treino encerrado sem série mostra
+só o texto, sem botão — não aceita série nova.
+
 ## Referência backend
 - UC36 (registrar série) — `POST /api/trainings/{trainingId}/series`
 - UC37 (listar séries) — `GET /api/trainings/{trainingId}/series`
@@ -52,8 +63,9 @@ Linha compacta por série: número/ordem, resumo dos resultados preenchidos
 houver. Tocar abre o card de edição, pré-preenchido.
 
 ## Excluir série
-Ação disponível em qualquer série (editar → excluir), sem bloqueio
-(ADR-0013) — confirmação simples, sem aviso de "em uso".
+Ação disponível em qualquer série, inclusive de treino encerrado, sem
+bloqueio (ADR-0013) — direto na linha da lista ("Excluir") ou pelo card
+de edição ("Excluir série"). Confirmação simples, sem aviso de "em uso".
 
 ## Estados
 - Nenhuma modalidade com tipos de resultado configurados → registro
