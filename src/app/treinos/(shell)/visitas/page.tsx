@@ -6,6 +6,7 @@ import Link from "next/link";
 import { IconTarget } from "@tabler/icons-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { AddButton } from "@/components/AddButton";
 import { EmptyState } from "@/components/EmptyState";
 import { deleteTrainingMessage, deleteVisitMessage } from "@/lib/deleteConfirmation";
 import { SeriesAccordion } from "@/components/SeriesAccordion";
@@ -525,13 +526,9 @@ function ActiveVisitCard({
           />
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={onToggleOpenTraining}
-          className="block text-sm text-accent-brass-soft hover:text-accent-brass transition-colors mb-3"
-        >
-          + Abrir novo treino
-        </button>
+        <div className="mb-3">
+          <AddButton onClick={onToggleOpenTraining}>Abrir novo treino</AddButton>
+        </div>
       )}
 
       <div className="pt-3 border-t border-border flex items-center gap-3">

@@ -25,8 +25,8 @@ não sabe que precisa disso), mostra um bloco de estado vazio primeiro:
 ícone, título "Nenhuma série registrada ainda", texto curto ("cada série
 é um disparo ou sequência de disparos"), e um **botão** "Registrar série"
 em destaque, que revela o card de registro rápido ao ser tocado. Assim
-que existir pelo menos uma série, volta o link discreto "+ Registrar
-série" (a pessoa já entendeu o padrão). Treino encerrado sem série mostra
+que existir pelo menos uma série, entra o botão secundário (contorno,
+ícone +) "Registrar nova série" (a pessoa já entendeu o padrão). Treino encerrado sem série mostra
 só o texto, sem botão — não aceita série nova.
 
 ## Referência backend

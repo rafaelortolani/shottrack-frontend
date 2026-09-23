@@ -67,11 +67,11 @@ test.describe("Registro rápido de série (FUC14)", () => {
     // Treino em andamento na visita ativa já abre com as séries expandidas
     await expect(page.getByRole("button", { name: "Séries" })).toHaveAttribute("aria-expanded", "true");
 
-    // Treino sem série: estado vazio com CTA em destaque, sem o link discreto
+    // Treino sem série: estado vazio com CTA em destaque, sem o botão secundário
     const emptyState = page.getByRole("group", { name: "Nenhuma série registrada ainda" });
     await expect(emptyState).toBeVisible();
     await expect(emptyState.getByText("Cada série é um disparo ou sequência de disparos.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "+ Registrar série" })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Registrar nova série" })).not.toBeVisible();
 
     // Registra uma série totalmente vazia pelo CTA
     await emptyState.getByRole("button", { name: "Registrar série", exact: true }).click();
@@ -80,9 +80,9 @@ test.describe("Registro rápido de série (FUC14)", () => {
     await expect(page.getByRole("button", { name: /^Série 1/ })).toBeVisible();
     await expect(page.getByText("Sem dados ainda")).toBeVisible();
 
-    // Com série registrada, volta o link discreto no lugar do estado vazio
+    // Com série registrada, o botão "Registrar nova série" entra no lugar do estado vazio
     await expect(emptyState).not.toBeVisible();
-    await expect(page.getByRole("button", { name: "+ Registrar série" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Registrar nova série" })).toBeVisible();
 
     // Completa depois: arma + um resultado
     await page.getByRole("button", { name: /^Série 1/ }).click();
@@ -151,7 +151,7 @@ test.describe("Registro rápido de série (FUC14)", () => {
 
     await page.getByRole("button", { name: "Séries" }).click();
     await expect(page.getByRole("button", { name: /^Série 1/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Registrar série/ })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: /Registrar/ })).not.toBeVisible();
 
     await page.getByRole("button", { name: /^Série 1/ }).click();
     await page.getByLabel("Quantidade de disparos").fill("3");
