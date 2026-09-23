@@ -3,6 +3,7 @@ import {
   createUser,
   randomEmail,
   loginAndGetToken,
+  updateProfile,
   getModalityCatalog,
   addPracticedModality,
   getConfiguredResultTypes,
@@ -13,6 +14,9 @@ import {
   closeTraining,
   registerSeries,
   registerSeriesResult,
+  getWeaponCatalog,
+  getWeaponModels,
+  registerWeapon,
 } from "./helpers";
 
 async function submitLogin(page: Page, email: string, password = "senha12345") {
@@ -22,79 +26,204 @@ async function submitLogin(page: Page, email: string, password = "senha12345") {
   await page.getByRole("button", { name: "Entrar" }).click();
 }
 
-test.describe("Dashboard com dados reais e landing condicional (FUC15)", () => {
-  test("login sem visita ativa cai no Dashboard, com convite pra primeira visita", async ({ page }) => {
+async function registerAnyWeapon(token: string, nickname?: string) {
+  const catalog = await getWeaponCatalog(token);
+  const brand = catalog.brands[0];
+  const [model] = await getWeaponModels(token, brand.id);
+  await registerWeapon(token, {
+    typeId: catalog.types[0].id,
+    brandId: brand.id,
+    modelId: model.id,
+    caliberId: catalog.calibers[0].id,
+    ...(nickname ? { nickname } : {}),
+  });
+}
+
+function onboardingItem(page: Page, label: string) {
+  return page.getByRole("region", { name: "Configuração inicial" }).getByRole("listitem").filter({ hasText: label });
+}
+
+test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
+  test("atleta novo vê onboarding completo, convite pra treinar e seções vazias sem indicador artificial", async ({
+    page,
+  }) => {
     const email = randomEmail();
     await createUser(email);
 
     await submitLogin(page, email);
     await expect(page).toHaveURL(/\/dashboard/);
 
-    await expect(page.getByRole("group", { name: "Destaque" }).getByText("—", { exact: true })).toBeVisible();
+    const onboarding = page.getByRole("region", { name: "Configuração inicial" });
+    await expect(onboarding).toBeVisible();
+    await expect(onboarding.getByText("0 de 3")).toBeVisible();
+    for (const label of ["Criar perfil", "Configurar modalidades", "Cadastrar arma"]) {
+      await expect(onboardingItem(page, label)).toContainText("(pendente)");
+    }
+
+    const mainAction = page.getByRole("region", { name: "Ação principal" });
+    await expect(mainAction.getByText("Pronto pra treinar?")).toBeVisible();
+
+    // Sem resultado registrado, nada de número grande "vazio"
+    await expect(page.getByRole("group", { name: "Destaque" })).toHaveCount(0);
     await expect(page.getByRole("group", { name: "Treinos esse mês" }).getByText("0", { exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Disparos esse mês" }).getByText("0", { exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Modalidades praticadas" }).getByText("—", { exact: true })).toBeVisible();
     await expect(page.getByText("NaN")).toHaveCount(0);
 
-    await page.getByRole("link", { name: "Iniciar primeira visita" }).click();
-    await expect(page).toHaveURL(/\/treinos\/visitas/);
+    await expect(page.getByRole("region", { name: "Últimos treinos" }).getByText(/Ainda não há treinos/)).toBeVisible();
+    await expect(page.getByRole("region", { name: "Modalidades" }).getByText(/Nenhum treino registrado/)).toBeVisible();
+    await expect(page.getByRole("region", { name: "Acervo" }).getByText("Nenhuma arma cadastrada ainda.")).toBeVisible();
+
+    // "Continuar configuração" leva pra primeira pendência
+    await onboarding.getByRole("link", { name: "Continuar configuração" }).click();
+    await expect(page).toHaveURL(/\/usuario\/perfil/);
   });
 
-  test("login com visita ativa cai em Treinos > Visitas", async ({ page }) => {
+  test("completar pendências marca cada uma como concluída e o onboarding some quando completo", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     const token = await loginAndGetToken(email);
-    const location = await registerTrainingLocation(token, {
-      name: "Estande Sul",
-      city: "Porto Alegre",
-      state: "RS",
-    });
-    await startVisit(token, location.id);
 
     await submitLogin(page, email);
-    await expect(page).toHaveURL(/\/treinos\/visitas/);
+    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(onboardingItem(page, "Configurar modalidades")).toContainText("(pendente)");
 
-    // Dashboard continua acessível pelo menu a qualquer momento
-    await page.goto("/dashboard");
-    await expect(page.getByRole("heading", { name: "Sua evolução" })).toBeVisible();
+    const [modality] = await getModalityCatalog(token);
+    await addPracticedModality(token, modality.id);
+    await page.reload();
+
+    await expect(onboardingItem(page, "Configurar modalidades")).toContainText("(concluído)");
+    await expect(page.getByRole("region", { name: "Configuração inicial" }).getByText("1 de 3")).toBeVisible();
+
+    // Perfil ainda pendente → continua sendo o primeiro destino
+    await expect(page.getByRole("link", { name: "Continuar configuração" })).toHaveAttribute("href", "/usuario/perfil");
+
+    await updateProfile(token, { name: "Atleta Teste", experienceLevel: "INTERMEDIATE" });
+    await page.reload();
+    await expect(page.getByRole("link", { name: "Continuar configuração" })).toHaveAttribute("href", "/acervo/armas/nova");
+
+    await registerAnyWeapon(token);
+    await page.reload();
+
+    await expect(page.getByRole("region", { name: "Ação principal" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Configuração inicial" })).toHaveCount(0);
   });
 
-  test("números do dashboard batem com os dados registrados", async ({ page }) => {
+  test("ação principal muda pra 'Continuar treino' ao iniciar uma visita", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const location = await registerTrainingLocation(token, { name: "Estande Sul", city: "Porto Alegre", state: "RS" });
+    const [modality] = await getModalityCatalog(token);
+    await addPracticedModality(token, modality.id);
+
+    await submitLogin(page, email);
+    await expect(page).toHaveURL(/\/dashboard/);
+    const mainAction = page.getByRole("region", { name: "Ação principal" });
+    await expect(mainAction.getByText("Pronto pra treinar?")).toBeVisible();
+
+    const visit = await startVisit(token, location.id);
+    await openTraining(token, visit.id, modality.id);
+    await page.reload();
+
+    await expect(mainAction.getByText("Visita em andamento")).toBeVisible();
+    await expect(mainAction.getByText(location.name)).toBeVisible();
+    await expect(mainAction.getByText(modality.name)).toBeVisible();
+    await expect(mainAction.getByText("Pronto pra treinar?")).toHaveCount(0);
+
+    await mainAction.getByRole("link", { name: "Continuar treino" }).click();
+    await expect(page).toHaveURL(/\/treinos\/visitas/);
+  });
+
+  test("últimos treinos com e sem métrica, resumo de modalidades e de acervo", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     const token = await loginAndGetToken(email);
 
-    const location = await registerTrainingLocation(token, {
-      name: "Clube de Tiro Alvorada",
-      city: "Curitiba",
-      state: "PR",
-    });
-    const precisao = (await getModalityCatalog(token)).find((m) => m.name === "Precisão")!;
+    const location = await registerTrainingLocation(token, { name: "Clube de Tiro Alvorada", city: "Curitiba", state: "PR" });
+    const catalog = await getModalityCatalog(token);
+    const precisao = catalog.find((m) => m.name === "Precisão")!;
+    const outra = catalog.find((m) => m.name !== "Precisão")!;
     await addPracticedModality(token, precisao.id);
+    await addPracticedModality(token, outra.id);
     const agrupamento = (await getConfiguredResultTypes(token, precisao.id)).find((r) => r.name === "Agrupamento")!;
+    await registerAnyWeapon(token, "Minha pistola");
 
     const visit = await startVisit(token, location.id);
-    const training = await openTraining(token, visit.id, precisao.id);
-    const serieA = await registerSeries(token, { trainingId: training.id, shotCount: 10 });
-    await registerSeriesResult(token, serieA.id, agrupamento.id, "3.2");
-    const serieB = await registerSeries(token, { trainingId: training.id, shotCount: 15 });
-    await registerSeriesResult(token, serieB.id, agrupamento.id, "4.4");
-    await closeTraining(token, training.id);
+    // Treino com resultado: melhor agrupamento = menor = 3,2 cm
+    const comMetrica = await openTraining(token, visit.id, precisao.id);
+    const serieA = await registerSeries(token, { trainingId: comMetrica.id, shotCount: 10 });
+    await registerSeriesResult(token, serieA.id, agrupamento.id, "4.4");
+    const serieB = await registerSeries(token, { trainingId: comMetrica.id, shotCount: 15 });
+    await registerSeriesResult(token, serieB.id, agrupamento.id, "3.2");
+    await closeTraining(token, comMetrica.id);
+    // Treino sem nenhum resultado
+    const semMetrica = await openTraining(token, visit.id, outra.id);
+    await registerSeries(token, { trainingId: semMetrica.id, shotCount: 5 });
+    await closeTraining(token, semMetrica.id);
     await closeVisit(token, visit.id);
 
     await submitLogin(page, email);
     await expect(page).toHaveURL(/\/dashboard/);
 
-    // destaque = Agrupamento (único tipo registrado), melhor = menor = 3,2; disparos 10 + 15 = 25
+    // Destaque geral e indicadores
     const destaque = page.getByRole("group", { name: "Destaque" });
     await expect(destaque).toContainText("Melhor Agrupamento");
-    await expect(destaque.getByText("3,2", { exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Treinos esse mês" }).getByText("1", { exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Disparos esse mês" }).getByText("25", { exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Modalidades praticadas" }).getByText("Precisão", { exact: true })).toBeVisible();
+    await expect(destaque).toContainText("3,2");
+    await expect(page.getByRole("group", { name: "Disparos esse mês" }).getByText("30", { exact: true })).toBeVisible();
 
-    const recentVisit = page.getByRole("link", { name: /Clube de Tiro Alvorada/ });
-    await expect(recentVisit).toContainText("Precisão");
-    await expect(page.getByRole("link", { name: "Iniciar primeira visita" })).not.toBeVisible();
+    // Últimos treinos: um com métrica, outro só com data/local/modalidade
+    const recent = page.getByRole("region", { name: "Últimos treinos" });
+    const rowComMetrica = recent.getByRole("link", { name: new RegExp(precisao.name) });
+    await expect(rowComMetrica).toContainText("Agrupamento: 3,2 cm");
+    await expect(rowComMetrica).toContainText(location.name);
+    const rowSemMetrica = recent.getByRole("link", { name: new RegExp(outra.name) });
+    await expect(rowSemMetrica).toContainText(location.name);
+    await expect(rowSemMetrica).not.toContainText(":");
+    await expect(recent.getByRole("link", { name: "Ver todos" })).toHaveCount(0);
+
+    // Resumo de modalidades: contagem e melhor valor por modalidade
+    const modalities = page.getByRole("region", { name: "Modalidades" });
+    const precisaoRow = modalities.getByRole("listitem").filter({ hasText: precisao.name });
+    await expect(precisaoRow).toContainText("1 treino");
+    await expect(precisaoRow).toContainText("Melhor Agrupamento: 3,2 cm");
+    await expect(modalities.getByRole("listitem").filter({ hasText: outra.name })).not.toContainText("Melhor");
+    await expect(modalities.getByRole("link", { name: "Ver modalidades" })).toHaveAttribute("href", "/usuario/modalidades");
+
+    // Resumo de acervo
+    const acervo = page.getByRole("region", { name: "Acervo" });
+    await expect(acervo.getByText("1 arma", { exact: true })).toBeVisible();
+    await expect(acervo.getByText("Minha pistola")).toBeVisible();
+    await expect(acervo.getByRole("link", { name: "Gerenciar acervo" })).toHaveAttribute("href", "/acervo");
+
+    // Linha do treino leva pro detalhe da visita
+    await rowComMetrica.click();
+    await expect(page).toHaveURL(new RegExp(`/treinos/${visit.id}`));
+  });
+
+  test("login com visita ativa cai em Treinos > Visitas, e o Dashboard segue acessível", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const location = await registerTrainingLocation(token, { name: "Estande Sul", city: "Porto Alegre", state: "RS" });
+    await startVisit(token, location.id);
+
+    await submitLogin(page, email);
+    await expect(page).toHaveURL(/\/treinos\/visitas/);
+
+    await page.goto("/dashboard");
+    await expect(page.getByRole("heading", { name: "Sua evolução" })).toBeVisible();
+  });
+
+  test("sessão inválida no carregamento manda pro login", async ({ page, context }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    await submitLogin(page, email);
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    // Cookie presente (o proxy deixa passar) mas token inválido: o backend
+    // responde 401 e a tela precisa tratar como sessão expirada.
+    await context.addCookies([{ name: "shottrack_access", value: "token-invalido", url: "http://localhost:3000" }]);
+    await page.reload();
+    await expect(page).toHaveURL(/\/login/);
   });
 });
