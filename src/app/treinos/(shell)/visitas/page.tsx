@@ -467,6 +467,7 @@ function ActiveVisitCard({
                 trainingId={training.id}
                 trainingOpen={training.status === "IN_PROGRESS"}
                 modalityId={training.modalityId}
+                defaultExpanded={training.status === "IN_PROGRESS"}
               />
             </li>
           ))}

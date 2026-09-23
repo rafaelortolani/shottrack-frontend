@@ -64,7 +64,8 @@ test.describe("Registro rápido de série (FUC14)", () => {
     await login(page, email);
     await page.goto("/treinos/visitas");
 
-    await page.getByRole("button", { name: "Séries" }).click();
+    // Treino em andamento na visita ativa já abre com as séries expandidas
+    await expect(page.getByRole("button", { name: "Séries" })).toHaveAttribute("aria-expanded", "true");
 
     // Treino sem série: estado vazio com CTA em destaque, sem o link discreto
     const emptyState = page.getByRole("group", { name: "Nenhuma série registrada ainda" });
@@ -185,7 +186,8 @@ test.describe("Registro rápido de série (FUC14)", () => {
     await login(page, email);
     await page.goto("/treinos/visitas");
 
-    await page.getByRole("button", { name: "Séries" }).click();
+    // Treino em andamento na visita ativa já abre com as séries expandidas
+    await expect(page.getByRole("button", { name: "Séries" })).toHaveAttribute("aria-expanded", "true");
     await page.getByRole("button", { name: "Registrar série", exact: true }).click();
 
     await page.getByLabel("Quantidade de disparos").fill("50");

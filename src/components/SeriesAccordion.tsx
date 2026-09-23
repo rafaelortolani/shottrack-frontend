@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconChevronDown, IconListNumbers } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -120,19 +120,27 @@ function buildRegisterPayload(values: SeriesFormValues) {
   };
 }
 
+/**
+ * `defaultExpanded`: já abre expandido (e carrega) — usado nos treinos em
+ * andamento da visita ativa, pra que treino recém-aberto mostre de cara o
+ * estado vazio com "Registrar série" (FUC14), sem depender de achar o
+ * "Séries" recolhido.
+ */
 export function SeriesAccordion({
   trainingId,
   trainingOpen,
   modalityId,
+  defaultExpanded = false,
 }: {
   trainingId: string;
   trainingOpen: boolean;
   modalityId: string;
+  defaultExpanded?: boolean;
 }) {
   const router = useRouter();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [loaded, setLoaded] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(defaultExpanded);
   const [listError, setListError] = useState<string | null>(null);
   const [series, setSeries] = useState<Series[]>([]);
   const [resultTypes, setResultTypes] = useState<ResultType[]>([]);
@@ -147,12 +155,13 @@ export function SeriesAccordion({
 
   const weaponsById = new Map(weapons.map((w) => [w.id, w]));
 
-  async function toggleExpanded() {
+  function toggleExpanded() {
     const next = !expanded;
     setExpanded(next);
+    if (next && !loaded) loadSeries();
+  }
 
-    if (!next || loaded) return;
-
+  async function loadSeries() {
     setLoading(true);
 
     const [seriesRes, resultTypesRes, weaponsRes, ammunitionsRes] = await Promise.all([
@@ -187,6 +196,12 @@ export function SeriesAccordion({
     setLoading(false);
     setLoaded(true);
   }
+
+  useEffect(() => {
+    if (defaultExpanded) loadSeries();
+    // só no primeiro render: depois disso, quem carrega é o toggleExpanded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSaveSeries(values: SeriesFormValues, editingSeries: Series | null) {
     setSaveError(null);
