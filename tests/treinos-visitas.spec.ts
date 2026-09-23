@@ -50,10 +50,10 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     await expect(page.getByText("Visita em andamento", { exact: true })).toBeVisible();
     await expect(page.getByText(location.name)).toBeVisible();
 
-    // Visita sem treino: estado vazio com CTA em destaque, sem o link discreto
+    // Visita sem treino: estado vazio com CTA em destaque, sem o botão secundário
     const emptyState = page.getByRole("group", { name: "Nenhum treino aberto ainda" });
     await expect(emptyState).toBeVisible();
-    await expect(page.getByRole("button", { name: "+ Abrir novo treino" })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Abrir novo treino" })).not.toBeVisible();
 
     // Abre o primeiro treino pelo CTA do estado vazio
     await emptyState.getByRole("button", { name: "Abrir treino" }).click();
@@ -66,9 +66,9 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     await expect(page.getByRole("group", { name: "Nenhuma série registrada ainda" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Registrar série", exact: true })).toBeVisible();
 
-    // Com treino aberto, volta o link discreto — abre mais dois, mesma modalidade
+    // Com treino aberto, aparece o botão "Abrir novo treino" — abre mais dois, mesma modalidade
     for (const expectedCount of [2, 3]) {
-      await page.getByRole("button", { name: "+ Abrir novo treino" }).click();
+      await page.getByRole("button", { name: "Abrir novo treino" }).click();
       await page.getByLabel("Modalidade").selectOption({ label: modality.name });
       await page.getByRole("button", { name: "Abrir", exact: true }).click();
       await expect(page.locator("li", { hasText: modality.name })).toHaveCount(expectedCount);

@@ -41,12 +41,13 @@ Visitas"), `/treinos/locais` (breadcrumb "Treinos / Locais", era
   modalidades praticadas naquela visita (resumo), com busca por local
 
 ## Estado vazio: visita sem nenhum treino aberto
-Enquanto a visita ativa não tem nenhum treino, em vez do link discreto
-"+ Abrir novo treino", mostra um bloco de estado vazio (borda tracejada,
+Enquanto a visita ativa não tem nenhum treino, em vez do botão
+secundário "Abrir novo treino", mostra um bloco de estado vazio (borda tracejada,
 componente `EmptyState`, o mesmo do treino sem série no FUC14): ícone,
 título "Nenhum treino aberto ainda", texto curto explicando, e um
-**botão** (não link) "Abrir treino" em destaque. Assim que existir pelo menos um treino, o
-link discreto passa a ser suficiente (a pessoa já entendeu o padrão).
+**botão** (não link) "Abrir treino" em destaque. Assim que existir pelo
+menos um treino, o botão secundário (contorno, ícone +) "Abrir novo
+treino" passa a ser suficiente (a pessoa já entendeu o padrão).
 
 ## Excluir treino e excluir visita
 - Cada treino ganha uma ação "Excluir" (além de "Encerrar", quando em

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconChevronDown, IconListNumbers } from "@tabler/icons-react";
+import { AddButton } from "@/components/AddButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { resultTypeKind, resultTypeUnit } from "@/lib/resultTypeFormat";
@@ -430,13 +431,7 @@ export function SeriesAccordion({
               )}
 
               {formMode === "closed" && trainingOpen && series.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setFormMode("new")}
-                  className="text-sm text-accent-brass-soft hover:text-accent-brass transition-colors"
-                >
-                  + Registrar série
-                </button>
+                <AddButton onClick={() => setFormMode("new")}>Registrar nova série</AddButton>
               )}
 
               {formMode !== "closed" && (
