@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SeriesAccordion } from "@/components/SeriesAccordion";
 import { TargetRings } from "@/components/TargetRings";
 import { formatDateTime } from "@/lib/datetime";
+import { deleteTrainingMessage, deleteVisitMessage } from "@/lib/deleteConfirmation";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string };
 type TrainingStatus = "IN_PROGRESS" | "CLOSED";
@@ -37,6 +39,10 @@ export default function DetalheVisitaPage() {
   const [visit, setVisit] = useState<Visit | null>(null);
   const [location, setLocation] = useState<TrainingLocation | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingDeleteTraining, setConfirmingDeleteTraining] = useState<Training | null>(null);
+  const [deletingTraining, setDeletingTraining] = useState(false);
+  const [confirmingDeleteVisit, setConfirmingDeleteVisit] = useState(false);
+  const [deletingVisit, setDeletingVisit] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +90,53 @@ export default function DetalheVisitaPage() {
       cancelled = true;
     };
   }, [router, visitId]);
+
+  async function handleDeleteTraining() {
+    if (!confirmingDeleteTraining) return;
+    const trainingId = confirmingDeleteTraining.id;
+    setError(null);
+    setDeletingTraining(true);
+
+    const response = await fetch(`/api/trainings/${trainingId}`, { method: "DELETE" });
+
+    setDeletingTraining(false);
+    setConfirmingDeleteTraining(null);
+
+    if (response.status === 401) {
+      router.push("/login");
+      return;
+    }
+
+    if (!response.ok) {
+      const { error } = await response.json();
+      setError(error?.message ?? "Não foi possível excluir o treino");
+      return;
+    }
+
+    setVisit((prev) => prev && { ...prev, trainings: prev.trainings.filter((t) => t.id !== trainingId) });
+  }
+
+  async function handleDeleteVisit() {
+    setError(null);
+    setDeletingVisit(true);
+
+    const response = await fetch(`/api/visits/${visitId}`, { method: "DELETE" });
+
+    if (response.status === 401) {
+      router.push("/login");
+      return;
+    }
+
+    if (!response.ok) {
+      setDeletingVisit(false);
+      setConfirmingDeleteVisit(false);
+      const { error } = await response.json();
+      setError(error?.message ?? "Não foi possível excluir a visita");
+      return;
+    }
+
+    router.push("/treinos/visitas");
+  }
 
   if (loading) {
     return (
@@ -157,15 +210,24 @@ export default function DetalheVisitaPage() {
               <li key={training.id} className="py-2 border-b border-border last:border-0">
                 <div className="flex items-center justify-between">
                   <p className="text-foreground">{training.modalityName}</p>
-                  <span
-                    className={
-                      training.status === "IN_PROGRESS"
-                        ? "text-sm text-accent-brass-soft"
-                        : "text-sm text-foreground-muted"
-                    }
-                  >
-                    {training.status === "IN_PROGRESS" ? "Em andamento" : "Encerrado"}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={
+                        training.status === "IN_PROGRESS"
+                          ? "text-sm text-accent-brass-soft"
+                          : "text-sm text-foreground-muted"
+                      }
+                    >
+                      {training.status === "IN_PROGRESS" ? "Em andamento" : "Encerrado"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingDeleteTraining(training)}
+                      className="text-sm text-foreground-muted hover:text-accent-target transition-colors"
+                    >
+                      Excluir
+                    </button>
+                  </div>
                 </div>
                 <SeriesAccordion
                   trainingId={training.id}
@@ -176,7 +238,43 @@ export default function DetalheVisitaPage() {
             ))}
           </ul>
         )}
+
+        <div className="mt-4 pt-3 border-t border-border">
+          <button
+            type="button"
+            onClick={() => setConfirmingDeleteVisit(true)}
+            className="text-sm text-foreground-muted hover:text-accent-target transition-colors"
+          >
+            Excluir visita
+          </button>
+        </div>
       </div>
+
+      {confirmingDeleteTraining && (
+        <ConfirmDialog
+          id="confirm-delete-training"
+          title="Excluir treino"
+          busy={deletingTraining}
+          busyLabel="Excluindo..."
+          onCancel={() => setConfirmingDeleteTraining(null)}
+          onConfirm={handleDeleteTraining}
+        >
+          {deleteTrainingMessage(confirmingDeleteTraining.modalityName)}
+        </ConfirmDialog>
+      )}
+
+      {confirmingDeleteVisit && (
+        <ConfirmDialog
+          id="confirm-delete-visit"
+          title="Excluir visita"
+          busy={deletingVisit}
+          busyLabel="Excluindo..."
+          onCancel={() => setConfirmingDeleteVisit(false)}
+          onConfirm={handleDeleteVisit}
+        >
+          {deleteVisitMessage(visit.trainings.length)}
+        </ConfirmDialog>
+      )}
     </div>
   );
 }

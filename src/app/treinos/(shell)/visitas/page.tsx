@@ -7,6 +7,7 @@ import { IconTarget } from "@tabler/icons-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { deleteTrainingMessage, deleteVisitMessage } from "@/lib/deleteConfirmation";
 import { SeriesAccordion } from "@/components/SeriesAccordion";
 import { formatDate, formatDateTime } from "@/lib/datetime";
 
@@ -365,8 +366,7 @@ export default function VisitasTabPage() {
           onCancel={() => setConfirmingDeleteTraining(null)}
           onConfirm={handleDeleteTraining}
         >
-          O treino de {confirmingDeleteTraining.modalityName} e todas as séries dele serão excluídos. Essa ação não
-          pode ser desfeita. Confirmar?
+          {deleteTrainingMessage(confirmingDeleteTraining.modalityName)}
         </ConfirmDialog>
       )}
 
@@ -379,7 +379,7 @@ export default function VisitasTabPage() {
           onCancel={() => setConfirmingDeleteVisit(false)}
           onConfirm={handleDeleteVisit}
         >
-          {deleteVisitMessage(activeVisit.trainings.length)} Essa ação não pode ser desfeita. Confirmar?
+          {deleteVisitMessage(activeVisit.trainings.length)}
         </ConfirmDialog>
       )}
     </div>
@@ -552,12 +552,6 @@ function ActiveVisitCard({
       </div>
     </div>
   );
-}
-
-function deleteVisitMessage(trainingCount: number): string {
-  if (trainingCount === 0) return "A visita será excluída.";
-  const trainings = trainingCount === 1 ? "o treino" : `os ${trainingCount} treinos`;
-  return `A visita, ${trainings} dela e todas as séries serão excluídos.`;
 }
 
 function ConfirmCloseVisitModal({
