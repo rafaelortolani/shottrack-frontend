@@ -55,9 +55,9 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
 
     const onboarding = page.getByRole("region", { name: "Configuração inicial" });
     await expect(onboarding).toBeVisible();
-    await expect(onboarding.getByText("0 de 3")).toBeVisible();
+    await expect(onboarding.getByText("0 de 3 concluídos")).toBeVisible();
     for (const label of ["Criar perfil", "Configurar modalidades", "Cadastrar arma"]) {
-      await expect(onboardingItem(page, label)).toContainText("(pendente)");
+      await expect(onboardingItem(page, label)).toBeVisible();
     }
 
     const mainAction = page.getByRole("region", { name: "Ação principal" });
@@ -77,27 +77,30 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     await expect(page).toHaveURL(/\/usuario\/perfil/);
   });
 
-  test("completar pendências marca cada uma como concluída e o onboarding some quando completo", async ({ page }) => {
+  test("completar uma pendência tira ela da lista, e o onboarding some quando completo", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     const token = await loginAndGetToken(email);
 
     await submitLogin(page, email);
     await expect(page).toHaveURL(/\/dashboard/);
-    await expect(onboardingItem(page, "Configurar modalidades")).toContainText("(pendente)");
+    await expect(onboardingItem(page, "Configurar modalidades")).toBeVisible();
 
     const [modality] = await getModalityCatalog(token);
     await addPracticedModality(token, modality.id);
     await page.reload();
 
-    await expect(onboardingItem(page, "Configurar modalidades")).toContainText("(concluído)");
-    await expect(page.getByRole("region", { name: "Configuração inicial" }).getByText("1 de 3")).toBeVisible();
+    await expect(onboardingItem(page, "Configurar modalidades")).toHaveCount(0);
+    await expect(onboardingItem(page, "Criar perfil")).toBeVisible();
+    await expect(onboardingItem(page, "Cadastrar arma")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Configuração inicial" }).getByText("1 de 3 concluídos")).toBeVisible();
 
     // Perfil ainda pendente → continua sendo o primeiro destino
     await expect(page.getByRole("link", { name: "Continuar configuração" })).toHaveAttribute("href", "/usuario/perfil");
 
     await updateProfile(token, { name: "Atleta Teste", experienceLevel: "INTERMEDIATE" });
     await page.reload();
+    await expect(onboardingItem(page, "Criar perfil")).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Continuar configuração" })).toHaveAttribute("href", "/acervo/armas/nova");
 
     await registerAnyWeapon(token);

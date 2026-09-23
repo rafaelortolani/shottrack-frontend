@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IconCircle, IconCircleCheck, IconFocus2 } from "@tabler/icons-react";
+import { IconCircle, IconFocus2 } from "@tabler/icons-react";
 import { AppNav } from "@/components/AppNav";
 import { TargetRings } from "@/components/TargetRings";
 import { formatDate, formatDateTime } from "@/lib/datetime";
@@ -172,8 +172,9 @@ function SectionHeader({ id, title, link }: { id: string; title: string; link?: 
 }
 
 function OnboardingSection({ pendingSteps }: { pendingSteps: OnboardingStep[] }) {
-  const firstPending = ONBOARDING_STEPS.find((s) => pendingSteps.includes(s.step));
-  const doneCount = ONBOARDING_STEPS.length - pendingSteps.length;
+  // só as pendentes aparecem — item concluído sai da lista, o progresso fica no contador
+  const pending = ONBOARDING_STEPS.filter((s) => pendingSteps.includes(s.step));
+  const doneCount = ONBOARDING_STEPS.length - pending.length;
 
   return (
     <section aria-labelledby="onboarding-title" className="rounded-md bg-surface p-4">
@@ -182,30 +183,20 @@ function OnboardingSection({ pendingSteps }: { pendingSteps: OnboardingStep[] })
           Configuração inicial
         </h2>
         <span className="text-sm text-foreground-muted">
-          {doneCount} de {ONBOARDING_STEPS.length}
+          {doneCount} de {ONBOARDING_STEPS.length} concluídos
         </span>
       </div>
       <ul className="space-y-1.5 mb-3">
-        {ONBOARDING_STEPS.map(({ step, label }) => {
-          const done = !pendingSteps.includes(step);
-          return (
-            <li key={step} className="flex items-center gap-2 text-sm">
-              {done ? (
-                <IconCircleCheck size={18} stroke={1.75} className="text-accent-brass-soft shrink-0" aria-hidden />
-              ) : (
-                <IconCircle size={18} stroke={1.75} className="text-foreground-muted shrink-0" aria-hidden />
-              )}
-              <span className={done ? "text-foreground-muted line-through" : "text-foreground"}>{label}</span>
-              <span className="sr-only">{done ? "(concluído)" : "(pendente)"}</span>
-            </li>
-          );
-        })}
+        {pending.map(({ step, label }) => (
+          <li key={step} className="flex items-center gap-2 text-sm">
+            <IconCircle size={18} stroke={1.75} className="text-foreground-muted shrink-0" aria-hidden />
+            <span className="text-foreground">{label}</span>
+          </li>
+        ))}
       </ul>
-      {firstPending && (
-        <Link href={firstPending.href} className={SECONDARY_LINK_CLASS}>
-          Continuar configuração
-        </Link>
-      )}
+      <Link href={pending[0].href} className={SECONDARY_LINK_CLASS}>
+        Continuar configuração
+      </Link>
     </section>
   );
 }

@@ -18,7 +18,8 @@ Mantido como já definido: visita em andamento → `/treinos`; senão →
 ## Hierarquia da tela (topo pro fim)
 
 1. **Onboarding** (só se a API retornar pendência) — lista de até 3
-   itens, cada um com check (feito) ou círculo vazio (pendente):
+   itens, só os pendentes (item concluído sai da lista; o progresso
+   fica num contador "N de 3 concluídos"):
    "Criar perfil", "Configurar modalidades", "Cadastrar arma". Botão
    "Continuar configuração" leva pro primeiro item pendente. Some da
    tela sozinho assim que as 3 estiverem completas.
