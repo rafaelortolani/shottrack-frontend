@@ -119,7 +119,7 @@ test.describe("Registro rápido de série (FUC14)", () => {
     await expect(page.getByLabel(pontuacao.name, { exact: true })).toHaveValue("92");
 
     // Exclui a série
-    await page.getByRole("button", { name: "Excluir série" }).click();
+    await page.getByRole("button", { name: "Excluir série", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Excluir série" });
     await expect(dialog).toBeVisible();
     await dialog.getByRole("button", { name: "Confirmar" }).click();

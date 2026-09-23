@@ -386,17 +386,28 @@ export function SeriesAccordion({
               ) : (
                 <ul className="space-y-1">
                   {series.map((s, index) => (
-                    <li key={s.id}>
+                    <li key={s.id} className="flex items-center gap-3">
                       <button
                         type="button"
                         onClick={() => {
                           setSaveError(null);
                           setFormMode(s.id);
                         }}
-                        className="w-full flex items-center justify-between gap-3 py-1.5 text-left text-sm hover:text-foreground transition-colors"
+                        className="flex-1 min-w-0 flex items-center justify-between gap-3 py-1.5 text-left text-sm hover:text-foreground transition-colors"
                       >
                         <span className="text-foreground shrink-0">Série {index + 1}</span>
                         <span className="text-foreground-muted truncate">{formatSeriesSummary(s, weaponsById)}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSaveError(null);
+                          setConfirmingDeleteId(s.id);
+                        }}
+                        aria-label={`Excluir série ${index + 1}`}
+                        className="shrink-0 text-sm text-foreground-muted hover:text-accent-target transition-colors"
+                      >
+                        Excluir
                       </button>
                     </li>
                   ))}
