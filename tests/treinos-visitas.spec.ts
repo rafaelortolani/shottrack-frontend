@@ -148,7 +148,10 @@ test.describe("Treinos > Visitas (FUC13)", () => {
 
     await expect(page.getByText(location.name)).toBeVisible();
 
-    const toDateInput = (d: Date) => d.toISOString().slice(0, 10);
+    // Data local (não UTC): o filtro compara com o dia local do navegador —
+    // toISOString() viraria o dia depois das 21h em UTC-3.
+    const toDateInput = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
