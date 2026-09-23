@@ -201,13 +201,17 @@ test.describe("Treinos > Visitas (FUC13)", () => {
 
     await login(page, email, /\/treinos\/visitas/);
     await expect(page.locator("li", { hasText: modality.name })).toHaveCount(1);
+    // Treino em andamento carrega as séries sozinho — espera terminar, senão
+    // a exclusão por fora corre com essa busca e ela também falha
+    await expect(page.getByRole("group", { name: "Nenhuma série registrada ainda" })).toBeVisible();
 
     // Excluído por fora (ex: outra aba) depois que a tela já carregou
     await deleteTraining(token, training.id);
 
     await page.getByRole("button", { name: "Excluir", exact: true }).click();
     await page.getByRole("dialog", { name: "Excluir treino" }).getByRole("button", { name: "Confirmar" }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    // filtra o anunciador de rotas do Next, que também é role="alert" (vazio)
+    await expect(page.getByRole("alert").filter({ hasText: /\S/ })).toBeVisible();
     await expect(page.getByRole("dialog", { name: "Excluir treino" })).not.toBeVisible();
   });
 
