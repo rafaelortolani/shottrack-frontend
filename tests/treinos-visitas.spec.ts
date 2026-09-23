@@ -9,18 +9,21 @@ import {
   startVisit,
   openTraining,
   closeVisit,
+  deleteTraining,
+  registerSeries,
 } from "./helpers";
 
-async function login(page: Page, email: string, password = "senha12345") {
+// Landing pós-login depende de ter visita em andamento (FUC15)
+async function login(page: Page, email: string, landing: RegExp = /\/dashboard/) {
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Senha").fill(password);
+  await page.getByLabel("Senha").fill("senha12345");
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(landing);
 }
 
 test.describe("Treinos > Visitas (FUC13)", () => {
-  test("inicia visita, abre 2 treinos, encerra 1 manualmente e encerra a visita com o outro em cascata", async ({ page }) => {
+  test("inicia visita, abre 3 treinos, encerra 1, exclui 1 e encerra a visita com o outro em cascata", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     const token = await loginAndGetToken(email);
@@ -47,21 +50,38 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     await expect(page.getByText("Visita em andamento", { exact: true })).toBeVisible();
     await expect(page.getByText(location.name)).toBeVisible();
 
-    // Abre o primeiro treino
-    await page.getByRole("button", { name: "+ Abrir novo treino" }).click();
-    await page.getByLabel("Modalidade").selectOption({ label: modality.name });
-    await page.getByRole("button", { name: "Abrir" }).click();
-    await expect(page.locator("li", { hasText: modality.name })).toHaveCount(1);
+    // Visita sem treino: estado vazio com CTA em destaque, sem o link discreto
+    const emptyState = page.getByRole("group", { name: "Nenhum treino aberto ainda" });
+    await expect(emptyState).toBeVisible();
+    await expect(page.getByRole("button", { name: "+ Abrir novo treino" })).not.toBeVisible();
 
-    // Abre o segundo treino, mesma modalidade
-    await page.getByRole("button", { name: "+ Abrir novo treino" }).click();
+    // Abre o primeiro treino pelo CTA do estado vazio
+    await emptyState.getByRole("button", { name: "Abrir treino" }).click();
     await page.getByLabel("Modalidade").selectOption({ label: modality.name });
-    await page.getByRole("button", { name: "Abrir" }).click();
-    await expect(page.locator("li", { hasText: modality.name })).toHaveCount(2);
-    await expect(page.getByRole("button", { name: "Encerrar", exact: true })).toHaveCount(2);
+    await page.getByRole("button", { name: "Abrir", exact: true }).click();
+    await expect(page.locator("li", { hasText: modality.name })).toHaveCount(1);
+    await expect(emptyState).not.toBeVisible();
+
+    // Com treino aberto, volta o link discreto — abre mais dois, mesma modalidade
+    for (const expectedCount of [2, 3]) {
+      await page.getByRole("button", { name: "+ Abrir novo treino" }).click();
+      await page.getByLabel("Modalidade").selectOption({ label: modality.name });
+      await page.getByRole("button", { name: "Abrir", exact: true }).click();
+      await expect(page.locator("li", { hasText: modality.name })).toHaveCount(expectedCount);
+    }
+    await expect(page.getByRole("button", { name: "Encerrar", exact: true })).toHaveCount(3);
 
     // Encerra o primeiro treino manualmente
     await page.getByRole("button", { name: "Encerrar", exact: true }).first().click();
+    await expect(page.getByRole("button", { name: "Encerrar", exact: true })).toHaveCount(2);
+
+    // Exclui um dos treinos em andamento — confirmação avisa das séries
+    await page.getByRole("button", { name: "Excluir", exact: true }).last().click();
+    const deleteDialog = page.getByRole("dialog", { name: "Excluir treino" });
+    await expect(deleteDialog.getByText(/todas as séries dele serão excluídos/i)).toBeVisible();
+    await deleteDialog.getByRole("button", { name: "Confirmar" }).click();
+    await expect(deleteDialog).not.toBeVisible();
+    await expect(page.locator("li", { hasText: modality.name })).toHaveCount(2);
     await expect(page.getByRole("button", { name: "Encerrar", exact: true })).toHaveCount(1);
 
     // Encerra a visita com o outro treino ainda aberto — confirma a cascata
@@ -80,6 +100,112 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     const historyItem = page.locator("li", { hasText: location.name });
     await expect(historyItem).toBeVisible();
     await expect(historyItem.getByText(modality.name)).toBeVisible();
+  });
+
+  test("exclui a visita em andamento com treinos, avisando da cascata", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+
+    const location = await registerTrainingLocation(token, { name: "Estande Sul", city: "Curitiba", state: "PR" });
+    const [modality] = await getModalityCatalog(token);
+    await addPracticedModality(token, modality.id);
+    const visit = await startVisit(token, location.id);
+    await openTraining(token, visit.id, modality.id);
+    await openTraining(token, visit.id, modality.id);
+
+    await login(page, email, /\/treinos\/visitas/);
+    await expect(page.getByText("Visita em andamento", { exact: true })).toBeVisible();
+
+    // Cancelar não exclui nada
+    await page.getByRole("button", { name: "Excluir visita" }).click();
+    const dialog = page.getByRole("dialog", { name: "Excluir visita" });
+    await expect(dialog.getByText(/os 2 treinos dela e todas as séries serão excluídos/i)).toBeVisible();
+    await dialog.getByRole("button", { name: "Cancelar" }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(page.getByText("Visita em andamento", { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Excluir visita" }).click();
+    await dialog.getByRole("button", { name: "Confirmar" }).click();
+    await expect(dialog).not.toBeVisible();
+
+    await expect(page.getByText("Visita em andamento", { exact: true })).not.toBeVisible();
+    await expect(page.getByText("Nenhuma visita em andamento.")).toBeVisible();
+    // Excluída de verdade: não vai pro histórico, nem volta ao recarregar
+    await expect(page.getByText("Nenhuma visita encerrada ainda.")).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("Nenhuma visita em andamento.")).toBeVisible();
+    await expect(page.getByText(location.name)).not.toBeVisible();
+  });
+
+  test("no detalhe de uma visita encerrada, exclui série, treino e a própria visita", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+
+    const location = await registerTrainingLocation(token, { name: "Clube Norte", city: "Manaus", state: "AM" });
+    const [modalityA, modalityB] = await getModalityCatalog(token);
+    await addPracticedModality(token, modalityA.id);
+    await addPracticedModality(token, modalityB.id);
+    const visit = await startVisit(token, location.id);
+    const trainingA = await openTraining(token, visit.id, modalityA.id);
+    await openTraining(token, visit.id, modalityB.id);
+    await registerSeries(token, { trainingId: trainingA.id });
+    await closeVisit(token, visit.id);
+
+    await login(page, email);
+    await page.goto("/treinos/visitas");
+    await page.getByRole("link", { name: new RegExp(location.name) }).click();
+    await expect(page).toHaveURL(new RegExp(`/treinos/${visit.id}`));
+    await expect(page.getByText("Encerrada", { exact: true })).toBeVisible();
+
+    const trainingItemA = page.locator("li", { hasText: modalityA.name });
+
+    // Série de treino encerrado: excluir pelo formulário de edição
+    await trainingItemA.getByRole("button", { name: "Séries" }).click();
+    await trainingItemA.getByRole("button", { name: /^Série 1/ }).click();
+    await trainingItemA.getByRole("button", { name: "Excluir série" }).click();
+    await page.getByRole("dialog", { name: "Excluir série" }).getByRole("button", { name: "Confirmar" }).click();
+    await expect(trainingItemA.getByText("Nenhuma série registrada ainda.")).toBeVisible();
+
+    // Treino encerrado
+    await trainingItemA.getByRole("button", { name: "Excluir", exact: true }).click();
+    const trainingDialog = page.getByRole("dialog", { name: "Excluir treino" });
+    await expect(trainingDialog.getByText(`O treino de ${modalityA.name} e todas as séries dele`)).toBeVisible();
+    await trainingDialog.getByRole("button", { name: "Confirmar" }).click();
+    await expect(trainingItemA).toHaveCount(0);
+    await expect(page.locator("li", { hasText: modalityB.name })).toHaveCount(1);
+
+    // Visita encerrada: volta pra Visitas, e some do histórico
+    await page.getByRole("button", { name: "Excluir visita" }).click();
+    const visitDialog = page.getByRole("dialog", { name: "Excluir visita" });
+    await expect(visitDialog.getByText(/o treino dela e todas as séries serão excluídos/i)).toBeVisible();
+    await visitDialog.getByRole("button", { name: "Confirmar" }).click();
+    await expect(page).toHaveURL(/\/treinos\/visitas$/);
+    await expect(page.getByText("Nenhuma visita encerrada ainda.")).toBeVisible();
+  });
+
+  test("mostra erro ao excluir treino que já não existe mais", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+
+    const location = await registerTrainingLocation(token, { name: "Estande Sul", city: "Curitiba", state: "PR" });
+    const [modality] = await getModalityCatalog(token);
+    await addPracticedModality(token, modality.id);
+    const visit = await startVisit(token, location.id);
+    const training = await openTraining(token, visit.id, modality.id);
+
+    await login(page, email, /\/treinos\/visitas/);
+    await expect(page.locator("li", { hasText: modality.name })).toHaveCount(1);
+
+    // Excluído por fora (ex: outra aba) depois que a tela já carregou
+    await deleteTraining(token, training.id);
+
+    await page.getByRole("button", { name: "Excluir", exact: true }).click();
+    await page.getByRole("dialog", { name: "Excluir treino" }).getByRole("button", { name: "Confirmar" }).click();
+    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Excluir treino" })).not.toBeVisible();
   });
 
   test("filtra o histórico por local e por modalidade", async ({ page }) => {

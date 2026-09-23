@@ -320,6 +320,16 @@ export async function closeTraining(accessToken: string, trainingId: string) {
   return data;
 }
 
+export async function deleteTraining(accessToken: string, trainingId: string) {
+  const response = await fetch(`${BACKEND_URL}/api/trainings/${trainingId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao excluir treino de teste: ${response.status}`);
+  }
+}
+
 export async function registerSeries(accessToken: string, payload: Record<string, unknown>) {
   const response = await fetch(`${BACKEND_URL}/api/series`, {
     method: "POST",
