@@ -6,7 +6,7 @@ import Link from "next/link";
 import { IconCircle, IconFocus2 } from "@tabler/icons-react";
 import { AppNav } from "@/components/AppNav";
 import { EvolutionSection } from "@/components/EvolutionSection";
-import { TargetRings } from "@/components/TargetRings";
+import { PageContainer } from "@/components/PageContainer";
 import { formatDate, formatDateTime } from "@/lib/datetime";
 import { resultTypeUnit } from "@/lib/resultTypeFormat";
 
@@ -122,9 +122,7 @@ export default function DashboardPage() {
       <AppNav />
 
       <main className="flex-1 relative overflow-hidden">
-        <TargetRings className="absolute -right-32 -top-32 w-[420px] h-[420px] text-accent-brass pointer-events-none" />
-
-        <div className="relative max-w-4xl px-5 md:px-6 py-6 pb-20 md:pb-6">
+        <PageContainer width="wide" ringsClassName="text-accent-brass">
           <p className="text-foreground-muted mb-1">Bem-vindo de volta</p>
           <h1 className="font-display text-lg font-semibold mb-4">
             Sua evolução
@@ -139,7 +137,7 @@ export default function DashboardPage() {
           ) : (
             <DashboardContent dashboard={dashboard} />
           )}
-        </div>
+        </PageContainer>
       </main>
     </div>
   );
