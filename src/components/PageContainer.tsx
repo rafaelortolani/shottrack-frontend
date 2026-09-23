@@ -1,6 +1,8 @@
 import { TargetRings } from "@/components/TargetRings";
 
 const WIDTHS = {
+  // dashboard: gráfico de evolução precisa de mais largura que uma lista
+  wide: "max-w-3xl",
   // listas e detalhe
   content: "max-w-2xl",
   // formulários: um pouco mais largo que um campo, sem esticar os inputs
