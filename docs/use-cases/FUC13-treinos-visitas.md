@@ -25,6 +25,8 @@ Visitas"), `/treinos/locais` (breadcrumb "Treinos / Locais", era
 - UC33 (encerrar treino) — `PATCH /api/trainings/{id}/close`
 - UC34 (encerrar visita) — `PATCH /api/visits/{id}/close`
 - UC35 (listar visitas) — `GET /api/visits`
+- UC43 (excluir treino) — `DELETE /api/trainings/{id}`
+- UC44 (excluir visita) — `DELETE /api/visits/{id}`
 
 ## Tela "Visitas"
 - **Se há visita em andamento**: card destacado no topo, "Visita em
@@ -37,6 +39,24 @@ Visitas"), `/treinos/locais` (breadcrumb "Treinos / Locais", era
   cadastrar um primeiro, aba Locais)
 - **Histórico**: abaixo, lista de visitas já encerradas — local, data,
   modalidades praticadas naquela visita (resumo), com busca por local
+
+## Estado vazio: visita sem nenhum treino aberto
+Enquanto a visita ativa não tem nenhum treino, em vez do link discreto
+"+ Abrir novo treino", mostra um bloco de estado vazio (borda tracejada,
+componente `EmptyState`, o mesmo do treino sem série no FUC14): ícone,
+título "Nenhum treino aberto ainda", texto curto explicando, e um
+**botão** (não link) "Abrir treino" em destaque. Assim que existir pelo menos um treino, o
+link discreto passa a ser suficiente (a pessoa já entendeu o padrão).
+
+## Excluir treino e excluir visita
+- Cada treino ganha uma ação "Excluir" (além de "Encerrar", quando em
+  andamento) — confirmação simples antes de excluir, avisando que as
+  séries dele somem junto (UC43)
+- A visita ganha uma ação "Excluir visita" (além de "Encerrar visita") —
+  confirmação avisando que treinos e séries somem junto (UC44)
+- As duas ações existem na visita ativa (tela Visitas) e no detalhe de
+  qualquer visita (`/treinos/[id]`), inclusive encerrada — excluir a
+  visita pelo detalhe volta pra `/treinos/visitas`
 
 ## Encerrar visita com treino(s) aberto(s)
 O backend sempre aceita e cascateia (ADR-0012) — mas a UI confirma antes:
@@ -54,15 +74,20 @@ eles também. Confirmar?" — só chama o endpoint depois da confirmação.
 ## Definição de pronto
 - [ ] Tela "Locais" migrada pra `/treinos/locais` sem quebrar nada do FUC11
 - [ ] Iniciar visita funciona
+- [ ] Estado vazio (visita sem treino) mostra o CTA em destaque
 - [ ] Abrir treino funciona, inclusive dois da mesma modalidade
 - [ ] Encerrar um treino individualmente funciona
+- [ ] Excluir um treino funciona, com confirmação
 - [ ] Encerrar visita com confirmação, cascata refletida na tela depois
+- [ ] Excluir visita funciona, com confirmação
+- [ ] Excluir treino e visita também no detalhe de visita encerrada
 - [ ] Histórico lista visitas encerradas corretamente
-- [ ] Teste E2E (Playwright) cobrindo: iniciar visita, abrir 2 treinos
-  (mesma modalidade), encerrar 1 manualmente, encerrar a visita com o
-  outro ainda aberto (confirmando a cascata), conferir no histórico
+- [ ] Teste E2E (Playwright) cobrindo: iniciar visita, abrir 3 treinos
+  (mesma modalidade), encerrar 1 manualmente, excluir 1, encerrar a
+  visita com o outro ainda aberto (confirmando a cascata), conferir no
+  histórico
 
 ## Referências
-- Backend: UC31, UC32, UC33, UC34, UC35, ADR-0012
+- Backend: UC31, UC32, UC33, UC34, UC35, UC43, UC44, ADR-0012
 - FUC11 (Locais — vira aba irmã)
 - FUC06 (Modalidades praticadas — pré-requisito pra abrir treino)
