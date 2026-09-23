@@ -24,6 +24,9 @@ Mantido como já definido: visita em andamento → `/treinos`; senão →
    "Continuar configuração" leva pro primeiro item pendente. Some da
    tela sozinho assim que as 3 estiverem completas.
 
+1.5. **Evolução** — gráfico com seletores de modalidade/tipo, período e
+   modo; detalhado no FUC16. Acima da ação principal.
+
 2. **Ação principal** — card em destaque:
    - Com visita ativa: "Continuar treino" + local/modalidade, botão leva
      pra `/treinos`
@@ -31,8 +34,11 @@ Mantido como já definido: visita em andamento → `/treinos`; senão →
      mesmo destino
 
 3. **Indicadores universais** — os 3 já existentes (treinos/mês,
-   disparos/mês, modalidades praticadas) + o destaque dinâmico geral, no
-   mesmo formato que já está implementado
+   disparos/mês, modalidades praticadas)
+
+3.5. **Recordes** — lista (não mais um único destaque): cada tipo de
+   resultado com dado suficiente, com o melhor valor já alcançado.
+   Seção omitida se não houver nenhum recorde ainda.
 
 4. **Últimos treinos** — lista compacta (até 5), cada linha: data, local,
    modalidade, métrica de destaque daquele treino (se houver). Tocar uma
@@ -55,6 +61,7 @@ Mantido como já definido: visita em andamento → `/treinos`; senão →
 - Carregando: enquanto busca `GET /api/dashboard`
 
 ## Definição de pronto
+- [ ] Recordes exibidos como lista (não mais um único destaque)
 - [ ] Onboarding aparece só com pendência, some quando completo
 - [ ] Ação principal reflete visita ativa ou convite genérico
 - [ ] Últimos treinos exibidos com métrica por treino (ou sem métrica,
