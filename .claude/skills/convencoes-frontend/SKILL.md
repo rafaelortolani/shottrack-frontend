@@ -90,6 +90,16 @@ de um item — implementado no cliente, filtrando a lista já carregada
 (`GET` sem paginação). Reavaliar para filtro no backend só se o volume
 por atleta crescer muito (centenas de itens) — não é o caso hoje.
 
+## Layout de conteúdo — centralizado, nunca grudado à esquerda com vazio à direita
+Toda tela de conteúdo (listas, formulários, detalhe) usa um container
+centralizado com largura máxima confortável (ex: `max-w-2xl`/`max-w-3xl`
+conforme o conteúdo) — nunca conteúdo estreito alinhado à esquerda
+deixando uma área vazia grande à direita do viewport. O `TargetRings`
+fica posicionado atrás do container centralizado (mesmo padrão já usado
+em login/cadastro), não como decoração isolada num canto desconectado do
+conteúdo. Vale pra toda tela dentro de Acervo, Usuário, Treinos — não só
+as telas de autenticação.
+
 ## Consistência entre mobile e desktop — regra inegociável
 Não existe "tema mobile" separado. Os breakpoints (`md:`, `lg:`, etc.)
 controlam apenas **layout** — visibilidade de elementos, espaçamento,

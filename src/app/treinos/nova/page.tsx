@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
-import { TargetRings } from "@/components/TargetRings";
+import { PageContainer } from "@/components/PageContainer";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string };
 
@@ -88,80 +88,76 @@ export default function IniciarVisitaPage() {
   }
 
   return (
-    <div className="relative">
-      <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
+    <PageContainer width="form" ringsClassName="text-accent-target-soft">
+      <Breadcrumb
+        items={[
+          { href: "/treinos", label: "Treinos" },
+          { href: "/treinos/visitas", label: "Visitas" },
+          { label: "Iniciar visita" },
+        ]}
+      />
 
-      <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-        <Breadcrumb
-          items={[
-            { href: "/treinos", label: "Treinos" },
-            { href: "/treinos/visitas", label: "Visitas" },
-            { label: "Iniciar visita" },
-          ]}
-        />
+      <h1 className="font-display text-lg font-semibold tracking-tight mb-1">Iniciar visita</h1>
+      <p className="text-foreground-muted mb-6">Selecione o local de treino.</p>
 
-        <h1 className="font-display text-lg font-semibold tracking-tight mb-1">Iniciar visita</h1>
-        <p className="text-foreground-muted mb-6">Selecione o local de treino.</p>
-
-        {loading ? (
-          <p className="text-foreground-muted">Carregando locais de treino...</p>
-        ) : locations.length === 0 ? (
+      {loading ? (
+        <p className="text-foreground-muted">Carregando locais de treino...</p>
+      ) : locations.length === 0 ? (
+        <div>
+          <p className="text-foreground-muted mb-4">
+            Você ainda não cadastrou nenhum local de treino. Cadastre um primeiro.
+          </p>
+          <Link
+            href="/treinos/locais/novo"
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover text-foreground text-sm font-medium px-4 py-2 transition-colors"
+          >
+            + Cadastrar local
+          </Link>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} noValidate className="space-y-3">
           <div>
-            <p className="text-foreground-muted mb-4">
-              Você ainda não cadastrou nenhum local de treino. Cadastre um primeiro.
-            </p>
-            <Link
-              href="/treinos/locais/novo"
-              className="rounded-md bg-accent-target hover:bg-accent-target-hover text-foreground text-sm font-medium px-4 py-2 transition-colors"
+            <label htmlFor="locationId" className="block text-sm text-foreground-muted mb-1">
+              Local de treino
+            </label>
+            <select
+              id="locationId"
+              value={locationId}
+              onChange={(e) => setLocationId(e.target.value)}
+              className={INPUT_CLASS}
             >
-              + Cadastrar local
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} noValidate className="space-y-3">
-            <div>
-              <label htmlFor="locationId" className="block text-sm text-foreground-muted mb-1">
-                Local de treino
-              </label>
-              <select
-                id="locationId"
-                value={locationId}
-                onChange={(e) => setLocationId(e.target.value)}
-                className={INPUT_CLASS}
-              >
-                <option value="" disabled>Selecione</option>
-                {locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {location.name} · {location.city}/{location.state}
-                  </option>
-                ))}
-              </select>
-              {fieldError && (
-                <p className="text-sm text-accent-target mt-1" role="alert">
-                  {fieldError}
-                </p>
-              )}
-            </div>
-
-            {error && (
-              <p className="text-sm text-accent-target" role="alert">
-                {error}
+              <option value="" disabled>Selecione</option>
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.name} · {location.city}/{location.state}
+                </option>
+              ))}
+            </select>
+            {fieldError && (
+              <p className="text-sm text-accent-target mt-1" role="alert">
+                {fieldError}
               </p>
             )}
+          </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
-              >
-                {saving ? "Iniciando..." : "Iniciar"}
-              </button>
-              <CancelButton href="/treinos/visitas" />
-            </div>
-          </form>
-        )}
-      </div>
-    </div>
+          {error && (
+            <p className="text-sm text-accent-target" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
+            >
+              {saving ? "Iniciando..." : "Iniciar"}
+            </button>
+            <CancelButton href="/treinos/visitas" />
+          </div>
+        </form>
+      )}
+    </PageContainer>
   );
 }

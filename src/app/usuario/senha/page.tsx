@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
-import { TargetRings } from "@/components/TargetRings";
+import { PageContainer } from "@/components/PageContainer";
 
 type FieldErrors = Partial<Record<"currentPassword" | "newPassword", string>>;
 
@@ -65,73 +65,69 @@ export default function AlterarSenhaPage() {
   }
 
   return (
-    <div className="relative">
-      <TargetRings className="absolute -right-24 -top-24 w-[500px] h-[500px] text-accent-target pointer-events-none" />
+    <PageContainer width="form" ringsClassName="text-accent-target">
+      <Breadcrumb items={[{ href: "/usuario", label: "Usuário" }, { href: "/usuario/perfil", label: "Perfil" }, { label: "Alterar senha" }]} />
+      <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
+        Alterar senha
+      </h1>
+      <p className="text-foreground-muted mb-10">Confirme sua senha atual pra definir uma nova.</p>
 
-      <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-        <Breadcrumb items={[{ href: "/usuario", label: "Usuário" }, { href: "/usuario/perfil", label: "Perfil" }, { label: "Alterar senha" }]} />
-        <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
-          Alterar senha
-        </h1>
-        <p className="text-foreground-muted mb-10">Confirme sua senha atual pra definir uma nova.</p>
-
-        <form onSubmit={handleSubmit} noValidate className="space-y-5">
-          <div>
-            <label htmlFor="currentPassword" className="block text-sm text-foreground-muted mb-1.5">
-              Senha atual
-            </label>
-            <input
-              id="currentPassword"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
-            />
-            {fieldErrors.currentPassword && (
-              <p className="text-sm text-accent-target mt-1.5" role="alert">
-                {fieldErrors.currentPassword}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="newPassword" className="block text-sm text-foreground-muted mb-1.5">
-              Nova senha
-            </label>
-            <input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
-            />
-            {fieldErrors.newPassword && (
-              <p className="text-sm text-accent-target mt-1.5" role="alert">
-                {fieldErrors.newPassword}
-              </p>
-            )}
-          </div>
-
-          {formError && (
-            <p className="text-sm text-accent-target" role="alert">
-              {formError}
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
+        <div>
+          <label htmlFor="currentPassword" className="block text-sm text-foreground-muted mb-1.5">
+            Senha atual
+          </label>
+          <input
+            id="currentPassword"
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+          />
+          {fieldErrors.currentPassword && (
+            <p className="text-sm text-accent-target mt-1.5" role="alert">
+              {fieldErrors.currentPassword}
             </p>
           )}
+        </div>
 
-          <div className="flex items-center gap-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 px-6 transition-colors"
-            >
-              {saving ? "Alterando..." : "Alterar senha"}
-            </button>
-            <Link href="/usuario/perfil" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
-              Cancelar
-            </Link>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div>
+          <label htmlFor="newPassword" className="block text-sm text-foreground-muted mb-1.5">
+            Nova senha
+          </label>
+          <input
+            id="newPassword"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+          />
+          {fieldErrors.newPassword && (
+            <p className="text-sm text-accent-target mt-1.5" role="alert">
+              {fieldErrors.newPassword}
+            </p>
+          )}
+        </div>
+
+        {formError && (
+          <p className="text-sm text-accent-target" role="alert">
+            {formError}
+          </p>
+        )}
+
+        <div className="flex items-center gap-4">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 px-6 transition-colors"
+          >
+            {saving ? "Alterando..." : "Alterar senha"}
+          </button>
+          <Link href="/usuario/perfil" className="text-sm text-foreground-muted hover:text-foreground transition-colors">
+            Cancelar
+          </Link>
+        </div>
+      </form>
+    </PageContainer>
   );
 }

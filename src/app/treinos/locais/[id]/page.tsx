@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
-import { TargetRings } from "@/components/TargetRings";
+import { PageContainer } from "@/components/PageContainer";
 import { BRAZILIAN_STATES } from "@/lib/brazilianStates";
 
 const INPUT_CLASS =
@@ -217,116 +217,112 @@ export default function EditarLocalTreinoPage() {
   }
 
   return (
-    <div className="relative">
-      <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target-soft pointer-events-none" />
+    <PageContainer width="form" ringsClassName="text-accent-target-soft">
+      <Breadcrumb
+        items={[
+          { href: "/treinos", label: "Treinos" },
+          { href: "/treinos/locais", label: "Locais" },
+          { label: "Editar local" },
+        ]}
+      />
 
-      <div className="relative max-w-sm px-5 md:px-6 py-6 pb-20 md:pb-6">
-          <Breadcrumb
-            items={[
-              { href: "/treinos", label: "Treinos" },
-              { href: "/treinos/locais", label: "Locais" },
-              { label: "Editar local" },
-            ]}
+      <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
+        Editar local
+      </h1>
+      <p className="text-foreground-muted mb-6">Só os campos alterados são salvos.</p>
+
+      <form onSubmit={handleSubmit} noValidate className="space-y-3">
+        <div>
+          <label htmlFor="name" className="block text-sm text-foreground-muted mb-1">
+            Nome
+          </label>
+          <input
+            id="name"
+            type="text"
+            value={values.name}
+            onChange={(e) => updateField("name", e.target.value)}
+            className={INPUT_CLASS}
           />
+          {fieldErrors.name && (
+            <p className="text-sm text-accent-target mt-1" role="alert">
+              {fieldErrors.name}
+            </p>
+          )}
+        </div>
 
-          <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
-            Editar local
-          </h1>
-          <p className="text-foreground-muted mb-6">Só os campos alterados são salvos.</p>
+        <div>
+          <label htmlFor="city" className="block text-sm text-foreground-muted mb-1">
+            Cidade
+          </label>
+          <input
+            id="city"
+            type="text"
+            value={values.city}
+            onChange={(e) => updateField("city", e.target.value)}
+            className={INPUT_CLASS}
+          />
+          {fieldErrors.city && (
+            <p className="text-sm text-accent-target mt-1" role="alert">
+              {fieldErrors.city}
+            </p>
+          )}
+        </div>
 
-          <form onSubmit={handleSubmit} noValidate className="space-y-3">
-            <div>
-              <label htmlFor="name" className="block text-sm text-foreground-muted mb-1">
-                Nome
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={values.name}
-                onChange={(e) => updateField("name", e.target.value)}
-                className={INPUT_CLASS}
-              />
-              {fieldErrors.name && (
-                <p className="text-sm text-accent-target mt-1" role="alert">
-                  {fieldErrors.name}
-                </p>
-              )}
-            </div>
+        <div>
+          <label htmlFor="state" className="block text-sm text-foreground-muted mb-1">
+            Estado
+          </label>
+          <select
+            id="state"
+            value={values.state}
+            onChange={(e) => updateField("state", e.target.value)}
+            className={INPUT_CLASS}
+          >
+            <option value="" disabled>Selecione</option>
+            {BRAZILIAN_STATES.map((s) => (
+              <option key={s.uf} value={s.uf}>{s.name}</option>
+            ))}
+          </select>
+          {fieldErrors.state && (
+            <p className="text-sm text-accent-target mt-1" role="alert">
+              {fieldErrors.state}
+            </p>
+          )}
+        </div>
 
-            <div>
-              <label htmlFor="city" className="block text-sm text-foreground-muted mb-1">
-                Cidade
-              </label>
-              <input
-                id="city"
-                type="text"
-                value={values.city}
-                onChange={(e) => updateField("city", e.target.value)}
-                className={INPUT_CLASS}
-              />
-              {fieldErrors.city && (
-                <p className="text-sm text-accent-target mt-1" role="alert">
-                  {fieldErrors.city}
-                </p>
-              )}
-            </div>
+        {error && (
+          <p className="text-sm text-accent-target" role="alert">
+            {error}
+          </p>
+        )}
 
-            <div>
-              <label htmlFor="state" className="block text-sm text-foreground-muted mb-1">
-                Estado
-              </label>
-              <select
-                id="state"
-                value={values.state}
-                onChange={(e) => updateField("state", e.target.value)}
-                className={INPUT_CLASS}
-              >
-                <option value="" disabled>Selecione</option>
-                {BRAZILIAN_STATES.map((s) => (
-                  <option key={s.uf} value={s.uf}>{s.name}</option>
-                ))}
-              </select>
-              {fieldErrors.state && (
-                <p className="text-sm text-accent-target mt-1" role="alert">
-                  {fieldErrors.state}
-                </p>
-              )}
-            </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
+          >
+            {saving ? "Salvando..." : "Salvar"}
+          </button>
+          <CancelButton href="/treinos/locais" />
+        </div>
+      </form>
 
-            {error && (
-              <p className="text-sm text-accent-target" role="alert">
-                {error}
-              </p>
-            )}
-
-            <div className="flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
-              >
-                {saving ? "Salvando..." : "Salvar"}
-              </button>
-              <CancelButton href="/treinos/locais" />
-            </div>
-          </form>
-
-          <div className="pt-4 mt-4 border-t border-border">
-            {deleteBlocked && (
-              <p className="text-sm text-accent-target mb-3" role="alert">
-                Esse local já foi usado em algum treino e não pode ser excluído.
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="text-sm text-accent-target hover:text-accent-target-hover disabled:opacity-60 transition-colors"
-            >
-              {deleting ? "Excluindo..." : "Excluir local"}
-            </button>
-          </div>
+      <div className="pt-4 mt-4 border-t border-border">
+        {deleteBlocked && (
+          <p className="text-sm text-accent-target mb-3" role="alert">
+            Esse local já foi usado em algum treino e não pode ser excluído.
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleting}
+          className="text-sm text-accent-target hover:text-accent-target-hover disabled:opacity-60 transition-colors"
+        >
+          {deleting ? "Excluindo..." : "Excluir local"}
+        </button>
       </div>
-    </div>
+    </PageContainer>
   );
 }
