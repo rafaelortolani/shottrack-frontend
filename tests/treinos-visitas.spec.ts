@@ -161,10 +161,9 @@ test.describe("Treinos > Visitas (FUC13)", () => {
 
     const trainingItemA = page.locator("li", { hasText: modalityA.name });
 
-    // Série de treino encerrado: excluir pelo formulário de edição
+    // Série de treino encerrado: excluir direto na linha, sem abrir a edição
     await trainingItemA.getByRole("button", { name: "Séries" }).click();
-    await trainingItemA.getByRole("button", { name: /^Série 1/ }).click();
-    await trainingItemA.getByRole("button", { name: "Excluir série" }).click();
+    await trainingItemA.getByRole("button", { name: "Excluir série 1" }).click();
     await page.getByRole("dialog", { name: "Excluir série" }).getByRole("button", { name: "Confirmar" }).click();
     await expect(trainingItemA.getByText("Nenhuma série registrada ainda.")).toBeVisible();
 
