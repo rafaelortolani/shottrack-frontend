@@ -206,7 +206,9 @@ export async function getWeaponCatalog(accessToken: string) {
   };
 }
 
-export async function getWeaponModels(accessToken: string, brandId: string): Promise<WeaponCatalogItem[]> {
+export type WeaponCatalogModel = WeaponCatalogItem & { type: WeaponCatalogItem };
+
+export async function getWeaponModels(accessToken: string, brandId: string): Promise<WeaponCatalogModel[]> {
   const response = await fetch(`${BACKEND_URL}/api/weapon-catalog/brands/${brandId}/models`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -217,9 +219,29 @@ export async function getWeaponModels(accessToken: string, brandId: string): Pro
   return data;
 }
 
+export async function getModelCalibers(accessToken: string, modelId: string): Promise<WeaponCatalogItem[]> {
+  const response = await fetch(`${BACKEND_URL}/api/weapon-catalog/models/${modelId}/calibers`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao buscar calibres do modelo de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
+/** Primeira combinação válida marca → modelo → calibre do catálogo. */
+export async function getValidWeaponCombo(accessToken: string) {
+  const { brands } = await getWeaponCatalog(accessToken);
+  const brand = brands[0];
+  const [model] = await getWeaponModels(accessToken, brand.id);
+  const [caliber] = await getModelCalibers(accessToken, model.id);
+  return { brand, model, caliber };
+}
+
 export async function registerWeapon(
   accessToken: string,
-  weapon: { typeId: string; brandId: string; modelId: string; caliberId: string }
+  weapon: { modelId: string; caliberId: string }
 ) {
   const response = await fetch(`${BACKEND_URL}/api/weapons`, {
     method: "POST",
@@ -228,6 +250,23 @@ export async function registerWeapon(
   });
   if (!response.ok) {
     throw new Error(`Falha ao cadastrar arma de teste: ${response.status}`);
+  }
+  const { data } = await response.json();
+  return data;
+}
+
+export async function updateWeapon(
+  accessToken: string,
+  weaponId: string,
+  weapon: { modelId: string; caliberId: string; nickname?: string }
+) {
+  const response = await fetch(`${BACKEND_URL}/api/weapons/${weaponId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(weapon),
+  });
+  if (!response.ok) {
+    throw new Error(`Falha ao editar arma de teste: ${response.status}`);
   }
   const { data } = await response.json();
   return data;

@@ -22,9 +22,12 @@ Rotas: `/acervo` (aba Armas, padrão), `/acervo/armas/nova` (cadastro),
 ## Telas (mockups já validados)
 1. **Lista** — cards com ícone por tipo, nome/apelido, tipo+calibre.
    Estado vazio: convite pra cadastrar a primeira arma (mockup validado).
-2. **Cadastro** — seleção em cascata: Tipo → Marca → Modelo → Calibre
-   (todos do catálogo fechado, sem apelido nesse momento — ver observação
-   no UC06 do backend).
+2. **Cadastro** — seleção em cascata: Marca → Modelo → Calibre (sem
+   apelido nesse momento — ver observação no UC06 do backend). **Tipo não
+   é mais selecionável** — aparece automaticamente assim que o modelo é
+   escolhido (campo somente leitura, derivado do modelo — ADR-0004,
+   Revisão 2). O calibre só mostra as opções válidas pra aquele modelo
+   (endpoint novo do UC09), não o catálogo geral de calibres.
 3. **Edição** — mesmos campos do cadastro + apelido (opcional), e botão
    "Excluir arma".
 4. **Bloqueio de exclusão** — se a arma já foi usada (erro `WEAPON_IN_USE`),
