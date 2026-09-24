@@ -67,7 +67,7 @@ const ONBOARDING_STEPS: { step: OnboardingStep; label: string; href: string }[] 
 const RECENT_TRAININGS_SHOWN = 5;
 
 const PRIMARY_LINK_CLASS =
-  "inline-block rounded-md bg-accent-target hover:bg-accent-target-hover text-foreground text-sm font-medium px-4 py-2 transition-colors";
+  "inline-block rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium px-4 py-2 transition-colors";
 // Secundário: a ação principal logo abaixo é o único botão sólido da tela
 const SECONDARY_LINK_CLASS =
   "inline-block rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-accent-target transition-colors";

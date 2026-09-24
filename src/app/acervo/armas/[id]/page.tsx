@@ -246,7 +246,7 @@ export default function EditarArmaPage() {
 
       <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="nickname" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Apelido
             </label>
             <input
@@ -260,7 +260,7 @@ export default function EditarArmaPage() {
           </div>
 
           <div>
-            <label htmlFor="typeId" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="typeId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Tipo
             </label>
             <select
@@ -277,7 +277,7 @@ export default function EditarArmaPage() {
           </div>
 
           <div>
-            <label htmlFor="brandId" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="brandId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Marca
             </label>
             <select
@@ -294,7 +294,7 @@ export default function EditarArmaPage() {
           </div>
 
           <div>
-            <label htmlFor="modelId" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="modelId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Modelo
             </label>
             <select
@@ -312,7 +312,7 @@ export default function EditarArmaPage() {
           </div>
 
           <div>
-            <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="caliberId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Calibre
             </label>
             <select
@@ -338,7 +338,7 @@ export default function EditarArmaPage() {
             <button
               type="submit"
               disabled={saving || !canSubmit}
-              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
+              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2 px-5 transition-colors"
             >
               {saving ? "Salvando..." : "Salvar"}
             </button>

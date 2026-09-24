@@ -292,7 +292,7 @@ export default function EditarAcessorioPage() {
 
       <form onSubmit={handleSubmit} noValidate className="space-y-3">
         <div>
-          <label htmlFor="name" className="block text-sm text-foreground-muted mb-1">
+          <label htmlFor="name" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
             Nome
           </label>
           <input
@@ -310,7 +310,7 @@ export default function EditarAcessorioPage() {
         </div>
 
         <div>
-          <label htmlFor="typeId" className="block text-sm text-foreground-muted mb-1">
+          <label htmlFor="typeId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
             Tipo
           </label>
           <select
@@ -332,7 +332,7 @@ export default function EditarAcessorioPage() {
         </div>
 
         <div>
-          <label htmlFor="notes" className="block text-sm text-foreground-muted mb-1">
+          <label htmlFor="notes" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
             Observações <span className="text-foreground-muted/60">· opcional</span>
           </label>
           <textarea
@@ -354,7 +354,7 @@ export default function EditarAcessorioPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2 px-5 transition-colors"
           >
             {saving ? "Salvando..." : "Salvar"}
           </button>
@@ -363,7 +363,7 @@ export default function EditarAcessorioPage() {
       </form>
 
       <div className="pt-4 mt-4 border-t border-border">
-        <h2 className="text-sm text-foreground-muted mb-2">Armas associadas</h2>
+        <h2 className="text-xs uppercase tracking-wide text-foreground-muted mb-2">Armas associadas</h2>
 
         {associatedWeapons.length === 0 ? (
           <p className="text-sm text-foreground-muted mb-3">Nenhuma arma associada ainda.</p>

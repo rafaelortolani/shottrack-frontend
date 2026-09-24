@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IconFocus2 } from "@tabler/icons-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
 
 type Catalog = { id: string; name: string };
@@ -88,7 +87,7 @@ export default function ArmasTabPage() {
         </p>
         <Link
           href="/acervo/armas/nova"
-          className="rounded-md bg-accent-target hover:bg-accent-target-hover text-foreground text-sm font-medium px-4 py-2 transition-colors"
+          className="rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium px-4 py-2 transition-colors"
         >
           + Cadastrar arma
         </Link>
@@ -147,11 +146,8 @@ export default function ArmasTabPage() {
             <li key={weapon.id} className="border-b border-border last:border-0">
               <Link
                 href={`/acervo/armas/${weapon.id}`}
-                className="flex items-center gap-3 py-2 -mx-2 px-2 rounded-md hover:bg-surface transition-colors"
+                className="flex items-center gap-3 py-2 px-3 border-l-2 border-accent-target rounded-r-md hover:bg-surface transition-colors"
               >
-                <span className="flex items-center justify-center w-9 h-9 rounded-full bg-accent-target/15 shrink-0">
-                  <IconFocus2 size={18} stroke={1.75} className="text-accent-target-soft" />
-                </span>
                 <div>
                   <p className="text-foreground">
                     {weapon.nickname || `${weapon.brand.name} ${weapon.model.name}`}

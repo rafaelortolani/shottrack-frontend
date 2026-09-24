@@ -16,16 +16,26 @@ Nenhum componente client-side chama `BACKEND_URL` diretamente. Toda
 comunicação com o backend passa por um Route Handler em `src/app/api/`, que
 é o único lugar que conhece o token JWT (guardado em cookie `httpOnly`).
 
+## Identidade visual — revisão tática
+Decisão consciente e registrada: a diretriz original do brief de produto
+("evite estética militar/tática") foi **revertida** — a identidade agora
+abraça a referência tática de propósito. Isso substitui, não complementa,
+as regras antigas de "evitar ícone literal de arma" e "referência mais
+próxima de apps de fitness". Paleta: gunmetal/oliva escuro, desert tan,
+laranja queimado. Tipografia de destaque: Rajdhani (técnica, HUD). Motivo
+gráfico: retícula mil-dot (círculo + cruz + marcações), não mais anéis
+concêntricos puros. Labels de seção em caixa alta.
+
 ## Sistema de design
 - Cores: sempre via tokens Tailwind definidos em `globals.css`
   (`bg-background`, `bg-surface`, `text-foreground`, `text-foreground-muted`,
   `border-border`) — nunca hex direto num componente.
 - Três acentos, cada um com um papel fixo — nunca usar um no lugar do outro:
-  - `accent-target` (vermelho) — ação primária / categoria "Armas" ou
+  - `accent-target` (desert tan) — ação primária / categoria "Armas" ou
     desempenho principal.
-  - `accent-brass` (latão) — ação secundária / categoria "Munições" ou
-    informação complementar.
-  - `accent-sage` (verde-sálvia) — categoria "Acessórios" / terceiro dado
+  - `accent-brass` (laranja queimado) — ação secundária / categoria
+    "Munições" ou informação complementar.
+  - `accent-sage` (oliva) — categoria "Acessórios" / terceiro dado
     numa comparação (ex: terceira linha de um gráfico).
   - Botões e ações usam a variante sólida (`bg-accent-target`). Ícones e
     texto de destaque sobre fundo escuro usam a variante `-soft`
@@ -36,6 +46,11 @@ comunicação com o backend passa por um Route Handler em `src/app/api/`, que
     tags, linhas de gráfico) — não só como detalhe raro num botão. Ao
     mesmo tempo, cada uso precisa ter significado (categoria, estado,
     destaque) — nunca decoração sem propósito.
+- Cards de item de lista usam **borda lateral fina** na cor do acento da
+  categoria (`border-left`), não mais ícone com fundo tintado — reforça o
+  tom de indicador de status tático.
+- Labels de seção/campo em **caixa alta**, com leve letter-spacing (ex:
+  `uppercase tracking-wide`).
 
 ## Ícones por categoria (fixo — não varia por tipo de item)
 Cada categoria do Acervo usa **um único ícone**, sempre o mesmo, em vez de
@@ -60,9 +75,7 @@ Itens de submenu (ex: Armas/Munições/Acessórios dentro de Acervo; Perfil/
 Modalidades dentro de Usuário) também levam ícone — o mesmo ícone fixo já
 definido acima pra cada um, não um ícone genérico de "item de lista".
 
-Nunca usar ícone literal de arma/munição — nem essa biblioteca teria um, e
-a diretriz de identidade visual já pede pra evitar estética tática.
-- Tipografia: `font-display` (Space Grotesk) pra títulos e números de
+- Tipografia: `font-display` (Rajdhani) pra títulos e números de
   destaque; `font-sans` (IBM Plex Sans, padrão do body) pro resto.
 - Motivo dos anéis concêntricos (`TargetRings`): no máximo uma vez por tela,
   sempre como textura de fundo de baixa opacidade — nunca como ícone
@@ -79,7 +92,8 @@ deixando a tela com sensação de vazio. Referência de escala (Tailwind):
 - Padding interno de input/botão: `py-2 px-3` (não `py-3`+).
 - Linhas de lista: `py-2` entre itens, divisor fino (`border-border`),
   nunca card com borda própria por item — ver seção de cor acima
-  (ícone com fundo tintado, sem borda ao redor do item inteiro).
+  (borda lateral fina na cor da categoria, sem borda ao redor do item
+  inteiro).
 - Fonte de título de tela: `text-base`/`text-lg` (não `text-xl`+); número
   de destaque no dashboard é a exceção (esse sim grande).
 

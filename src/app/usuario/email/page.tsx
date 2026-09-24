@@ -162,7 +162,7 @@ export default function TrocarEmailPage() {
       {step === "request" ? (
         <form onSubmit={handleRequestSubmit} noValidate className="space-y-5">
           <div>
-            <label htmlFor="newEmail" className="block text-sm text-foreground-muted mb-1.5">
+            <label htmlFor="newEmail" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1.5">
               Novo email
             </label>
             <input
@@ -183,7 +183,7 @@ export default function TrocarEmailPage() {
           <button
             type="submit"
             disabled={sending}
-            className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 transition-colors"
+            className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2.5 transition-colors"
           >
             {sending ? "Enviando código..." : "Enviar código"}
           </button>
@@ -191,7 +191,7 @@ export default function TrocarEmailPage() {
       ) : (
         <form onSubmit={handleConfirmSubmit} noValidate className="space-y-5">
           <fieldset>
-            <legend className="block text-sm text-foreground-muted mb-1.5">
+            <legend className="block text-xs uppercase tracking-wide text-foreground-muted mb-1.5">
               Código de verificação
             </legend>
             <div className="flex gap-2">
@@ -227,7 +227,7 @@ export default function TrocarEmailPage() {
           <button
             type="submit"
             disabled={confirming || !codeComplete}
-            className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 transition-colors"
+            className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2.5 transition-colors"
           >
             {confirming ? "Confirmando..." : "Confirmar"}
           </button>

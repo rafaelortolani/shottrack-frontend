@@ -7,7 +7,7 @@ JavaScript do navegador.
 ## Stack
 - Next.js (App Router, TypeScript)
 - Tailwind CSS v4 (tokens de design em `src/app/globals.css`)
-- Fontes: Space Grotesk (display/números), IBM Plex Sans (corpo)
+- Fontes: Rajdhani (display/números), IBM Plex Sans (corpo)
 
 ## Como rodar
 1. Backend do ShotTrack rodando em `http://localhost:8080` (ver repositório
@@ -31,10 +31,9 @@ Tokens de cor e tipografia estão em `src/app/globals.css` — nunca usar cor
 hexadecimal direto num componente, sempre pelas classes Tailwind geradas a
 partir desses tokens (`bg-background`, `text-accent-target`, etc.).
 
-Motivo gráfico: anéis concêntricos (`src/components/TargetRings.tsx`), usado
-como textura decorativa sutil — nunca mais de uma vez por tela. Pode incluir
-duas linhas finas cruzando o centro (mira sutil), na mesma opacidade baixa
-do anel mais externo — nunca um ícone de mira óbvio ou em primeiro plano.
+Motivo gráfico: retícula mil-dot (`src/components/TargetRings.tsx` —
+círculo, cruz central e marcações), usada como textura decorativa sutil —
+nunca mais de uma vez por tela, nunca em primeiro plano.
 
 ## Onde estão as coisas
 - `docs/use-cases/` — cada tela/fluxo formalizado antes de implementar

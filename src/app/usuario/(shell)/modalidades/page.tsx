@@ -178,7 +178,7 @@ export default function ModalidadesTabPage() {
               onClick={() => handleToggle(modality, isPracticed)}
               className={
                 isPracticed
-                  ? "inline-flex items-center gap-1.5 rounded-full bg-accent-target text-foreground px-3 py-1.5 text-sm disabled:opacity-60 transition-colors"
+                  ? "inline-flex items-center gap-1.5 rounded-full bg-accent-target text-background px-3 py-1.5 text-sm disabled:opacity-60 transition-colors"
                   : "inline-flex items-center gap-1.5 rounded-full border border-border text-foreground-muted px-3 py-1.5 text-sm hover:text-foreground hover:border-accent-target disabled:opacity-60 transition-colors"
               }
             >
@@ -203,7 +203,7 @@ export default function ModalidadesTabPage() {
 
       {practiced.length > 0 && (
         <div className="mt-6 pt-4 border-t border-border space-y-3">
-          <h2 className="text-sm text-foreground-muted">Resultados por modalidade</h2>
+          <h2 className="text-xs uppercase tracking-wide text-foreground-muted">Resultados por modalidade</h2>
           {practiced.map((modality) => (
             <div key={modality.id} className="flex items-center justify-between">
               <div>
@@ -391,7 +391,7 @@ function ResultTypePanel({
                   onClick={() => handleToggle(resultType, isConfigured)}
                   className={
                     isConfigured
-                      ? "inline-flex items-center gap-1.5 rounded-full bg-accent-target text-foreground px-3 py-1.5 text-sm disabled:opacity-60 transition-colors"
+                      ? "inline-flex items-center gap-1.5 rounded-full bg-accent-target text-background px-3 py-1.5 text-sm disabled:opacity-60 transition-colors"
                       : "inline-flex items-center gap-1.5 rounded-full border border-border text-foreground-muted px-3 py-1.5 text-sm hover:text-foreground hover:border-accent-target disabled:opacity-60 transition-colors"
                   }
                 >

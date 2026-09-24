@@ -199,7 +199,7 @@ export default function DetalheVisitaPage() {
           </span>
         </div>
 
-        <h2 className="text-sm text-foreground-muted mb-2">Treinos</h2>
+        <h2 className="text-xs uppercase tracking-wide text-foreground-muted mb-2">Treinos</h2>
         {visit.trainings.length === 0 ? (
           <p className="text-foreground-muted">Nenhum treino nessa visita.</p>
         ) : (

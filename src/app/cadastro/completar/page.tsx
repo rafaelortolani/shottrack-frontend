@@ -123,7 +123,7 @@ function CompletarCadastroForm() {
 
         <form onSubmit={handleSubmit} noValidate className="space-y-3">
           <div>
-            <label htmlFor="name" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="name" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Nome
             </label>
             <input
@@ -142,7 +142,7 @@ function CompletarCadastroForm() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="password" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Senha
             </label>
             <input
@@ -168,7 +168,7 @@ function CompletarCadastroForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 transition-colors"
+            className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2 transition-colors"
           >
             {loading ? "Concluindo..." : "Concluir cadastro"}
           </button>
