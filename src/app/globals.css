@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #1a1917;
-  --surface: #24221e;
-  --surface-raised: #2c2a25;
-  --foreground: #f1efe9;
-  --foreground-muted: #9c968a;
-  --border: #34322c;
+  /* Paleta tática — gunmetal/oliva escuro, desert tan, laranja queimado.
+     Decisão consciente de reverter a diretriz original do brief de
+     produto ("evite estética militar/tática") — ver skill de
+     convenções, seção "Identidade visual — revisão tática". */
+  --background: #14150f;
+  --surface: #1e2018;
+  --surface-raised: #262820;
+  --foreground: #e8e2d0;
+  --foreground-muted: #8c8878;
+  --border: #33362a;
 
-  /* Acentos "sólidos" — botões, ações primárias */
-  --accent-target: #a6323a;
-  --accent-target-hover: #bd3a43;
-  --accent-brass: #b8863b;
-  --accent-sage: #6f8560;
+  --accent-target: #c9a876;       /* desert tan — ação primária, Armas */
+  --accent-target-hover: #d4b488;
+  --accent-brass: #d4713c;        /* laranja queimado — secundário, Munições */
+  --accent-sage: #6e7a4f;         /* oliva — Acessórios */
 
-  /* Variantes "soft" — ícones, texto de destaque sobre fundo escuro.
-     Fundos tintados (chips, badges) usam a versão sólida acima com
-     opacidade via Tailwind, ex: bg-accent-target/15 */
-  --accent-target-soft: #c4525a;
-  --accent-brass-soft: #d4a253;
-  --accent-sage-soft: #9bb08a;
+  --accent-target-soft: #d9bc92;
+  --accent-brass-soft: #e08d5f;
+  --accent-sage-soft: #8b976a;
 }
 
 @theme inline {
@@ -36,7 +36,7 @@
   --color-accent-target-soft: var(--accent-target-soft);
   --color-accent-brass-soft: var(--accent-brass-soft);
   --color-accent-sage-soft: var(--accent-sage-soft);
-  --font-display: var(--font-space-grotesk);
+  --font-display: var(--font-rajdhani);
   --font-sans: var(--font-plex-sans);
 }
 

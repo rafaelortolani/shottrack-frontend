@@ -74,7 +74,7 @@ export default function AlterarSenhaPage() {
 
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         <div>
-          <label htmlFor="currentPassword" className="block text-sm text-foreground-muted mb-1.5">
+          <label htmlFor="currentPassword" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1.5">
             Senha atual
           </label>
           <input
@@ -92,7 +92,7 @@ export default function AlterarSenhaPage() {
         </div>
 
         <div>
-          <label htmlFor="newPassword" className="block text-sm text-foreground-muted mb-1.5">
+          <label htmlFor="newPassword" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1.5">
             Nova senha
           </label>
           <input
@@ -119,7 +119,7 @@ export default function AlterarSenhaPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2.5 px-6 transition-colors"
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2.5 px-6 transition-colors"
           >
             {saving ? "Alterando..." : "Alterar senha"}
           </button>

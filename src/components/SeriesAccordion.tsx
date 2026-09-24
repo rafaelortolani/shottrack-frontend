@@ -567,7 +567,7 @@ function SeriesForm({
   return (
     <form onSubmit={handleSubmit} className="rounded-md bg-surface p-3 space-y-2">
       <div>
-        <label htmlFor={`${idPrefix}-weapon`} className="block text-sm text-foreground-muted mb-1">
+        <label htmlFor={`${idPrefix}-weapon`} className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
           Arma
         </label>
         <select id={`${idPrefix}-weapon`} value={weaponId} onChange={(e) => setWeaponId(e.target.value)} className={INPUT_CLASS}>
@@ -579,7 +579,7 @@ function SeriesForm({
       </div>
 
       <div>
-        <label htmlFor={`${idPrefix}-shot-count`} className="block text-sm text-foreground-muted mb-1">
+        <label htmlFor={`${idPrefix}-shot-count`} className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
           Quantidade de disparos
         </label>
         <input
@@ -598,7 +598,7 @@ function SeriesForm({
         const rv = results[resultType.id] ?? { value: "", notApplicable: false };
         return (
           <div key={resultType.id}>
-            <label htmlFor={`${idPrefix}-result-${resultType.id}`} className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor={`${idPrefix}-result-${resultType.id}`} className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               {resultType.name}
               {unit && ` (${unit.label})`}
             </label>
@@ -633,7 +633,7 @@ function SeriesForm({
                 onClick={() => updateResult(resultType.id, { notApplicable: !rv.notApplicable, value: "" })}
                 className={
                   rv.notApplicable
-                    ? "shrink-0 rounded-md px-2 py-2 text-xs font-medium bg-accent-target text-foreground transition-colors"
+                    ? "shrink-0 rounded-md px-2 py-2 text-xs font-medium bg-accent-target text-background transition-colors"
                     : "shrink-0 rounded-md px-2 py-2 text-xs font-medium border border-border text-foreground-muted hover:text-foreground transition-colors"
                 }
               >
@@ -647,7 +647,7 @@ function SeriesForm({
       {moreOpen ? (
         <div className="space-y-2 pt-2 border-t border-border">
           <div>
-            <label htmlFor={`${idPrefix}-ammunition`} className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor={`${idPrefix}-ammunition`} className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Munição
             </label>
             <select
@@ -663,7 +663,7 @@ function SeriesForm({
             </select>
           </div>
           <div>
-            <label htmlFor={`${idPrefix}-distance`} className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor={`${idPrefix}-distance`} className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Distância (metros)
             </label>
             <input
@@ -677,7 +677,7 @@ function SeriesForm({
             />
           </div>
           <div>
-            <label htmlFor={`${idPrefix}-target`} className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor={`${idPrefix}-target`} className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Alvo
             </label>
             <input
@@ -689,7 +689,7 @@ function SeriesForm({
             />
           </div>
           <div>
-            <label htmlFor={`${idPrefix}-notes`} className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor={`${idPrefix}-notes`} className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Observações
             </label>
             <textarea
@@ -721,7 +721,7 @@ function SeriesForm({
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground text-sm font-medium py-2 px-4 transition-colors"
+          className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background text-sm font-medium py-2 px-4 transition-colors"
         >
           {saving ? "Salvando..." : initialSeries ? "Salvar alterações" : "Salvar série"}
         </button>

@@ -80,7 +80,7 @@ export default function CadastroPage() {
 
             <form onSubmit={handleSubmit} noValidate className="space-y-3">
               <div>
-                <label htmlFor="email" className="block text-sm text-foreground-muted mb-1">
+                <label htmlFor="email" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
                   Email
                 </label>
                 <input
@@ -101,7 +101,7 @@ export default function CadastroPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 transition-colors"
+                className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2 transition-colors"
               >
                 {loading ? "Enviando..." : "Continuar"}
               </button>

@@ -282,7 +282,7 @@ export default function EditarMunicaoPage() {
 
       <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label htmlFor="manufacturerId" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="manufacturerId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Fabricante <span className="text-foreground-muted/60">· opcional</span>
             </label>
             <select
@@ -299,7 +299,7 @@ export default function EditarMunicaoPage() {
           </div>
 
           <div>
-            <label htmlFor="nickname" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="nickname" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Apelido <span className="text-foreground-muted/60">· opcional</span>
             </label>
             <input
@@ -325,7 +325,7 @@ export default function EditarMunicaoPage() {
             <div className="mt-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="caliberId" className="block text-sm text-foreground-muted mb-1">
+                  <label htmlFor="caliberId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
                     Calibre
                   </label>
                   <select
@@ -342,7 +342,7 @@ export default function EditarMunicaoPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="projectileWeightGrains" className="block text-sm text-foreground-muted mb-1">
+                  <label htmlFor="projectileWeightGrains" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
                     Peso (grains)
                   </label>
                   <input
@@ -356,7 +356,7 @@ export default function EditarMunicaoPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="powderCharge" className="block text-sm text-foreground-muted mb-1">
+                  <label htmlFor="powderCharge" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
                     Pólvora
                   </label>
                   <input
@@ -370,7 +370,7 @@ export default function EditarMunicaoPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="lot" className="block text-sm text-foreground-muted mb-1">
+                  <label htmlFor="lot" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
                     Lote
                   </label>
                   <input
@@ -384,7 +384,7 @@ export default function EditarMunicaoPage() {
               </div>
 
               <div className="mt-3">
-                <label htmlFor="notes" className="block text-sm text-foreground-muted mb-1">
+                <label htmlFor="notes" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
                   Observações
                 </label>
                 <textarea
@@ -408,7 +408,7 @@ export default function EditarMunicaoPage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
+              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2 px-5 transition-colors"
             >
               {saving ? "Salvando..." : "Salvar"}
             </button>

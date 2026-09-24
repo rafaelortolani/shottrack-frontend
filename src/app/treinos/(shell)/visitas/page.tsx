@@ -319,7 +319,7 @@ export default function VisitasTabPage() {
           </p>
           <Link
             href="/treinos/locais/novo"
-            className="rounded-md bg-accent-target hover:bg-accent-target-hover text-foreground text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium px-4 py-2 transition-colors"
           >
             + Cadastrar local
           </Link>
@@ -329,7 +329,7 @@ export default function VisitasTabPage() {
           <p className="text-foreground-muted mb-4">Nenhuma visita em andamento.</p>
           <Link
             href="/treinos/nova"
-            className="rounded-md bg-accent-target hover:bg-accent-target-hover text-foreground text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium px-4 py-2 transition-colors"
           >
             Iniciar visita
           </Link>
@@ -478,7 +478,7 @@ function ActiveVisitCard({
       {openingTraining ? (
         <form onSubmit={onSubmitOpenTraining} className="space-y-2 mb-3">
           <div>
-            <label htmlFor="modalityId" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="modalityId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Modalidade
             </label>
             <select
@@ -502,7 +502,7 @@ function ActiveVisitCard({
             <button
               type="submit"
               disabled={openingSaving}
-              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground text-sm font-medium py-2 px-4 transition-colors"
+              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background text-sm font-medium py-2 px-4 transition-colors"
             >
               {openingSaving ? "Abrindo..." : "Abrir"}
             </button>
@@ -624,7 +624,7 @@ function HistorySection({
 
   return (
     <div>
-      <h2 className="text-sm text-foreground-muted mb-2">Histórico</h2>
+      <h2 className="text-xs uppercase tracking-wide text-foreground-muted mb-2">Histórico</h2>
       {visits.length === 0 ? (
         <p className="text-foreground-muted">Nenhuma visita encerrada ainda.</p>
       ) : (
@@ -651,7 +651,7 @@ function HistorySection({
                 ))}
               </select>
               <div className="flex items-center gap-1.5">
-                <label htmlFor="history-date-from" className="text-sm text-foreground-muted">
+                <label htmlFor="history-date-from" className="text-xs uppercase tracking-wide text-foreground-muted">
                   De
                 </label>
                 <input
@@ -663,7 +663,7 @@ function HistorySection({
                 />
               </div>
               <div className="flex items-center gap-1.5">
-                <label htmlFor="history-date-to" className="text-sm text-foreground-muted">
+                <label htmlFor="history-date-to" className="text-xs uppercase tracking-wide text-foreground-muted">
                   Até
                 </label>
                 <input

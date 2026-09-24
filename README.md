@@ -17,14 +17,15 @@ httpOnly geridos pelo próprio servidor Next.js.
 ## Sistema de design
 | Token | Cor | Uso |
 |---|---|---|
-| `background` | `#1A1917` | Grafite quente, fundo |
-| `surface` | `#24221E` | Painéis |
-| `foreground` | `#F1EFE9` | Texto principal |
-| `foreground-muted` | `#9C968A` | Texto secundário |
-| `accent-target` | `#A6323A` | Destaque principal (recorde, ação primária) |
-| `accent-brass` | `#B8863B` | Destaque secundário |
+| `background` | `#14150F` | Gunmetal/oliva escuro, fundo |
+| `surface` | `#1E2018` | Painéis |
+| `foreground` | `#E8E2D0` | Texto principal |
+| `foreground-muted` | `#8C8878` | Texto secundário |
+| `accent-target` | `#C9A876` | Desert tan — ação primária, Armas |
+| `accent-brass` | `#D4713C` | Laranja queimado — secundário, Munições |
+| `accent-sage` | `#6E7A4F` | Oliva — Acessórios |
 
-Tipografia: **Space Grotesk** (títulos/números), **IBM Plex Sans** (corpo).
+Tipografia: **Rajdhani** (títulos/números), **IBM Plex Sans** (corpo).
 
 ## Telas prontas (protótipo)
 - `/login` — autenticação

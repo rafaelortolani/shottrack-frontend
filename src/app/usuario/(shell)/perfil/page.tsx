@@ -143,7 +143,7 @@ function PerfilTabForm() {
 
       <form onSubmit={handleSubmit} noValidate className="space-y-3 mb-6">
         <div>
-          <label htmlFor="name" className="block text-sm text-foreground-muted mb-1">
+          <label htmlFor="name" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
             Nome
           </label>
           <input
@@ -161,7 +161,7 @@ function PerfilTabForm() {
         </div>
 
         <div>
-          <label htmlFor="experienceLevel" className="block text-sm text-foreground-muted mb-1">
+          <label htmlFor="experienceLevel" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
             Nível de experiência
           </label>
           <select
@@ -193,7 +193,7 @@ function PerfilTabForm() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
+          className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2 px-5 transition-colors"
         >
           {saving ? "Salvando..." : "Salvar"}
         </button>

@@ -63,7 +63,7 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label htmlFor="email" className="block text-sm text-foreground-muted mb-1">
+              <label htmlFor="email" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
                 Email
               </label>
               <input
@@ -78,7 +78,7 @@ function LoginForm() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm text-foreground-muted mb-1">
+              <label htmlFor="password" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
                 Senha
               </label>
               <input
@@ -100,7 +100,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 transition-colors"
+              className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2 transition-colors"
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>

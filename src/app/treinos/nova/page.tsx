@@ -109,7 +109,7 @@ export default function IniciarVisitaPage() {
           </p>
           <Link
             href="/treinos/locais/novo"
-            className="rounded-md bg-accent-target hover:bg-accent-target-hover text-foreground text-sm font-medium px-4 py-2 transition-colors"
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium px-4 py-2 transition-colors"
           >
             + Cadastrar local
           </Link>
@@ -117,7 +117,7 @@ export default function IniciarVisitaPage() {
       ) : (
         <form onSubmit={handleSubmit} noValidate className="space-y-3">
           <div>
-            <label htmlFor="locationId" className="block text-sm text-foreground-muted mb-1">
+            <label htmlFor="locationId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Local de treino
             </label>
             <select
@@ -150,7 +150,7 @@ export default function IniciarVisitaPage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-foreground font-medium py-2 px-5 transition-colors"
+              className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2 px-5 transition-colors"
             >
               {saving ? "Iniciando..." : "Iniciar"}
             </button>
