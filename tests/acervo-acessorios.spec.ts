@@ -3,8 +3,7 @@ import {
   createUser,
   randomEmail,
   loginAndGetToken,
-  getWeaponCatalog,
-  getWeaponModels,
+  getValidWeaponCombo,
   registerWeapon,
   registerAccessory,
   associateAccessoryWeapon,
@@ -20,22 +19,9 @@ async function login(page: Page, email: string, password = "senha12345") {
 }
 
 async function registerTwoWeapons(token: string) {
-  const { types, brands, calibers } = await getWeaponCatalog(token);
-  const brand = brands[0];
-  const models = await getWeaponModels(token, brand.id);
-  const model = models[0];
-  const weaponA = await registerWeapon(token, {
-    typeId: types[0].id,
-    brandId: brand.id,
-    modelId: model.id,
-    caliberId: calibers[0].id,
-  });
-  const weaponB = await registerWeapon(token, {
-    typeId: types[0].id,
-    brandId: brand.id,
-    modelId: model.id,
-    caliberId: calibers[0].id,
-  });
+  const { brand, model, caliber } = await getValidWeaponCombo(token);
+  const weaponA = await registerWeapon(token, { modelId: model.id, caliberId: caliber.id });
+  const weaponB = await registerWeapon(token, { modelId: model.id, caliberId: caliber.id });
   return { weaponA, weaponB, brand, model };
 }
 

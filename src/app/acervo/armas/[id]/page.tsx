@@ -8,6 +8,7 @@ import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
 
 type Catalog = { id: string; name: string };
+type Model = Catalog & { type: Catalog };
 type Weapon = {
   id: string;
   nickname: string | null;
@@ -20,6 +21,9 @@ type Weapon = {
 const SELECT_CLASS =
   "w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors disabled:opacity-60";
 
+const READONLY_CLASS =
+  "w-full rounded-md bg-surface-raised border border-border px-3 py-2 text-foreground-muted cursor-default focus:outline-none";
+
 export default function EditarArmaPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -27,12 +31,11 @@ export default function EditarArmaPage() {
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [types, setTypes] = useState<Catalog[]>([]);
   const [brands, setBrands] = useState<Catalog[]>([]);
-  const [calibers, setCalibers] = useState<Catalog[]>([]);
-  const [models, setModels] = useState<Catalog[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [modelsForBrandId, setModelsForBrandId] = useState<string | null>(null);
-  const [typeId, setTypeId] = useState("");
+  const [calibers, setCalibers] = useState<Catalog[]>([]);
+  const [calibersForModelId, setCalibersForModelId] = useState<string | null>(null);
   const [brandId, setBrandId] = useState("");
   const [modelId, setModelId] = useState("");
   const [caliberId, setCaliberId] = useState("");
@@ -47,19 +50,17 @@ export default function EditarArmaPage() {
     let cancelled = false;
 
     async function loadData() {
-      const [weaponsRes, typesRes, brandsRes, calibersRes] = await Promise.all([
+      const [weaponsRes, brandsRes] = await Promise.all([
         fetch("/api/weapons"),
-        fetch("/api/weapon-catalog/types"),
         fetch("/api/weapon-catalog/brands"),
-        fetch("/api/weapon-catalog/calibers"),
       ]);
 
-      if ([weaponsRes, typesRes, brandsRes, calibersRes].some((r) => r.status === 401)) {
+      if ([weaponsRes, brandsRes].some((r) => r.status === 401)) {
         router.push("/login");
         return;
       }
 
-      if (!weaponsRes.ok || !typesRes.ok || !brandsRes.ok || !calibersRes.ok) {
+      if (!weaponsRes.ok || !brandsRes.ok) {
         if (!cancelled) {
           setError("Não foi possível carregar os dados");
           setLoading(false);
@@ -78,15 +79,10 @@ export default function EditarArmaPage() {
         return;
       }
 
-      const { data: typesData } = await typesRes.json();
       const { data: brandsData } = await brandsRes.json();
-      const { data: calibersData } = await calibersRes.json();
 
       if (!cancelled) {
-        setTypes(typesData);
         setBrands(brandsData);
-        setCalibers(calibersData);
-        setTypeId(weapon.type.id);
         setBrandId(weapon.brand.id);
         setModelId(weapon.model.id);
         setCaliberId(weapon.caliber.id);
@@ -134,11 +130,48 @@ export default function EditarArmaPage() {
     };
   }, [brandId, router]);
 
+  useEffect(() => {
+    if (!modelId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`/api/weapon-catalog/models/${modelId}/calibers`)
+      .then(async (response) => {
+        if (response.status === 401) {
+          router.push("/login");
+          return;
+        }
+        if (!response.ok) {
+          if (!cancelled) setError("Não foi possível carregar os calibres");
+          return;
+        }
+        const { data } = await response.json();
+        if (!cancelled) {
+          setCalibers(data);
+          setCalibersForModelId(modelId);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [modelId, router]);
+
   const loadingModels = brandId !== "" && modelsForBrandId !== brandId;
+  const loadingCalibers = modelId !== "" && calibersForModelId !== modelId;
+  const selectedModel = models.find((m) => m.id === modelId);
 
   function handleBrandChange(newBrandId: string) {
     setBrandId(newBrandId);
     setModelId("");
+    setCaliberId("");
+  }
+
+  function handleModelChange(newModelId: string) {
+    setModelId(newModelId);
+    setCaliberId("");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -151,8 +184,6 @@ export default function EditarArmaPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        typeId,
-        brandId,
         modelId,
         caliberId,
         nickname: nickname.trim() || undefined,
@@ -223,7 +254,7 @@ export default function EditarArmaPage() {
     );
   }
 
-  const canSubmit = Boolean(typeId && brandId && modelId && caliberId);
+  const canSubmit = Boolean(modelId && caliberId);
 
   return (
     <PageContainer width="form" ringsClassName="text-accent-target-soft">
@@ -260,23 +291,6 @@ export default function EditarArmaPage() {
           </div>
 
           <div>
-            <label htmlFor="typeId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
-              Tipo
-            </label>
-            <select
-              id="typeId"
-              required
-              value={typeId}
-              onChange={(e) => setTypeId(e.target.value)}
-              className={SELECT_CLASS}
-            >
-              {types.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
             <label htmlFor="brandId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
               Marca
             </label>
@@ -302,14 +316,30 @@ export default function EditarArmaPage() {
               required
               disabled={!brandId || loadingModels}
               value={modelId}
-              onChange={(e) => setModelId(e.target.value)}
+              onChange={(e) => handleModelChange(e.target.value)}
               className={SELECT_CLASS}
             >
+              <option value="" disabled>Selecione</option>
               {models.map((m) => (
                 <option key={m.id} value={m.id}>{m.name}</option>
               ))}
             </select>
           </div>
+
+          {selectedModel && (
+            <div>
+              <label htmlFor="type" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
+                Tipo
+              </label>
+              <input
+                id="type"
+                type="text"
+                readOnly
+                value={selectedModel.type.name}
+                className={READONLY_CLASS}
+              />
+            </div>
+          )}
 
           <div>
             <label htmlFor="caliberId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
@@ -318,10 +348,14 @@ export default function EditarArmaPage() {
             <select
               id="caliberId"
               required
+              disabled={!modelId || loadingCalibers}
               value={caliberId}
               onChange={(e) => setCaliberId(e.target.value)}
               className={SELECT_CLASS}
             >
+              <option value="" disabled>
+                {modelId ? "Selecione" : "Escolha um modelo primeiro"}
+              </option>
               {calibers.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}

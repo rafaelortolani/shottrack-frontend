@@ -33,12 +33,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { typeId, brandId, modelId, caliberId } = await request.json();
+  const { modelId, caliberId } = await request.json();
 
   const { status, body } = await backendFetch("/api/weapons", {
     method: "POST",
     accessToken,
-    body: JSON.stringify({ typeId, brandId, modelId, caliberId }),
+    body: JSON.stringify({ modelId, caliberId }),
   });
 
   if (status !== 201 || body.error) {

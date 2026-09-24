@@ -11,8 +11,7 @@ import {
   openTraining,
   closeTraining,
   registerSeries,
-  getWeaponCatalog,
-  getWeaponModels,
+  getValidWeaponCombo,
   registerWeapon,
 } from "./helpers";
 
@@ -46,16 +45,8 @@ test.describe("Registro rápido de série (FUC14)", () => {
     const pontuacao = configured.find((r) => r.name === "Pontuação")!;
     const agrupamento = configured.find((r) => r.name === "Agrupamento")!;
 
-    const weaponCatalog = await getWeaponCatalog(token);
-    const brand = weaponCatalog.brands[0];
-    const models = await getWeaponModels(token, brand.id);
-    const model = models[0];
-    const weapon = await registerWeapon(token, {
-      typeId: weaponCatalog.types[0].id,
-      brandId: brand.id,
-      modelId: model.id,
-      caliberId: weaponCatalog.calibers[0].id,
-    });
+    const { brand, model, caliber } = await getValidWeaponCombo(token);
+    const weapon = await registerWeapon(token, { modelId: model.id, caliberId: caliber.id });
     const weaponLabel = `${brand.name} ${model.name}`;
 
     const visit = await startVisit(token, location.id);

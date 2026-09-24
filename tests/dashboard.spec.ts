@@ -14,9 +14,9 @@ import {
   closeTraining,
   registerSeries,
   registerSeriesResult,
-  getWeaponCatalog,
-  getWeaponModels,
+  getValidWeaponCombo,
   registerWeapon,
+  updateWeapon,
 } from "./helpers";
 
 async function submitLogin(page: Page, email: string, password = "senha12345") {
@@ -27,16 +27,12 @@ async function submitLogin(page: Page, email: string, password = "senha12345") {
 }
 
 async function registerAnyWeapon(token: string, nickname?: string) {
-  const catalog = await getWeaponCatalog(token);
-  const brand = catalog.brands[0];
-  const [model] = await getWeaponModels(token, brand.id);
-  await registerWeapon(token, {
-    typeId: catalog.types[0].id,
-    brandId: brand.id,
-    modelId: model.id,
-    caliberId: catalog.calibers[0].id,
-    ...(nickname ? { nickname } : {}),
-  });
+  const { model, caliber } = await getValidWeaponCombo(token);
+  const weapon = await registerWeapon(token, { modelId: model.id, caliberId: caliber.id });
+  // Apelido não entra no cadastro, só na edição (UC06/UC10)
+  if (nickname) {
+    await updateWeapon(token, weapon.id, { modelId: model.id, caliberId: caliber.id, nickname });
+  }
 }
 
 function onboardingItem(page: Page, label: string) {
