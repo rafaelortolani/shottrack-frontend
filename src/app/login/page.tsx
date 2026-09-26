@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { LogoWordmark } from "@/components/LogoWordmark";
 import { TargetRings } from "@/components/TargetRings";
 
 export default function LoginPage() {
@@ -50,8 +51,8 @@ function LoginForm() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target pointer-events-none" />
 
         <div className="relative z-10">
-          <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
-            ShotTrack
+          <h1 className="text-lg mb-1">
+            <LogoWordmark />
           </h1>
           <p className="text-foreground-muted mb-6">Treine. Registre. Evolua.</p>
 
