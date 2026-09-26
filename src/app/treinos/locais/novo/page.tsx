@@ -73,7 +73,7 @@ export default function NovoLocalTreinoPage() {
   }
 
   return (
-    <PageContainer width="form" ringsClassName="text-accent-target-soft">
+    <PageContainer width="form">
       <Breadcrumb
         items={[
           { href: "/treinos", label: "Treinos" },

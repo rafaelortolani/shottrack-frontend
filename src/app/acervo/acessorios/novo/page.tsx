@@ -108,7 +108,7 @@ export default function NovoAcessorioPage() {
   }
 
   return (
-    <PageContainer width="form" ringsClassName="text-accent-target-soft">
+    <PageContainer width="form">
       <Breadcrumb
         items={[
           { href: "/acervo", label: "Acervo" },

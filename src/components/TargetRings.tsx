@@ -13,13 +13,13 @@ export function TargetRings({ className = "" }: { className?: string }) {
       aria-hidden="true"
       fill="none"
     >
-      <circle cx="100" cy="100" r="85" stroke="currentColor" strokeOpacity="0.18" strokeWidth="1" />
-      <line x1="100" y1="15" x2="100" y2="185" stroke="currentColor" strokeOpacity="0.15" strokeWidth="1" />
-      <line x1="15" y1="100" x2="185" y2="100" stroke="currentColor" strokeOpacity="0.15" strokeWidth="1" />
-      <line x1="70" y1="15" x2="70" y2="30" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-      <line x1="130" y1="15" x2="130" y2="30" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-      <line x1="15" y1="70" x2="30" y2="70" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-      <line x1="15" y1="130" x2="30" y2="130" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+      <circle cx="100" cy="100" r="85" stroke="currentColor" strokeOpacity="0.24" strokeWidth="1" />
+      <line x1="100" y1="15" x2="100" y2="185" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <line x1="15" y1="100" x2="185" y2="100" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <line x1="70" y1="15" x2="70" y2="30" stroke="currentColor" strokeOpacity="0.32" strokeWidth="1" />
+      <line x1="130" y1="15" x2="130" y2="30" stroke="currentColor" strokeOpacity="0.32" strokeWidth="1" />
+      <line x1="15" y1="70" x2="30" y2="70" stroke="currentColor" strokeOpacity="0.32" strokeWidth="1" />
+      <line x1="15" y1="130" x2="30" y2="130" stroke="currentColor" strokeOpacity="0.32" strokeWidth="1" />
     </svg>
   );
 }

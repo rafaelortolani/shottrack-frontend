@@ -19,12 +19,12 @@ export function EmptyState({
   onAction: () => void;
 }) {
   return (
-    <div role="group" aria-label={title} className="rounded-md border border-dashed border-border p-5 flex flex-col items-center text-center">
-      <span className="flex items-center justify-center w-10 h-10 rounded-full bg-accent-brass/15 text-accent-brass-soft mb-3">
-        <IconComponent size={20} stroke={1.75} />
+    <div role="group" aria-label={title} className="rounded-md border border-dashed border-border/60 p-4 flex flex-col items-center text-center">
+      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-accent-brass/15 text-accent-brass-soft mb-2">
+        <IconComponent size={16} stroke={1.75} />
       </span>
       <p className="font-display font-semibold text-foreground mb-1">{title}</p>
-      <p className="text-sm text-foreground-muted mb-4 max-w-xs">{description}</p>
+      <p className="text-sm text-foreground-muted mb-3 max-w-xs">{description}</p>
       <button
         type="button"
         onClick={onAction}
