@@ -47,8 +47,13 @@ function LoginForm() {
 
   return (
     <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background text-foreground">
-      <div className="relative w-full max-w-sm px-6">
-        <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target pointer-events-none" animated />
+      {/* md:mr reserva o espaço da mira à direita, pra centralizar formulário + mira juntos */}
+      <div className="relative w-full max-w-sm px-6 md:mr-[396px]">
+        {/* Fora do formulário: acima do logo no mobile, ao lado dos campos no desktop */}
+        <TargetRings
+          className="absolute z-0 text-accent-target pointer-events-none w-[260px] h-[260px] left-1/2 -translate-x-1/2 bottom-full mb-4 md:w-[420px] md:h-[420px] md:left-[calc(100%-1.5rem)] md:translate-x-0 md:bottom-auto md:mb-0 md:top-1/2 md:-translate-y-1/2"
+          animated
+        />
 
         <div className="relative z-10">
           <h1 className="text-5xl mb-3">
