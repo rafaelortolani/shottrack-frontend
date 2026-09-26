@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { LogoWordmark } from "@/components/LogoWordmark";
 import { TargetRings } from "@/components/TargetRings";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,8 +71,8 @@ export default function CadastroPage() {
       <TargetRings className="absolute -right-24 -top-24 w-[500px] h-[500px] text-accent-target pointer-events-none" />
 
       <div className="relative w-full max-w-sm px-6">
-        <h1 className="font-display text-lg font-semibold tracking-tight mb-1">
-          ShotTrack
+        <h1 className="text-lg mb-1">
+          <LogoWordmark />
         </h1>
 
         {step === "request" ? (

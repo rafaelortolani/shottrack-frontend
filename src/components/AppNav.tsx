@@ -21,6 +21,8 @@ import {
   IconCategory2,
   type TablerIcon,
 } from "@tabler/icons-react";
+import { LogoIcon } from "@/components/LogoIcon";
+import { LogoWordmark } from "@/components/LogoWordmark";
 
 const NAV_COLLAPSED_KEY = "shottrack:nav-collapsed";
 
@@ -140,8 +142,8 @@ export function AppNav() {
           collapsed ? "w-16 px-3" : "w-56 px-5"
         }`}
       >
-        <div className={`flex items-center mb-10 ${collapsed ? "justify-center" : "justify-between"}`}>
-          {!collapsed && <span className="font-display font-semibold text-lg">ShotTrack</span>}
+        <div className={`flex items-center mb-10 ${collapsed ? "flex-col gap-3" : "justify-between"}`}>
+          {collapsed ? <LogoIcon className="w-7 h-7" /> : <LogoWordmark className="text-lg" />}
           <button
             type="button"
             onClick={toggleCollapsed}
