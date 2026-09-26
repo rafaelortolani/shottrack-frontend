@@ -21,22 +21,27 @@ Decisão consciente e registrada: a diretriz original do brief de produto
 ("evite estética militar/tática") foi **revertida** — a identidade agora
 abraça a referência tática de propósito. Isso substitui, não complementa,
 as regras antigas de "evitar ícone literal de arma" e "referência mais
-próxima de apps de fitness". Paleta: gunmetal/oliva escuro, desert tan,
-laranja queimado. Tipografia de destaque: Rajdhani (técnica, HUD). Motivo
-gráfico: retícula mil-dot (círculo + cruz + marcações), não mais anéis
-concêntricos puros. Labels de seção em caixa alta.
+próxima de apps de fitness". Paleta: cinza escuro, dourado, vermelho vivo
+(revisada — versão anterior era gunmetal/oliva/desert-tan/laranja).
+Tipografia de destaque: Rajdhani (técnica, HUD). Motivo gráfico: retícula
+mil-dot (círculo + cruz + marcações), não mais anéis concêntricos puros.
+Labels de seção em caixa alta.
 
 ## Sistema de design
 - Cores: sempre via tokens Tailwind definidos em `globals.css`
   (`bg-background`, `bg-surface`, `text-foreground`, `text-foreground-muted`,
   `border-border`) — nunca hex direto num componente.
 - Três acentos, cada um com um papel fixo — nunca usar um no lugar do outro:
-  - `accent-target` (desert tan) — ação primária / categoria "Armas" ou
-    desempenho principal.
-  - `accent-brass` (laranja queimado) — ação secundária / categoria
-    "Munições" ou informação complementar.
-  - `accent-sage` (oliva) — categoria "Acessórios" / terceiro dado
-    numa comparação (ex: terceira linha de um gráfico).
+  - `accent-target` (dourado) — ação primária / categoria "Armas" ou
+    desempenho principal. É o acento "de peso" da identidade — usar com
+    presença real, é ele que deve chamar atenção primeiro.
+  - `accent-brass` (vermelho vivo) — ação secundária / categoria
+    "Munições" / estado que precisa de atenção (ex: "visita em
+    andamento"). Mais saturado que o dourado — usar quando algo
+    realmente precisa se destacar como urgente/ativo, não como decoração.
+  - `accent-sage` (bronze, discreto) — categoria "Acessórios" / terceiro
+    dado numa comparação (ex: terceira linha de um gráfico). Propositalmente
+    menos vibrante que os outros dois.
   - Botões e ações usam a variante sólida (`bg-accent-target`). Ícones e
     texto de destaque sobre fundo escuro usam a variante `-soft`
     (`text-accent-target-soft`). Fundos tintados (chip, badge, ícone com
@@ -92,8 +97,7 @@ deixando a tela com sensação de vazio. Referência de escala (Tailwind):
 - Padding interno de input/botão: `py-2 px-3` (não `py-3`+).
 - Linhas de lista: `py-2` entre itens, divisor fino (`border-border`),
   nunca card com borda própria por item — ver seção de cor acima
-  (borda lateral fina na cor da categoria, sem borda ao redor do item
-  inteiro).
+  (ícone com fundo tintado, sem borda ao redor do item inteiro).
 - Fonte de título de tela: `text-base`/`text-lg` (não `text-xl`+); número
   de destaque no dashboard é a exceção (esse sim grande).
 
@@ -113,6 +117,20 @@ fica posicionado atrás do container centralizado (mesmo padrão já usado
 em login/cadastro), não como decoração isolada num canto desconectado do
 conteúdo. Vale pra toda tela dentro de Acervo, Usuário, Treinos — não só
 as telas de autenticação.
+
+## Logo — dois componentes, cada um com seu espaço fixo
+Dois componentes, `LogoWordmark` e `LogoIcon` (`src/components/`), nunca
+um substituindo o outro por escolha de tela:
+- `LogoWordmark`: nome completo "SHOTTRACK" (Rajdhani) com o ponto de mira
+  substituindo o primeiro "O" (círculo dourado, ponto central vermelho).
+  Usado em: login, cadastro, cabeçalho da nav quando expandida.
+- `LogoIcon`: só o ícone de retícula (círculo + cruz + ponto central
+  vermelho), sem texto. Usado em: favicon, nav quando recolhida (o botão
+  de recolher já existe na sidebar — é o estado que precisa desse ícone).
+
+Nunca usar um no lugar do outro por preferência de tela — a escolha é
+sempre "cabe o nome por extenso?" (wordmark) vs. "só cabe um símbolo?"
+(ícone).
 
 ## Consistência entre mobile e desktop — regra inegociável
 Não existe "tema mobile" separado. Os breakpoints (`md:`, `lg:`, etc.)
