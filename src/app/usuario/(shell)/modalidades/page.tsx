@@ -25,6 +25,17 @@ function formatResultTypesSummary(types: ResultType[] | undefined): string {
   return rest.length > 0 ? `${shown} +${rest.length}` : shown;
 }
 
+async function fetchResultTypesByModality(modalities: Modality[]): Promise<Record<string, ResultType[]>> {
+  const entries = await Promise.all(
+    modalities.map(async (modality) => {
+      const response = await fetch(`/api/practiced-modalities/${modality.id}/result-types`);
+      const resultTypes: ResultType[] = response.ok ? (await response.json()).data : [];
+      return [modality.id, resultTypes] as const;
+    })
+  );
+  return Object.fromEntries(entries);
+}
+
 export default function ModalidadesTabPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -67,16 +78,9 @@ export default function ModalidadesTabPage() {
         setLoading(false);
       }
 
-      const resultTypesEntries = await Promise.all(
-        practicedData.map(async (modality: Modality) => {
-          const response = await fetch(`/api/practiced-modalities/${modality.id}/result-types`);
-          const resultTypes = response.ok ? (await response.json()).data : [];
-          return [modality.id, resultTypes] as const;
-        })
-      );
-
+      const resultTypes = await fetchResultTypesByModality(practicedData);
       if (!cancelled) {
-        setResultTypesByModality(Object.fromEntries(resultTypesEntries));
+        setResultTypesByModality(resultTypes);
       }
     }
 
@@ -86,42 +90,43 @@ export default function ModalidadesTabPage() {
     };
   }, [router]);
 
+  /**
+   * Depois de adicionar ou remover, a lista de praticadas vem de novo do
+   * backend em vez de ser ajustada só em memória — o estado local nunca
+   * fica dessincronizado (ex: remover e re-adicionar logo em seguida).
+   * Retorna false se a sessão expirou (já redirecionou pro login).
+   */
+  async function refreshPracticed(): Promise<boolean> {
+    const response = await fetch("/api/practiced-modalities");
+
+    if (response.status === 401) {
+      router.push("/login");
+      return false;
+    }
+
+    if (!response.ok) {
+      setError("Não foi possível atualizar as modalidades praticadas. Recarregue a página.");
+      return true;
+    }
+
+    const { data } = await response.json();
+    setPracticed(data);
+    setResultTypesByModality(await fetchResultTypesByModality(data));
+    return true;
+  }
+
   async function handleToggle(modality: Modality, isPracticed: boolean) {
     setError(null);
     setFeedback(null);
     setPendingId(modality.id);
 
-    if (isPracticed) {
-      const response = await fetch(`/api/practiced-modalities/${modality.id}`, { method: "DELETE" });
-      setPendingId(null);
-
-      if (response.status === 401) {
-        router.push("/login");
-        return;
-      }
-
-      if (!response.ok) {
-        const { error } = await response.json();
-        setError(error?.message ?? "Não foi possível remover a modalidade");
-        return;
-      }
-
-      setPracticed((prev) => prev.filter((m) => m.id !== modality.id));
-      setResultTypesByModality((prev) => {
-        const next = { ...prev };
-        delete next[modality.id];
-        return next;
-      });
-      setFeedback(`${modality.name} removida`);
-      return;
-    }
-
-    const response = await fetch("/api/practiced-modalities", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ modalityId: modality.id }),
-    });
-    setPendingId(null);
+    const response = isPracticed
+      ? await fetch(`/api/practiced-modalities/${modality.id}`, { method: "DELETE" })
+      : await fetch("/api/practiced-modalities", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ modalityId: modality.id }),
+        });
 
     if (response.status === 401) {
       router.push("/login");
@@ -130,19 +135,22 @@ export default function ModalidadesTabPage() {
 
     if (!response.ok) {
       const { error } = await response.json();
-      setError(error?.message ?? "Não foi possível adicionar a modalidade");
+      if (error?.code === "MODALITY_IN_USE") {
+        setError(`${modality.name} já tem treino registrado e não pode ser removida.`);
+      } else {
+        setError(error?.message ?? (isPracticed ? "Não foi possível remover a modalidade" : "Não foi possível adicionar a modalidade"));
+      }
+      // Mesmo com erro o estado no backend pode ter mudado (ex: já adicionada,
+      // já removida, falha no meio da operação) — ressincroniza a lista
+      await refreshPracticed();
+      setPendingId(null);
       return;
     }
 
-    const { data } = await response.json();
-    setPracticed((prev) => [...prev, data]);
-    setFeedback(`${modality.name} adicionada`);
-
-    const resultTypesRes = await fetch(`/api/practiced-modalities/${data.id}/result-types`);
-    if (resultTypesRes.ok) {
-      const { data: resultTypesData } = await resultTypesRes.json();
-      setResultTypesByModality((prev) => ({ ...prev, [data.id]: resultTypesData }));
+    if (await refreshPracticed()) {
+      setFeedback(`${modality.name} ${isPracticed ? "removida" : "adicionada"}`);
     }
+    setPendingId(null);
   }
 
   if (loading) {
