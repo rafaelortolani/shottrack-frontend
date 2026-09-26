@@ -123,6 +123,23 @@ test.describe("Boas-vindas (FUC17)", () => {
     await expect(page.getByRole("heading", { name: "Sua evolução" })).toBeVisible();
   });
 
+  test("logo do menu leva de volta pra boas-vindas, expandido ou recolhido", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    await submitLogin(page, email);
+    await expect(page).toHaveURL(/\/boas-vindas/);
+
+    await page.goto("/acervo");
+    await page.getByRole("link", { name: "ShotTrack" }).click();
+    await expect(page).toHaveURL(/\/boas-vindas/);
+
+    await page.goto("/acervo");
+    await page.getByRole("button", { name: "Recolher menu" }).click();
+    await page.getByRole("link", { name: "ShotTrack" }).click();
+    await expect(page).toHaveURL(/\/boas-vindas/);
+  });
+
   test("login com visita ativa pula boas-vindas e vai direto pra Treinos", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
