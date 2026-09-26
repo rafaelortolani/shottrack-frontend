@@ -3,7 +3,14 @@
  * primeiro "O". Usado onde o nome completo cabe: login, cadastro,
  * cabeçalho da nav expandida. Ver skill de convenções, seção "Logo".
  */
-export function LogoWordmark({ className = "" }: { className?: string }) {
+export function LogoWordmark({
+  className = "",
+  animated = false,
+}: {
+  className?: string;
+  // entrada do login: ponto de mira "acerta" com anel de impacto (classes em globals.css)
+  animated?: boolean;
+}) {
   return (
     <span
       role="img"
@@ -19,7 +26,10 @@ export function LogoWordmark({ className = "" }: { className?: string }) {
         aria-hidden="true"
       >
         <circle cx="11" cy="11" r="9" fill="none" stroke="var(--accent-target)" strokeWidth="1.6" />
-        <circle cx="11" cy="11" r="3" fill="var(--accent-brass)" />
+        {animated && (
+          <circle cx="11" cy="11" r="3" fill="none" stroke="var(--accent-target)" strokeWidth="1" opacity="0" className="shot-ring" />
+        )}
+        <circle cx="11" cy="11" r="3" fill="var(--accent-brass)" className={animated ? "shot-hit" : undefined} />
       </svg>
       TTRACK
     </span>
