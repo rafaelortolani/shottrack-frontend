@@ -51,7 +51,7 @@ function LoginForm() {
         <TargetRings className="absolute -top-14 -right-14 z-0 w-[380px] h-[380px] text-accent-target pointer-events-none" />
 
         <div className="relative z-10">
-          <h1 className="text-3xl mb-2">
+          <h1 className="text-5xl mb-3">
             <LogoWordmark />
           </h1>
           <p className="text-foreground-muted mb-6">Treine. Registre. Evolua.</p>
