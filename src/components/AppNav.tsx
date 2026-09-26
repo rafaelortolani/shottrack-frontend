@@ -143,7 +143,10 @@ export function AppNav() {
         }`}
       >
         <div className={`flex items-center mb-10 ${collapsed ? "flex-col gap-3" : "justify-between"}`}>
-          {collapsed ? <LogoIcon className="w-7 h-7" /> : <LogoWordmark className="text-lg" />}
+          {/* Logo leva pra página inicial (Boas-vindas, FUC17); nome acessível vem do próprio logo */}
+          <Link href="/boas-vindas" className="flex">
+            {collapsed ? <LogoIcon className="w-7 h-7" /> : <LogoWordmark className="text-lg" />}
+          </Link>
           <button
             type="button"
             onClick={toggleCollapsed}
