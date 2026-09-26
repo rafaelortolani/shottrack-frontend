@@ -64,7 +64,7 @@ body {
   .shot-ring {
     transform-box: fill-box;
     transform-origin: center;
-    animation: shot-ring 500ms ease-out 900ms both;
+    animation: shot-ring 650ms ease-out 900ms both;
   }
   .rise-in {
     animation: rise-in 300ms ease-out 1000ms both;
@@ -84,7 +84,7 @@ body {
 
 @keyframes shot-ring {
   from { transform: scale(1); opacity: 0.9; }
-  to { transform: scale(3); opacity: 0; }
+  to { transform: scale(7); opacity: 0; }
 }
 
 @keyframes rise-in {
