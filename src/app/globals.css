@@ -45,3 +45,49 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
 }
+/* Animação de entrada do login (FUC02) — roda uma vez: retícula se
+   desenha, ponto do logo "acerta", formulário sobe. Fora do
+   no-preference (prefers-reduced-motion) a tela já nasce pronta. */
+@media (prefers-reduced-motion: no-preference) {
+  .reticle-draw > * {
+    stroke-dasharray: 1;
+    animation: reticle-draw 800ms ease-out both;
+  }
+  .reticle-draw > :not(:first-child) {
+    animation-delay: 250ms;
+  }
+  .shot-hit {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: shot-hit 300ms ease-out 800ms both;
+  }
+  .shot-ring {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: shot-ring 500ms ease-out 900ms both;
+  }
+  .rise-in {
+    animation: rise-in 300ms ease-out 1000ms both;
+  }
+}
+
+@keyframes reticle-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes shot-hit {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shot-ring {
+  from { transform: scale(1); opacity: 0.9; }
+  to { transform: scale(3); opacity: 0; }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
