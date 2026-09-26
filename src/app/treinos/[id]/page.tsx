@@ -161,7 +161,7 @@ export default function DetalheVisitaPage() {
 
   return (
     <>
-      <PageContainer ringsClassName="text-accent-target-soft">
+      <PageContainer>
         <Breadcrumb
           items={[
             { href: "/treinos", label: "Treinos" },

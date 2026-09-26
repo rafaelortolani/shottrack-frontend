@@ -207,7 +207,7 @@ function PerfilTabForm() {
           </div>
           <Link
             href="/usuario/modalidades"
-            className="text-sm text-foreground-muted hover:text-foreground transition-colors"
+            className="text-sm text-accent-brass-soft hover:text-accent-brass transition-colors"
           >
             Editar
           </Link>
@@ -219,7 +219,7 @@ function PerfilTabForm() {
           </div>
           <Link
             href="/usuario/email"
-            className="text-sm text-foreground-muted hover:text-foreground transition-colors"
+            className="text-sm text-accent-brass-soft hover:text-accent-brass transition-colors"
           >
             Alterar
           </Link>
@@ -231,7 +231,7 @@ function PerfilTabForm() {
           </div>
           <Link
             href="/usuario/senha"
-            className="text-sm text-foreground-muted hover:text-foreground transition-colors"
+            className="text-sm text-accent-brass-soft hover:text-accent-brass transition-colors"
           >
             Alterar
           </Link>

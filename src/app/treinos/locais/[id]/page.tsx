@@ -217,7 +217,7 @@ export default function EditarLocalTreinoPage() {
   }
 
   return (
-    <PageContainer width="form" ringsClassName="text-accent-target-soft">
+    <PageContainer width="form">
       <Breadcrumb
         items={[
           { href: "/treinos", label: "Treinos" },

@@ -65,7 +65,7 @@ export default function AlterarSenhaPage() {
   }
 
   return (
-    <PageContainer width="form" ringsClassName="text-accent-target">
+    <PageContainer width="form">
       <Breadcrumb items={[{ href: "/usuario", label: "Usuário" }, { href: "/usuario/perfil", label: "Perfil" }, { label: "Alterar senha" }]} />
       <h1 className="font-display text-3xl font-semibold tracking-tight mb-1">
         Alterar senha

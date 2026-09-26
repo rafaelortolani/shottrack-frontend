@@ -122,7 +122,7 @@ export default function DashboardPage() {
       <AppNav />
 
       <main className="flex-1 relative overflow-hidden">
-        <PageContainer width="wide" ringsClassName="text-accent-brass">
+        <PageContainer width="wide">
           <p className="text-foreground-muted mb-1">Bem-vindo de volta</p>
           <h1 className="font-display text-lg font-semibold mb-4">
             Sua evolução

@@ -270,7 +270,7 @@ export default function EditarAcessorioPage() {
   const availableWeapons = allWeapons.filter((w) => !associatedIds.has(w.id));
 
   return (
-    <PageContainer width="form" ringsClassName="text-accent-target-soft">
+    <PageContainer width="form">
       <Breadcrumb
         items={[
           { href: "/acervo", label: "Acervo" },
