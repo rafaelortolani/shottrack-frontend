@@ -20,7 +20,9 @@ async function loginToDashboard(page: Page, email: string) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Senha").fill("senha12345");
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  // Login cai em Boas-vindas (FUC17); o dashboard segue pela nav
+  await expect(page).toHaveURL(/\/boas-vindas/);
+  await page.goto("/dashboard");
 }
 
 // A tabela do gráfico (acessível, fora da tela) traz todos os pontos

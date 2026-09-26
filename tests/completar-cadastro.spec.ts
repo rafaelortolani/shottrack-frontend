@@ -29,7 +29,7 @@ test.describe("Completar cadastro (FUC10)", () => {
     await page.getByLabel("Senha").fill("senha12345");
     await page.getByRole("button", { name: "Entrar" }).click();
 
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/boas-vindas/);
   });
 
   test("mostra erro claro quando o token já foi usado", async ({ page }) => {

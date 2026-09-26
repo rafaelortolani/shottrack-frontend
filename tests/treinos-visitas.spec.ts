@@ -14,7 +14,7 @@ import {
 } from "./helpers";
 
 // Landing pós-login depende de ter visita em andamento (FUC15)
-async function login(page: Page, email: string, landing: RegExp = /\/dashboard/) {
+async function login(page: Page, email: string, landing: RegExp = /\/boas-vindas/) {
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Senha").fill("senha12345");

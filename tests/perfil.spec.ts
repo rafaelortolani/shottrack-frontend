@@ -10,7 +10,7 @@ test.describe("Usuário > Perfil (FUC03)", () => {
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Senha").fill("senha12345");
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/boas-vindas/);
 
     await page.goto("/usuario/perfil");
     await expect(page.getByLabel("Nome")).toHaveValue("Usuário de Teste");
@@ -31,7 +31,7 @@ test.describe("Usuário > Perfil (FUC03)", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("chega no usuário pelo link do menu no dashboard", async ({ page }) => {
+  test("chega no usuário pelo link do menu", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
 
@@ -39,7 +39,7 @@ test.describe("Usuário > Perfil (FUC03)", () => {
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Senha").fill("senha12345");
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/boas-vindas/);
 
     await page.getByRole("link", { name: "Usuário" }).click();
     await expect(page).toHaveURL(/\/usuario$/);
@@ -53,7 +53,7 @@ test.describe("Usuário > Perfil (FUC03)", () => {
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Senha").fill("senha12345");
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/boas-vindas/);
 
     await page.goto("/usuario/perfil");
     await page.getByRole("link", { name: "Editar" }).click();
@@ -68,7 +68,7 @@ test.describe("Usuário > Perfil (FUC03)", () => {
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Senha").fill("senha12345");
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/boas-vindas/);
 
     await page.goto("/usuario");
     await page.getByRole("button", { name: "Sair" }).click();

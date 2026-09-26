@@ -3,7 +3,6 @@ import {
   createUser,
   randomEmail,
   loginAndGetToken,
-  updateProfile,
   getModalityCatalog,
   addPracticedModality,
   getConfiguredResultTypes,
@@ -35,26 +34,27 @@ async function registerAnyWeapon(token: string, nickname?: string) {
   }
 }
 
-function onboardingItem(page: Page, label: string) {
-  return page.getByRole("region", { name: "Configuração inicial" }).getByRole("listitem").filter({ hasText: label });
+// Login cai em Boas-vindas (FUC17); o Dashboard segue acessível pela nav
+async function openDashboardFromNav(page: Page) {
+  await expect(page).toHaveURL(/\/boas-vindas/);
+  await page.getByRole("link", { name: "Dashboard" }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
 }
 
-test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
-  test("atleta novo vê onboarding completo, convite pra treinar e seções vazias sem indicador artificial", async ({
+test.describe("Dashboard Onda 1 e landing condicional (FUC15/FUC17)", () => {
+  test("atleta novo vê convite pra treinar e seções vazias sem indicador artificial, sem onboarding", async ({
     page,
   }) => {
     const email = randomEmail();
     await createUser(email);
 
     await submitLogin(page, email);
-    await expect(page).toHaveURL(/\/dashboard/);
+    await openDashboardFromNav(page);
 
-    const onboarding = page.getByRole("region", { name: "Configuração inicial" });
-    await expect(onboarding).toBeVisible();
-    await expect(onboarding.getByText("0 de 3 concluídos")).toBeVisible();
-    for (const label of ["Criar perfil", "Configurar modalidades", "Cadastrar arma"]) {
-      await expect(onboardingItem(page, label)).toBeVisible();
-    }
+    // Onboarding vive só em Boas-vindas agora (FUC17)
+    await expect(page.getByRole("heading", { name: "Sua evolução" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Configuração inicial" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Continuar configuração" })).toHaveCount(0);
 
     const mainAction = page.getByRole("region", { name: "Ação principal" });
     await expect(mainAction.getByText("Pronto pra treinar?")).toBeVisible();
@@ -67,43 +67,6 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     await expect(page.getByRole("region", { name: "Últimos treinos" }).getByText(/Ainda não há treinos/)).toBeVisible();
     await expect(page.getByRole("region", { name: "Modalidades" }).getByText(/Nenhum treino registrado/)).toBeVisible();
     await expect(page.getByRole("region", { name: "Acervo" }).getByText("Nenhuma arma cadastrada ainda.")).toBeVisible();
-
-    // "Continuar configuração" leva pra primeira pendência
-    await onboarding.getByRole("link", { name: "Continuar configuração" }).click();
-    await expect(page).toHaveURL(/\/usuario\/perfil/);
-  });
-
-  test("completar uma pendência tira ela da lista, e o onboarding some quando completo", async ({ page }) => {
-    const email = randomEmail();
-    await createUser(email);
-    const token = await loginAndGetToken(email);
-
-    await submitLogin(page, email);
-    await expect(page).toHaveURL(/\/dashboard/);
-    await expect(onboardingItem(page, "Configurar modalidades")).toBeVisible();
-
-    const [modality] = await getModalityCatalog(token);
-    await addPracticedModality(token, modality.id);
-    await page.reload();
-
-    await expect(onboardingItem(page, "Configurar modalidades")).toHaveCount(0);
-    await expect(onboardingItem(page, "Criar perfil")).toBeVisible();
-    await expect(onboardingItem(page, "Cadastrar arma")).toBeVisible();
-    await expect(page.getByRole("region", { name: "Configuração inicial" }).getByText("1 de 3 concluídos")).toBeVisible();
-
-    // Perfil ainda pendente → continua sendo o primeiro destino
-    await expect(page.getByRole("link", { name: "Continuar configuração" })).toHaveAttribute("href", "/usuario/perfil");
-
-    await updateProfile(token, { name: "Atleta Teste", experienceLevel: "INTERMEDIATE" });
-    await page.reload();
-    await expect(onboardingItem(page, "Criar perfil")).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Continuar configuração" })).toHaveAttribute("href", "/acervo/armas/nova");
-
-    await registerAnyWeapon(token);
-    await page.reload();
-
-    await expect(page.getByRole("region", { name: "Ação principal" })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Configuração inicial" })).toHaveCount(0);
   });
 
   test("ação principal muda pra 'Continuar treino' ao iniciar uma visita", async ({ page }) => {
@@ -115,7 +78,7 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     await addPracticedModality(token, modality.id);
 
     await submitLogin(page, email);
-    await expect(page).toHaveURL(/\/dashboard/);
+    await openDashboardFromNav(page);
     const mainAction = page.getByRole("region", { name: "Ação principal" });
     await expect(mainAction.getByText("Pronto pra treinar?")).toBeVisible();
 
@@ -164,7 +127,7 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     await closeVisit(token, visit.id);
 
     await submitLogin(page, email);
-    await expect(page).toHaveURL(/\/dashboard/);
+    await openDashboardFromNav(page);
 
     // Recordes: um por tipo com registro, cada um com o melhor valor
     const records = page.getByRole("region", { name: "Recordes" }).getByRole("listitem");
@@ -222,7 +185,7 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15)", () => {
     await createUser(email);
 
     await submitLogin(page, email);
-    await expect(page).toHaveURL(/\/dashboard/);
+    await openDashboardFromNav(page);
 
     // Cookie presente (o proxy deixa passar) mas token inválido: o backend
     // responde 401 e a tela precisa tratar como sessão expirada.

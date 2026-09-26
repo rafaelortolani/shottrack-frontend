@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IconCircle, IconFocus2 } from "@tabler/icons-react";
+import { IconFocus2 } from "@tabler/icons-react";
 import { AppNav } from "@/components/AppNav";
 import { EvolutionSection } from "@/components/EvolutionSection";
 import { PageContainer } from "@/components/PageContainer";
@@ -16,8 +16,6 @@ type Highlight = {
   resultTypeName: string;
   value: number;
 };
-
-type OnboardingStep = "CREATE_PROFILE" | "CONFIGURE_MODALITIES" | "REGISTER_WEAPON";
 
 type ActiveVisit = {
   visitId: string;
@@ -42,8 +40,6 @@ type ModalitySummary = {
 };
 
 type Dashboard = {
-  // ausente quando não há pendência de configuração
-  onboarding?: { pendingSteps: OnboardingStep[] };
   mainAction: { type: "CONTINUE_VISIT" | "START_VISIT"; activeVisit: ActiveVisit | null };
   trainingsThisMonth: number;
   shotsThisMonth: number;
@@ -56,21 +52,10 @@ type Dashboard = {
   records: Highlight[];
 };
 
-// Ordem de exibição e destino de cada pendência — "Continuar configuração"
-// leva pra primeira que ainda estiver pendente.
-const ONBOARDING_STEPS: { step: OnboardingStep; label: string; href: string }[] = [
-  { step: "CREATE_PROFILE", label: "Criar perfil", href: "/usuario/perfil" },
-  { step: "CONFIGURE_MODALITIES", label: "Configurar modalidades", href: "/usuario/modalidades" },
-  { step: "REGISTER_WEAPON", label: "Cadastrar arma", href: "/acervo/armas/nova" },
-];
-
 const RECENT_TRAININGS_SHOWN = 5;
 
 const PRIMARY_LINK_CLASS =
   "inline-block rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium px-4 py-2 transition-colors";
-// Secundário: a ação principal logo abaixo é o único botão sólido da tela
-const SECONDARY_LINK_CLASS =
-  "inline-block rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground hover:border-accent-target transition-colors";
 const SECTION_LINK_CLASS = "text-sm text-accent-brass-soft hover:text-accent-brass transition-colors";
 
 function formatNumber(value: number): string {
@@ -150,7 +135,6 @@ function DashboardContent({ dashboard }: { dashboard: Dashboard }) {
 
   return (
     <div className="space-y-6">
-      {dashboard.onboarding && <OnboardingSection pendingSteps={dashboard.onboarding.pendingSteps} />}
       <EvolutionSection
         trainingCountByModality={trainingCountByModality}
         recordTypeNames={dashboard.records.map((r) => r.resultTypeName)}
@@ -177,36 +161,6 @@ function SectionHeader({ id, title, link }: { id: string; title: string; link?: 
         </Link>
       )}
     </div>
-  );
-}
-
-function OnboardingSection({ pendingSteps }: { pendingSteps: OnboardingStep[] }) {
-  // só as pendentes aparecem — item concluído sai da lista, o progresso fica no contador
-  const pending = ONBOARDING_STEPS.filter((s) => pendingSteps.includes(s.step));
-  const doneCount = ONBOARDING_STEPS.length - pending.length;
-
-  return (
-    <section aria-labelledby="onboarding-title" className="rounded-md bg-surface p-4">
-      <div className="flex items-baseline justify-between mb-2">
-        <h2 id="onboarding-title" className="font-display text-base font-semibold">
-          Configuração inicial
-        </h2>
-        <span className="text-sm text-foreground-muted">
-          {doneCount} de {ONBOARDING_STEPS.length} concluídos
-        </span>
-      </div>
-      <ul className="space-y-1.5 mb-3">
-        {pending.map(({ step, label }) => (
-          <li key={step} className="flex items-center gap-2 text-sm">
-            <IconCircle size={18} stroke={1.75} className="text-foreground-muted shrink-0" aria-hidden />
-            <span className="text-foreground">{label}</span>
-          </li>
-        ))}
-      </ul>
-      <Link href={pending[0].href} className={SECONDARY_LINK_CLASS}>
-        Continuar configuração
-      </Link>
-    </section>
   );
 }
 

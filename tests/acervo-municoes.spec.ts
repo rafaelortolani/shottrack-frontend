@@ -13,7 +13,7 @@ async function login(page: Page, email: string, password = "senha12345") {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Senha").fill(password);
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(/\/boas-vindas/);
 }
 
 test.describe("Acervo > Munições (FUC08)", () => {

@@ -44,14 +44,14 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * FUC15: com visita em andamento, o atleta cai direto em Visitas (onde a
- * visita ativa aparece no topo); sem visita — ou se a consulta falhar —
- * cai no Dashboard, como antes. Resolvido aqui porque o token recém-emitido
+ * FUC15/FUC17: com visita em andamento, o atleta cai direto em Visitas
+ * (onde a visita ativa aparece no topo); sem visita — ou se a consulta
+ * falhar — cai em Boas-vindas. Resolvido aqui porque o token recém-emitido
  * já está em mãos, sem ida e volta extra do navegador.
  */
 async function resolveLanding(accessToken: string): Promise<string> {
   const { status, body } = await backendFetch("/api/visits", { accessToken });
   const hasActiveVisit =
     status === 200 && body.data?.some((visit: { status: string }) => visit.status === "IN_PROGRESS");
-  return hasActiveVisit ? "/treinos/visitas" : "/dashboard";
+  return hasActiveVisit ? "/treinos/visitas" : "/boas-vindas";
 }

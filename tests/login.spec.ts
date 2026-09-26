@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createUser, randomEmail } from "./helpers";
 
 test.describe("Login", () => {
-  test("entra com credenciais válidas e chega no dashboard", async ({ page }) => {
+  test("entra com credenciais válidas e chega em boas-vindas", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
 
@@ -11,7 +11,7 @@ test.describe("Login", () => {
     await page.getByLabel("Senha").fill("senha12345");
     await page.getByRole("button", { name: "Entrar" }).click();
 
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/boas-vindas/);
   });
 
   test("mostra erro com senha incorreta", async ({ page }) => {
