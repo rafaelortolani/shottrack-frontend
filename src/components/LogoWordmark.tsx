@@ -22,12 +22,12 @@ export function LogoWordmark({
         width="0.7em"
         height="0.7em"
         viewBox="0 0 22 22"
-        className="mx-[0.02em] inline-block"
+        className={`mx-[0.02em] inline-block ${animated ? "overflow-visible" : ""}`}
         aria-hidden="true"
       >
         <circle cx="11" cy="11" r="9" fill="none" stroke="var(--accent-target)" strokeWidth="1.6" />
         {animated && (
-          <circle cx="11" cy="11" r="3" fill="none" stroke="var(--accent-target)" strokeWidth="1" opacity="0" className="shot-ring" />
+          <circle cx="11" cy="11" r="3" fill="none" stroke="var(--accent-target)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" opacity="0" className="shot-ring" />
         )}
         <circle cx="11" cy="11" r="3" fill="var(--accent-brass)" className={animated ? "shot-hit" : undefined} />
       </svg>
