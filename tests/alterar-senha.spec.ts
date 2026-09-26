@@ -12,7 +12,7 @@ test.describe("Usuário > Alterar senha (FUC05)", () => {
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Senha").fill(currentPassword);
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/boas-vindas/);
 
     await page.goto("/usuario/perfil");
     await page.getByRole("link", { name: "Alterar" }).nth(1).click();
@@ -37,7 +37,7 @@ test.describe("Usuário > Alterar senha (FUC05)", () => {
 
     await page.getByLabel("Senha").fill(newPassword);
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/boas-vindas/);
   });
 
   test("mostra erro ao informar a senha atual incorreta", async ({ page }) => {
@@ -48,7 +48,7 @@ test.describe("Usuário > Alterar senha (FUC05)", () => {
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Senha").fill("senha12345");
     await page.getByRole("button", { name: "Entrar" }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/boas-vindas/);
 
     await page.goto("/usuario/senha");
     await page.getByLabel("Senha atual").fill("senhaErrada999");

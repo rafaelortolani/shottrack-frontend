@@ -11,23 +11,18 @@ sessão de design própria, depois — não faz parte deste use case.
 ## Referência backend
 UC42 — `GET /api/dashboard`
 
-## Landing condicional (pós-login)
-Mantido como já definido: visita em andamento → `/treinos`; senão →
-`/dashboard`.
+## Landing condicional (pós-login) — revisado no FUC17
+O destino automático deixa de ser `/dashboard` — agora é `/boas-vindas`
+(FUC17), que cuida do onboarding. `/dashboard` continua existindo como
+item de menu, sempre acessível, só não é mais pra onde o login leva
+automaticamente.
 
 ## Hierarquia da tela (topo pro fim)
 
-1. **Onboarding** (só se a API retornar pendência) — lista de até 3
-   itens, só os pendentes (item concluído sai da lista; o progresso
-   fica num contador "N de 3 concluídos"):
-   "Criar perfil", "Configurar modalidades", "Cadastrar arma". Botão
-   "Continuar configuração" leva pro primeiro item pendente. Some da
-   tela sozinho assim que as 3 estiverem completas.
+Onboarding **não vive mais aqui** — foi pra `/boas-vindas` (FUC17), pra
+não duplicar a mesma informação em dois lugares.
 
-1.5. **Evolução** — gráfico com seletores de modalidade/tipo, período e
-   modo; detalhado no FUC16. Acima da ação principal.
-
-2. **Ação principal** — card em destaque:
+1. **Ação principal** — card em destaque:
    - Com visita ativa: "Continuar treino" + local/modalidade, botão leva
      pra `/treinos`
    - Sem visita ativa: "Pronto pra treinar?" + botão "Iniciar treino",
@@ -62,7 +57,7 @@ Mantido como já definido: visita em andamento → `/treinos`; senão →
 
 ## Definição de pronto
 - [ ] Recordes exibidos como lista (não mais um único destaque)
-- [ ] Onboarding aparece só com pendência, some quando completo
+- [ ] Onboarding NÃO aparece mais aqui (confirma que foi removido, vive só em FUC17)
 - [ ] Ação principal reflete visita ativa ou convite genérico
 - [ ] Últimos treinos exibidos com métrica por treino (ou sem métrica,
   se o treino não tiver resultado)

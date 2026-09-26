@@ -42,7 +42,7 @@ function LoginForm() {
     }
 
     const { landing } = await response.json();
-    router.push(landing ?? "/dashboard");
+    router.push(landing ?? "/boas-vindas");
   }
 
   return (

@@ -6,7 +6,7 @@ async function loginAndGoToEmailChange(page: import("@playwright/test").Page, em
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Senha").fill("senha12345");
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(/\/boas-vindas/);
 
   await page.goto("/usuario/perfil");
   await page.getByRole("link", { name: "Alterar" }).first().click();
