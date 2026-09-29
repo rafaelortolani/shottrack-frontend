@@ -45,14 +45,11 @@ type Dashboard = {
   shotsThisMonth: number;
   practicedModalities: string[];
   recentTrainings: RecentTraining[];
-  totalTrainings: number;
   modalitySummaries: ModalitySummary[];
   weaponCollection: { weaponCount: number; weaponNames: string[] };
   // um por tipo de resultado com registro (ADR-0016); vazio sem nenhum ainda
   records: Highlight[];
 };
-
-const RECENT_TRAININGS_SHOWN = 5;
 
 const PRIMARY_LINK_CLASS =
   "inline-block rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium px-4 py-2 transition-colors";
@@ -142,7 +139,7 @@ function DashboardContent({ dashboard }: { dashboard: Dashboard }) {
       <MainActionSection mainAction={dashboard.mainAction} />
       <IndicatorsSection dashboard={dashboard} />
       {dashboard.records.length > 0 && <RecordsSection records={dashboard.records} />}
-      <RecentTrainingsSection trainings={dashboard.recentTrainings} totalTrainings={dashboard.totalTrainings} />
+      <RecentTrainingsSection trainings={dashboard.recentTrainings} />
       <ModalitiesSection summaries={dashboard.modalitySummaries} />
       <WeaponCollectionSection collection={dashboard.weaponCollection} />
     </div>
@@ -264,13 +261,13 @@ function RecordsSection({ records }: { records: Highlight[] }) {
   );
 }
 
-function RecentTrainingsSection({ trainings, totalTrainings }: { trainings: RecentTraining[]; totalTrainings: number }) {
+function RecentTrainingsSection({ trainings }: { trainings: RecentTraining[] }) {
   return (
     <section aria-labelledby="recent-trainings-title">
       <SectionHeader
         id="recent-trainings-title"
         title="Últimos treinos"
-        link={totalTrainings > RECENT_TRAININGS_SHOWN ? { href: "/treinos/visitas", label: "Ver todos" } : undefined}
+        link={trainings.length > 0 ? { href: "/treinos/historico", label: "Ver histórico completo" } : undefined}
       />
       {trainings.length === 0 ? (
         // sem botão próprio: o convite já está na ação principal, logo acima

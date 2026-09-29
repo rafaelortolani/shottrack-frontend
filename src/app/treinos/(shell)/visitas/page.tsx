@@ -10,6 +10,7 @@ import { AddButton } from "@/components/AddButton";
 import { EmptyState } from "@/components/EmptyState";
 import { deleteTrainingMessage, deleteVisitMessage } from "@/lib/deleteConfirmation";
 import { SeriesAccordion } from "@/components/SeriesAccordion";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { formatDate, formatDateTime } from "@/lib/datetime";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string };
@@ -650,30 +651,13 @@ function HistorySection({
                   <option key={name} value={name}>{name}</option>
                 ))}
               </select>
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="history-date-from" className="text-xs uppercase tracking-wide text-foreground-muted">
-                  De
-                </label>
-                <input
-                  id="history-date-from"
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => onDateFromChange(e.target.value)}
-                  className="rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
-                />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <label htmlFor="history-date-to" className="text-xs uppercase tracking-wide text-foreground-muted">
-                  Até
-                </label>
-                <input
-                  id="history-date-to"
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => onDateToChange(e.target.value)}
-                  className="rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
-                />
-              </div>
+              <DateRangeFilter
+                idPrefix="history"
+                from={dateFrom}
+                onFromChange={onDateFromChange}
+                to={dateTo}
+                onToChange={onDateToChange}
+              />
             </div>
           )}
 

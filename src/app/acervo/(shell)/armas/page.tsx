@@ -85,12 +85,22 @@ export default function ArmasTabPage() {
         <p className="text-sm text-foreground-muted">
           {weapons.length} {weapons.length === 1 ? "arma" : "armas"} no acervo
         </p>
-        <Link
-          href="/acervo/armas/nova"
-          className="rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium px-4 py-2 transition-colors"
-        >
-          + Cadastrar arma
-        </Link>
+        <div className="flex items-center gap-2">
+          {weapons.length >= 2 && (
+            <Link
+              href="/acervo/comparar"
+              className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:border-accent-target transition-colors"
+            >
+              Comparar armas
+            </Link>
+          )}
+          <Link
+            href="/acervo/armas/nova"
+            className="rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium px-4 py-2 transition-colors"
+          >
+            + Cadastrar arma
+          </Link>
+        </div>
       </div>
 
       {error && (

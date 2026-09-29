@@ -14,6 +14,7 @@ import {
   IconChevronDown,
   IconClipboardList,
   IconMapPin,
+  IconHistory,
   IconFocus2,
   IconCapsuleHorizontal,
   IconBackpack,
@@ -56,6 +57,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { href: "/treinos/visitas", label: "Visitas", icon: IconClipboardList, color: "text-accent-brass-soft" },
       { href: "/treinos/locais", label: "Locais", icon: IconMapPin, color: "text-accent-target-soft" },
+      { href: "/treinos/historico", label: "Histórico", icon: IconHistory, color: "text-accent-brass-soft" },
     ],
   },
   {
