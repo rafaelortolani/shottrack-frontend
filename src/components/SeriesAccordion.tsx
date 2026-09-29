@@ -8,12 +8,12 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { resultTypeKind, resultTypeUnit } from "@/lib/resultTypeFormat";
 
-type Catalog = { id: string; name: string };
-type Weapon = { id: string; nickname: string | null; type: Catalog; brand: Catalog; model: Catalog; caliber: Catalog };
-type Ammunition = { id: string; nickname: string | null; manufacturer: Catalog | null; caliber: Catalog | null };
-type ResultType = { id: string; name: string };
-type SeriesResult = { resultTypeId: string; resultTypeName: string; value: string | null; notApplicable: boolean };
-type Series = {
+export type Catalog = { id: string; name: string };
+export type Weapon = { id: string; nickname: string | null; type: Catalog; brand: Catalog; model: Catalog; caliber: Catalog };
+export type Ammunition = { id: string; nickname: string | null; manufacturer: Catalog | null; caliber: Catalog | null };
+export type ResultType = { id: string; name: string };
+export type SeriesResult = { resultTypeId: string; resultTypeName: string; value: string | null; notApplicable: boolean };
+export type Series = {
   id: string;
   trainingId: string;
   weaponId: string | null;
@@ -27,7 +27,7 @@ type Series = {
 };
 
 type ResultFormValue = { value: string; notApplicable: boolean };
-type SeriesFormValues = {
+export type SeriesFormValues = {
   weaponId: string;
   ammunitionId: string;
   distanceMeters: string;
@@ -40,7 +40,7 @@ type SeriesFormValues = {
 const INPUT_CLASS =
   "w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
 
-function weaponLabel(weapon: Weapon): string {
+export function weaponLabel(weapon: Weapon): string {
   return weapon.nickname || `${weapon.brand.name} ${weapon.model.name}`;
 }
 
@@ -119,6 +119,136 @@ function buildRegisterPayload(values: SeriesFormValues) {
     shotCount: values.shotCount === "" ? null : Number(values.shotCount),
     notes: values.notes || null,
   };
+}
+
+export type SaveSeriesOutcome =
+  | { status: "unauthorized"; series?: undefined }
+  | { status: "error"; message: string; series?: Series }
+  | { status: "ok"; series: Series };
+
+/**
+ * Salva a série (cria ou aplica o diff) e depois cada resultado alterado.
+ * Se um resultado falhar no meio, devolve a série com o que já foi salvo
+ * até ali, pra tela não mostrar um estado mais antigo que o do backend.
+ * Compartilhado entre o treino (FUC14) e o histórico (FUC18).
+ */
+export async function saveSeries(
+  trainingId: string,
+  resultTypes: ResultType[],
+  values: SeriesFormValues,
+  editingSeries: Series | null
+): Promise<SaveSeriesOutcome> {
+  let seriesData: Series;
+
+  if (editingSeries) {
+    const diff = buildSeriesDiff(editingSeries, values);
+
+    if (Object.keys(diff).length > 0) {
+      const response = await fetch(`/api/series/${editingSeries.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(diff),
+      });
+
+      if (response.status === 401) return { status: "unauthorized" };
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        return { status: "error", message: error?.message ?? "Não foi possível salvar as alterações" };
+      }
+
+      seriesData = (await response.json()).data;
+    } else {
+      seriesData = editingSeries;
+    }
+  } else {
+    const response = await fetch(`/api/trainings/${trainingId}/series`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildRegisterPayload(values)),
+    });
+
+    if (response.status === 401) return { status: "unauthorized" };
+
+    if (!response.ok) {
+      const { error } = await response.json();
+      return { status: "error", message: error?.message ?? "Não foi possível registrar a série" };
+    }
+
+    seriesData = (await response.json()).data;
+  }
+
+  let finalResults = seriesData.results;
+
+  for (const resultType of resultTypes) {
+    const original = editingSeries?.results.find((r) => r.resultTypeId === resultType.id);
+    const current = values.results[resultType.id] ?? { value: "", notApplicable: false };
+
+    const originalNotApplicable = original?.notApplicable ?? false;
+    const originalValue = original && !original.notApplicable ? original.value ?? "" : "";
+    const unchanged = current.notApplicable === originalNotApplicable && current.value === originalValue;
+
+    if (unchanged) continue;
+
+    if (current.notApplicable) {
+      const response = await fetch(`/api/series/${seriesData.id}/results`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resultTypeId: resultType.id, notApplicable: true }),
+      });
+
+      if (response.status === 401) return { status: "unauthorized" };
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        return {
+          status: "error",
+          message: error?.message ?? `Não foi possível salvar "${resultType.name}"`,
+          series: { ...seriesData, results: finalResults },
+        };
+      }
+
+      const { data } = await response.json();
+      finalResults = upsertResult(finalResults, data);
+    } else if (current.value !== "") {
+      const response = await fetch(`/api/series/${seriesData.id}/results`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resultTypeId: resultType.id, value: current.value }),
+      });
+
+      if (response.status === 401) return { status: "unauthorized" };
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        return {
+          status: "error",
+          message: error?.message ?? `Não foi possível salvar "${resultType.name}"`,
+          series: { ...seriesData, results: finalResults },
+        };
+      }
+
+      const { data } = await response.json();
+      finalResults = upsertResult(finalResults, data);
+    } else if (original) {
+      const response = await fetch(`/api/series/${seriesData.id}/results/${resultType.id}`, { method: "DELETE" });
+
+      if (response.status === 401) return { status: "unauthorized" };
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        return {
+          status: "error",
+          message: error?.message ?? `Não foi possível remover "${resultType.name}"`,
+          series: { ...seriesData, results: finalResults },
+        };
+      }
+
+      finalResults = finalResults.filter((r) => r.resultTypeId !== resultType.id);
+    }
+  }
+
+  return { status: "ok", series: { ...seriesData, results: finalResults } };
 }
 
 /**
@@ -208,134 +338,24 @@ export function SeriesAccordion({
     setSaveError(null);
     setSaving(true);
 
-    let seriesData: Series;
+    const outcome = await saveSeries(trainingId, resultTypes, values, editingSeries);
 
-    if (editingSeries) {
-      const diff = buildSeriesDiff(editingSeries, values);
-
-      if (Object.keys(diff).length > 0) {
-        const response = await fetch(`/api/series/${editingSeries.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(diff),
-        });
-
-        if (response.status === 401) {
-          router.push("/login");
-          return;
-        }
-
-        if (!response.ok) {
-          const { error } = await response.json();
-          setSaveError(error?.message ?? "Não foi possível salvar as alterações");
-          setSaving(false);
-          return;
-        }
-
-        seriesData = (await response.json()).data;
-      } else {
-        seriesData = editingSeries;
-      }
-    } else {
-      const response = await fetch(`/api/trainings/${trainingId}/series`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildRegisterPayload(values)),
-      });
-
-      if (response.status === 401) {
-        router.push("/login");
-        return;
-      }
-
-      if (!response.ok) {
-        const { error } = await response.json();
-        setSaveError(error?.message ?? "Não foi possível registrar a série");
-        setSaving(false);
-        return;
-      }
-
-      seriesData = (await response.json()).data;
+    if (outcome.status === "unauthorized") {
+      router.push("/login");
+      return;
     }
 
-    let finalResults = seriesData.results;
-
-    for (const resultType of resultTypes) {
-      const original = editingSeries?.results.find((r) => r.resultTypeId === resultType.id);
-      const current = values.results[resultType.id] ?? { value: "", notApplicable: false };
-
-      const originalNotApplicable = original?.notApplicable ?? false;
-      const originalValue = original && !original.notApplicable ? original.value ?? "" : "";
-      const unchanged = current.notApplicable === originalNotApplicable && current.value === originalValue;
-
-      if (unchanged) continue;
-
-      if (current.notApplicable) {
-        const response = await fetch(`/api/series/${seriesData.id}/results`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resultTypeId: resultType.id, notApplicable: true }),
-        });
-
-        if (response.status === 401) {
-          router.push("/login");
-          return;
-        }
-
-        if (!response.ok) {
-          const { error } = await response.json();
-          setSaveError(error?.message ?? `Não foi possível salvar "${resultType.name}"`);
-          setSaving(false);
-          setSeries((prev) => upsertById(prev, { ...seriesData, results: finalResults }));
-          return;
-        }
-
-        const { data } = await response.json();
-        finalResults = upsertResult(finalResults, data);
-      } else if (current.value !== "") {
-        const response = await fetch(`/api/series/${seriesData.id}/results`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resultTypeId: resultType.id, value: current.value }),
-        });
-
-        if (response.status === 401) {
-          router.push("/login");
-          return;
-        }
-
-        if (!response.ok) {
-          const { error } = await response.json();
-          setSaveError(error?.message ?? `Não foi possível salvar "${resultType.name}"`);
-          setSaving(false);
-          setSeries((prev) => upsertById(prev, { ...seriesData, results: finalResults }));
-          return;
-        }
-
-        const { data } = await response.json();
-        finalResults = upsertResult(finalResults, data);
-      } else if (original) {
-        const response = await fetch(`/api/series/${seriesData.id}/results/${resultType.id}`, { method: "DELETE" });
-
-        if (response.status === 401) {
-          router.push("/login");
-          return;
-        }
-
-        if (!response.ok) {
-          const { error } = await response.json();
-          setSaveError(error?.message ?? `Não foi possível remover "${resultType.name}"`);
-          setSaving(false);
-          setSeries((prev) => upsertById(prev, { ...seriesData, results: finalResults }));
-          return;
-        }
-
-        finalResults = finalResults.filter((r) => r.resultTypeId !== resultType.id);
-      }
-    }
-
-    setSeries((prev) => upsertById(prev, { ...seriesData, results: finalResults }));
     setSaving(false);
+    if (outcome.series) {
+      const saved = outcome.series;
+      setSeries((prev) => upsertById(prev, saved));
+    }
+
+    if (outcome.status === "error") {
+      setSaveError(outcome.message);
+      return;
+    }
+
     setFormMode("closed");
   }
 
@@ -473,7 +493,7 @@ export function SeriesAccordion({
   );
 }
 
-function SeriesForm({
+export function SeriesForm({
   idPrefix,
   resultTypes,
   weapons,

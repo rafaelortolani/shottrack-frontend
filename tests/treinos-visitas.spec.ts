@@ -100,7 +100,7 @@ test.describe("Treinos > Visitas (FUC13)", () => {
     await expect(page.getByText("Nenhuma visita em andamento.")).toBeVisible();
 
     // Confere a visita no histórico
-    await expect(page.getByText("Histórico")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Histórico" })).toBeVisible();
     const historyItem = page.locator("li", { hasText: location.name });
     await expect(historyItem).toBeVisible();
     await expect(historyItem.getByText(modality.name)).toBeVisible();

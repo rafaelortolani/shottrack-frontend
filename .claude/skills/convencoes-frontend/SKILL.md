@@ -73,6 +73,7 @@ diferente pra pistola vs. revólver) — biblioteca: `@tabler/icons-react`.
 | Usuário (nav) | `IconUser` | neutro (`foreground-muted`) |
 | Locais de treino | `IconMapPin` | `accent-target` |
 | Visitas (submenu de Treinos) | `IconClipboardList` | `accent-brass-soft` |
+| Histórico (submenu de Treinos) | `IconHistory` | `accent-brass-soft` |
 | Perfil (submenu de Usuário) | `IconIdBadge2` | neutro (`foreground-muted`) |
 | Modalidades (submenu de Usuário) | `IconCategory2` | neutro (`foreground-muted`) |
 

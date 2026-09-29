@@ -9,10 +9,9 @@ type BackendRecentTraining = { trainingId: string };
  * backend. Atleta sem dados recebe onboarding completo, zeros e listas
  * vazias — não é erro.
  *
- * "Últimos treinos" do backend não traz a visita de cada treino nem o
- * total de treinos, e a tela precisa dos dois (link pro detalhe da visita
- * e "Ver todos" só quando há mais do que os 5 listados) — completados
- * aqui a partir de GET /api/visits, que já traz os treinos de cada visita.
+ * "Últimos treinos" do backend não traz a visita de cada treino, e a tela
+ * precisa dela pro link do detalhe da visita — completada aqui a partir de
+ * GET /api/visits, que já traz os treinos de cada visita.
  */
 export async function GET(request: NextRequest) {
   const accessToken = request.cookies.get("shottrack_access")?.value;
@@ -54,7 +53,6 @@ export async function GET(request: NextRequest) {
     data: {
       ...dashboard.body.data,
       recentTrainings,
-      totalTrainings: visitIdByTrainingId.size,
     },
   });
 }

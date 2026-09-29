@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IconClipboardList, IconMapPin } from "@tabler/icons-react";
+import { IconClipboardList, IconHistory, IconMapPin } from "@tabler/icons-react";
 
 const SECTIONS = [
   {
@@ -17,6 +17,14 @@ const SECTIONS = [
     icon: IconMapPin,
     bg: "bg-accent-target/15",
     color: "text-accent-target-soft",
+  },
+  {
+    href: "/treinos/historico",
+    label: "Histórico",
+    description: "Todas as séries, com filtros",
+    icon: IconHistory,
+    bg: "bg-accent-brass/15",
+    color: "text-accent-brass-soft",
   },
 ];
 

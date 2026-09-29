@@ -145,7 +145,7 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15/FUC17)", () => {
     const rowSemMetrica = recent.getByRole("link", { name: new RegExp(outra.name) });
     await expect(rowSemMetrica).toContainText(location.name);
     await expect(rowSemMetrica).not.toContainText(":");
-    await expect(recent.getByRole("link", { name: "Ver todos" })).toHaveCount(0);
+    await expect(recent.getByRole("link", { name: "Ver histórico completo" })).toHaveAttribute("href", "/treinos/historico");
 
     // Resumo de modalidades: contagem e melhor valor por modalidade
     const modalities = page.getByRole("region", { name: "Modalidades" });
