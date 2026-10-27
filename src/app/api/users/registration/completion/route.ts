@@ -7,11 +7,11 @@ import { backendFetch } from "@/lib/backend";
  * não há token de sessão pra guardar.
  */
 export async function POST(request: NextRequest) {
-  const { token, name, password } = await request.json();
+  const { token, name, password, acceptedTerms } = await request.json();
 
   const { status, body } = await backendFetch("/api/users/registration/completion", {
     method: "POST",
-    body: JSON.stringify({ token, name, password }),
+    body: JSON.stringify({ token, name, password, acceptedTerms }),
   });
 
   if (status !== 201 || body.error) {

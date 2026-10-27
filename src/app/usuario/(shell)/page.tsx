@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IconUser, IconTarget } from "@tabler/icons-react";
+import { IconUser, IconTarget, IconShieldLock } from "@tabler/icons-react";
 
 const SECTIONS = [
   {
@@ -17,6 +17,14 @@ const SECTIONS = [
     icon: IconTarget,
     bg: "bg-accent-brass/15",
     color: "text-accent-brass-soft",
+  },
+  {
+    href: "/usuario/privacidade",
+    label: "Privacidade",
+    description: "Baixar seus dados e excluir a conta",
+    icon: IconShieldLock,
+    bg: "bg-foreground-muted/15",
+    color: "text-foreground-muted",
   },
 ];
 

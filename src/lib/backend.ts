@@ -4,13 +4,13 @@
  */
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
-export async function backendFetch(
-  path: string,
-  options: RequestInit & { accessToken?: string } = {}
-) {
+type BackendRequestInit = RequestInit & { accessToken?: string };
+
+/** Chamada crua ao backend: devolve a Response (usada quando a resposta não é o envelope JSON, ex.: download). */
+export function backendRawFetch(path: string, options: BackendRequestInit = {}) {
   const { accessToken, headers, ...rest } = options;
 
-  const response = await fetch(`${BACKEND_URL}${path}`, {
+  return fetch(`${BACKEND_URL}${path}`, {
     ...rest,
     headers: {
       "Content-Type": "application/json",
@@ -18,7 +18,10 @@ export async function backendFetch(
       ...headers,
     },
   });
+}
 
+export async function backendFetch(path: string, options: BackendRequestInit = {}) {
+  const response = await backendRawFetch(path, options);
   const body = await response.json();
   return { status: response.status, body, retryAfter: response.headers.get("Retry-After") };
 }

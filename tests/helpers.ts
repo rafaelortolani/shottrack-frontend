@@ -62,7 +62,7 @@ export async function createUser(email: string, password = "senha12345") {
   const completionResponse = await fetch(`${BACKEND_URL}/api/users/registration/completion`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, name: "Usuário de Teste", password }),
+    body: JSON.stringify({ token, name: "Usuário de Teste", password, acceptedTerms: true }),
   });
   if (!completionResponse.ok) {
     throw new Error(`Falha ao completar cadastro de teste: ${completionResponse.status}`);

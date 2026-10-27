@@ -20,6 +20,7 @@ import {
   IconBackpack,
   IconIdBadge2,
   IconCategory2,
+  IconShieldLock,
   type TablerIcon,
 } from "@tabler/icons-react";
 import { LogoIcon } from "@/components/LogoIcon";
@@ -81,6 +82,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { href: "/usuario/perfil", label: "Perfil", icon: IconIdBadge2, color: "text-foreground-muted" },
       { href: "/usuario/modalidades", label: "Modalidades", icon: IconCategory2, color: "text-foreground-muted" },
+      { href: "/usuario/privacidade", label: "Privacidade", icon: IconShieldLock, color: "text-foreground-muted" },
     ],
   },
 ];

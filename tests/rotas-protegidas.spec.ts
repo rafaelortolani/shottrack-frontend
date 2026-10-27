@@ -25,6 +25,7 @@ const PROTECTED_ROUTES = [
   "/usuario",
   "/usuario/perfil",
   "/usuario/modalidades",
+  "/usuario/privacidade",
   "/usuario/senha",
   "/usuario/email",
 ];
