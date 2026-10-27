@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendFetch } from "@/lib/backend";
+import { backendFetch, retryAfterHeaders } from "@/lib/backend";
 
 /**
  * BFF de login: recebe email/senha do formulário, chama o backend, e
@@ -10,7 +10,7 @@ import { backendFetch } from "@/lib/backend";
 export async function POST(request: NextRequest) {
   const { email, password } = await request.json();
 
-  const { status, body } = await backendFetch("/api/auth/login", {
+  const { status, body, retryAfter } = await backendFetch("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   if (status !== 200 || body.error) {
     return NextResponse.json(
       { error: body.error ?? { code: "LOGIN_FAILED", message: "Não foi possível entrar" } },
-      { status: status === 200 ? 401 : status }
+      { status: status === 200 ? 401 : status, headers: retryAfterHeaders(status, retryAfter) }
     );
   }
 

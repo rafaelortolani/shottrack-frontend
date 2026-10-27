@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { backendFetch } from "@/lib/backend";
+import { backendFetch, retryAfterHeaders } from "@/lib/backend";
 
 /**
  * BFF de solicitação de cadastro (FUC01): repassa só o email pro backend,
@@ -9,7 +9,7 @@ import { backendFetch } from "@/lib/backend";
 export async function POST(request: NextRequest) {
   const { email } = await request.json();
 
-  const { status, body } = await backendFetch("/api/users/registration", {
+  const { status, body, retryAfter } = await backendFetch("/api/users/registration", {
     method: "POST",
     body: JSON.stringify({ email }),
   });
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   if (status !== 202 || body.error) {
     return NextResponse.json(
       { error: body.error ?? { code: "REGISTRATION_REQUEST_FAILED", message: "Não foi possível solicitar o cadastro" } },
-      { status: status === 202 ? 422 : status }
+      { status: status === 202 ? 422 : status, headers: retryAfterHeaders(status, retryAfter) }
     );
   }
 

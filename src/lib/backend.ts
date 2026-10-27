@@ -20,5 +20,13 @@ export async function backendFetch(
   });
 
   const body = await response.json();
-  return { status: response.status, body };
+  return { status: response.status, body, retryAfter: response.headers.get("Retry-After") };
+}
+
+/**
+ * Cabeçalhos extras da resposta de erro do BFF: repassa o Retry-After do
+ * backend no 429 (ADR-0018) pra tela poder dizer quanto esperar.
+ */
+export function retryAfterHeaders(status: number, retryAfter: string | null): HeadersInit | undefined {
+  return status === 429 && retryAfter ? { "Retry-After": retryAfter } : undefined;
 }

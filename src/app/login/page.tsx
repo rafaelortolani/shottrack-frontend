@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { TargetRings } from "@/components/TargetRings";
+import { tooManyRequestsMessage } from "@/lib/rateLimit";
 
 export default function LoginPage() {
   return (
@@ -18,6 +19,10 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get("cadastro") === "sucesso";
+  const notice = {
+    redefinida: "Senha redefinida. Entre com a nova senha.",
+    alterada: "Senha alterada. Entre novamente.",
+  }[searchParams.get("senha") ?? ""];
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +40,11 @@ function LoginForm() {
     });
 
     setLoading(false);
+
+    if (response.status === 429) {
+      setError(tooManyRequestsMessage(response.headers.get("Retry-After")));
+      return;
+    }
 
     if (!response.ok) {
       setError("Email ou senha incorretos.");
@@ -68,6 +78,12 @@ function LoginForm() {
               </p>
             )}
 
+            {notice && (
+              <p className="text-sm text-accent-brass mb-3" role="status">
+                {notice}
+              </p>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <label htmlFor="email" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
@@ -96,6 +112,12 @@ function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
                 />
+                <Link
+                  href="/esqueci-senha"
+                  className="inline-block text-sm text-accent-brass hover:text-accent-brass-soft transition-colors mt-1.5"
+                >
+                  Esqueci minha senha
+                </Link>
               </div>
 
               {error && (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { TargetRings } from "@/components/TargetRings";
+import { tooManyRequestsMessage } from "@/lib/rateLimit";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -42,6 +43,10 @@ export default function CadastroPage() {
     setLoading(false);
 
     if (!response.ok) {
+      if (response.status === 429) {
+        setEmailError(tooManyRequestsMessage(response.headers.get("Retry-After")));
+        return;
+      }
       const { error } = await response.json();
       if (error?.code === "EMAIL_ALREADY_REGISTERED") {
         setEmailError("Já existe uma conta com esse email");
@@ -63,6 +68,8 @@ export default function CadastroPage() {
 
     if (response.ok) {
       setResendMessage("Link reenviado");
+    } else if (response.status === 429) {
+      setResendMessage(tooManyRequestsMessage(response.headers.get("Retry-After")));
     }
   }
 

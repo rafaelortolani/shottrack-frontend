@@ -29,7 +29,13 @@ const PROTECTED_ROUTES = [
   "/usuario/email",
 ];
 
-const PUBLIC_ROUTES = ["/login", "/cadastro", "/cadastro/completar?token=qualquer"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/cadastro",
+  "/cadastro/completar?token=qualquer",
+  "/esqueci-senha",
+  "/redefinir-senha?token=qualquer",
+];
 
 test.describe("Rotas protegidas sem sessão", () => {
   for (const route of PROTECTED_ROUTES) {

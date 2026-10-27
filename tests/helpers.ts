@@ -455,3 +455,38 @@ export async function getLatestVerificationCode(recipient: string): Promise<stri
 
   throw new Error(`Não encontrei o código de verificação pra ${recipient} no Mailpit`);
 }
+/**
+ * Busca no Mailpit o token do link de redefinição de senha (FUC20) enviado
+ * pra `recipient`. Filtra pelo caminho `/redefinir-senha` pra não confundir
+ * com o e-mail de cadastro do mesmo destinatário.
+ */
+export async function getLatestPasswordResetToken(recipient: string): Promise<string> {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const response = await fetch(
+      `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${recipient}`)}&limit=10`
+    );
+    const { messages } = await response.json();
+
+    // O Snippet vem truncado e cortaria o token — lê o corpo completo.
+    for (const message of messages ?? []) {
+      const full = await (await fetch(`${MAILPIT_URL}/api/v1/message/${message.ID}`)).json();
+      const match = full.Text?.match(/redefinir-senha\?token=([\w-]+)/);
+      if (match) {
+        return match[1];
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+
+  throw new Error(`Não encontrei o link de redefinição pra ${recipient} no Mailpit`);
+}
+
+/** Troca o refresh token por um novo par direto no backend (sem passar pelo BFF). */
+export async function refreshSession(refreshToken: string) {
+  return fetch(`${BACKEND_URL}/api/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  });
+}
