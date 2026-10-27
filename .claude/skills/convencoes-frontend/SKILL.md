@@ -76,6 +76,7 @@ diferente pra pistola vs. revólver) — biblioteca: `@tabler/icons-react`.
 | Histórico (submenu de Treinos) | `IconHistory` | `accent-brass-soft` |
 | Perfil (submenu de Usuário) | `IconIdBadge2` | neutro (`foreground-muted`) |
 | Modalidades (submenu de Usuário) | `IconCategory2` | neutro (`foreground-muted`) |
+| Privacidade (submenu de Usuário) | `IconShieldLock` | neutro (`foreground-muted`) |
 
 Itens de submenu (ex: Armas/Munições/Acessórios dentro de Acervo; Perfil/
 Modalidades dentro de Usuário) também levam ícone — o mesmo ícone fixo já

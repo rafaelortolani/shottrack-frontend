@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TargetRings } from "@/components/TargetRings";
 
-type FieldErrors = Partial<Record<"name" | "password", string>>;
+type FieldErrors = Partial<Record<"name" | "password" | "terms", string>>;
 type TokenState = "form" | "invalid" | "expired" | "used";
 
 function validate(name: string, password: string): FieldErrors {
@@ -37,6 +37,7 @@ function CompletarCadastroForm() {
   const [tokenState, setTokenState] = useState<TokenState>(token ? "form" : "invalid");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,7 +58,7 @@ function CompletarCadastroForm() {
     const response = await fetch("/api/users/registration/completion", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, name, password }),
+      body: JSON.stringify({ token, name, password, acceptedTerms }),
     });
 
     setLoading(false);
@@ -71,6 +72,8 @@ function CompletarCadastroForm() {
         setTokenState("expired");
       } else if (error?.code === "REGISTRATION_TOKEN_ALREADY_USED") {
         setTokenState("used");
+      } else if (error?.code === "TERMS_NOT_ACCEPTED") {
+        setFieldErrors({ terms: "É preciso aceitar os Termos de Uso e a Política de Privacidade" });
       } else {
         setFormError(error?.message ?? "Não foi possível concluir o cadastro");
       }
@@ -159,6 +162,33 @@ function CompletarCadastroForm() {
             )}
           </div>
 
+          <div>
+            <label htmlFor="acceptedTerms" className="flex items-start gap-2 text-sm text-foreground-muted">
+              <input
+                id="acceptedTerms"
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-accent-target"
+              />
+              <span>
+                Li e aceito os{" "}
+                <Link href="/termos" target="_blank" rel="noopener noreferrer" className="text-accent-brass hover:text-accent-brass-soft transition-colors">
+                  Termos de Uso
+                </Link>{" "}
+                e a{" "}
+                <Link href="/privacidade" target="_blank" rel="noopener noreferrer" className="text-accent-brass hover:text-accent-brass-soft transition-colors">
+                  Política de Privacidade
+                </Link>
+              </span>
+            </label>
+            {fieldErrors.terms && (
+              <p className="text-sm text-accent-target mt-1" role="alert">
+                {fieldErrors.terms}
+              </p>
+            )}
+          </div>
+
           {formError && (
             <p className="text-sm text-accent-target" role="alert">
               {formError}
@@ -167,7 +197,7 @@ function CompletarCadastroForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !acceptedTerms}
             className="w-full rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background font-medium py-2 transition-colors"
           >
             {loading ? "Concluindo..." : "Concluir cadastro"}

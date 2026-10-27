@@ -20,10 +20,12 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get("cadastro") === "sucesso";
-  const notice = {
-    redefinida: "Senha redefinida. Entre com a nova senha.",
-    alterada: "Senha alterada. Entre novamente.",
-  }[searchParams.get("senha") ?? ""];
+  const notice =
+    {
+      redefinida: "Senha redefinida. Entre com a nova senha.",
+      alterada: "Senha alterada. Entre novamente.",
+    }[searchParams.get("senha") ?? ""] ??
+    (searchParams.get("conta") === "excluida" ? "Sua conta foi excluída." : undefined);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
