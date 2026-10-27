@@ -2,6 +2,7 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["192.168.100.16"],
   env: {
     // Mesmo DSN do servidor, embutido no bundle do cliente no build
     // (instrumentation-client.ts). Vazio = Sentry desligado.
