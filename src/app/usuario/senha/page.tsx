@@ -61,7 +61,8 @@ export default function AlterarSenhaPage() {
       return;
     }
 
-    router.push("/usuario/perfil?senha=alterada");
+    // O backend revogou todas as sessões e o BFF limpou os cookies (ADR-0018).
+    router.push("/login?senha=alterada");
   }
 
   return (

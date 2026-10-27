@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createUser, randomEmail } from "./helpers";
+import { createUser, randomEmail, refreshSession } from "./helpers";
 
 test.describe("Usuário > Perfil (FUC03)", () => {
   test("carrega dados existentes e edita nome e nível com sucesso", async ({ page }) => {
@@ -76,5 +76,50 @@ test.describe("Usuário > Perfil (FUC03)", () => {
 
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/login/);
+  });
+
+  test("logout revoga o refresh token no backend: o refresh antigo deixa de funcionar", async ({ page, context }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Senha").fill("senha12345");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/boas-vindas/);
+
+    const refresh = (await context.cookies()).find((c) => c.name === "shottrack_refresh")!.value;
+
+    await page.goto("/usuario");
+    await page.getByRole("button", { name: "Sair" }).click();
+    await expect(page).toHaveURL(/\/login/);
+
+    const names = (await context.cookies()).map((c) => c.name);
+    expect(names).not.toContain("shottrack_refresh");
+    expect((await refreshSession(refresh)).status).toBe(401);
+  });
+
+  test("logout com refresh token inválido ainda limpa os cookies e responde 200", async ({ page, context }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Senha").fill("senha12345");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/boas-vindas/);
+
+    // O backend é chamado pelo servidor Next, então não dá pra derrubá-lo daqui;
+    // com o cookie adulterado o logout do backend é idempotente e a sessão local
+    // termina do mesmo jeito.
+    await context.addCookies([
+      { name: "shottrack_refresh", value: "token-invalido", url: "http://localhost:3000" },
+    ]);
+    const response = await page.request.post("/api/auth/logout");
+    expect(response.status()).toBe(200);
+
+    const names = (await context.cookies()).map((c) => c.name);
+    expect(names).not.toContain("shottrack_access");
+    expect(names).not.toContain("shottrack_refresh");
   });
 });

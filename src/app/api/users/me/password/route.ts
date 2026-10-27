@@ -30,5 +30,9 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true });
+  // O backend revogou todas as sessões (ADR-0018): limpa os cookies também.
+  const response = NextResponse.json({ ok: true });
+  response.cookies.delete("shottrack_access");
+  response.cookies.delete("shottrack_refresh");
+  return response;
 }
