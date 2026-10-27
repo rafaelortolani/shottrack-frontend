@@ -15,8 +15,9 @@ Rotas: `/acervo` (aba Armas, padrão), `/acervo/armas/nova` (cadastro),
 - UC06 (cadastrar) — `POST /api/weapons`
 - UC07 (listar) — `GET /api/weapons`
 - UC08 (excluir) — `DELETE /api/weapons/{id}`
-- UC09 (catálogo) — `GET /api/weapon-catalog/types`, `/brands`,
-  `/brands/{brandId}/models`, `/calibers`
+- UC09 (catálogo) — `GET /api/weapon-catalog/brands`,
+  `/brands/{brandId}/models`, `/models/{modelId}/calibers`
+  (o formulário não usa mais `/types` nem `/calibers`)
 - UC10 (editar) — `PATCH /api/weapons/{id}`
 
 ## Telas (mockups já validados)
@@ -27,7 +28,10 @@ Rotas: `/acervo` (aba Armas, padrão), `/acervo/armas/nova` (cadastro),
    é mais selecionável** — aparece automaticamente assim que o modelo é
    escolhido (campo somente leitura, derivado do modelo — ADR-0004,
    Revisão 2). O calibre só mostra as opções válidas pra aquele modelo
-   (endpoint novo do UC09), não o catálogo geral de calibres.
+   (endpoint novo do UC09), não o catálogo geral de calibres. Trocar a
+   marca limpa modelo e calibre; trocar o modelo limpa o calibre. Se o
+   modelo tem um único calibre, ele já vem selecionado. O request envia só
+   `modelId` + `caliberId` — tipo e marca são derivados no servidor.
 3. **Edição** — mesmos campos do cadastro + apelido (opcional), e botão
    "Excluir arma".
 4. **Bloqueio de exclusão** — se a arma já foi usada (erro `WEAPON_IN_USE`),
@@ -36,18 +40,23 @@ Rotas: `/acervo` (aba Armas, padrão), `/acervo/armas/nova` (cadastro),
 ## Estados
 - Carregando catálogo/lista
 - Salvando (cadastro ou edição)
-- Erro de validação por campo (ex: modelo não pertence à marca escolhida)
+- Erro de validação por campo: `WEAPON_CALIBER_NOT_ALLOWED_FOR_MODEL`
+  aparece inline sob o campo Calibre (a UI só oferece calibres válidos,
+  então o erro cobre catálogo alterado entre o carregamento e o envio)
 - Exclusão bloqueada (`WEAPON_IN_USE`)
 - Exclusão bem-sucedida: volta pra lista, arma removida
 
 ## Definição de pronto
 - [ ] As 4 telas refletem os mockups validados
-- [ ] Cadastro completo (seleção em cascata) funciona
+- [ ] Cadastro completo (seleção em cascata) funciona; tipo derivado do
+  modelo e não editável; calibre limitado aos permitidos do modelo
+- [ ] Erro `WEAPON_CALIBER_NOT_ALLOWED_FOR_MODEL` exibido inline
 - [ ] Lista mostra as armas do atleta, estado vazio tratado
-- [ ] Edição (incluindo apelido) funciona
+- [ ] Edição funciona: só apelido, e troca de calibre
 - [ ] Bloqueio de exclusão exibido corretamente quando aplicável
 - [ ] Exclusão bem-sucedida quando a arma nunca foi usada
-- [ ] Teste E2E (Playwright) cobrindo: cadastro, listagem, edição,
+- [ ] Teste E2E (Playwright) cobrindo: cadastro, listagem, edição (apelido e
+  calibre), calibres filtrados por modelo, erro de calibre não permitido,
   exclusão bem-sucedida
 
 ## Referências
