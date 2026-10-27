@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.100.16"],
+  devIndicators: false,
   env: {
     // Mesmo DSN do servidor, embutido no bundle do cliente no build
     // (instrumentation-client.ts). Vazio = Sentry desligado.
