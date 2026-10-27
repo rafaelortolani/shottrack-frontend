@@ -116,7 +116,7 @@ export default function NovaMunicaoPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-dvh bg-background text-foreground flex items-center justify-center">
         <p className="text-foreground-muted">Carregando catálogo...</p>
       </div>
     );

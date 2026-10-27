@@ -142,7 +142,7 @@ export function AppNav() {
   return (
     <>
       <aside
-        className={`hidden md:flex flex-col py-6 shrink-0 border-r border-border transition-[width] duration-150 ${
+        className={`hidden md:flex flex-col sticky top-0 h-dvh overflow-y-auto py-6 shrink-0 border-r border-border transition-[width] duration-150 ${
           collapsed ? "w-16 px-3" : "w-56 px-5"
         }`}
       >
@@ -198,7 +198,7 @@ export function AppNav() {
         </div>
       </aside>
 
-      <nav className="flex md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-background items-center py-2">
+      <nav className="flex md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-background items-center pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <div className="flex flex-1 items-center justify-around">
           {NAV_ITEMS.map((item) => (
             <MobileNavLink key={item.href} item={item} active={isActive(pathname, item.href)} />

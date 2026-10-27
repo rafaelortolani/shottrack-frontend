@@ -103,7 +103,7 @@ function CompletarCadastroForm() {
     }[tokenState];
 
     return (
-      <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background text-foreground">
+      <main className="relative min-h-dvh flex items-center justify-center overflow-hidden bg-background text-foreground">
         <div className="text-center">
           <p className="text-foreground-muted mb-4">{content.message}</p>
           <Link href={content.href} className="text-sm text-accent-target hover:text-accent-target-hover transition-colors">
@@ -115,7 +115,7 @@ function CompletarCadastroForm() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background text-foreground">
+    <main className="relative min-h-dvh flex items-center justify-center overflow-hidden bg-background text-foreground">
       <TargetRings className="absolute -right-24 -top-24 w-[500px] h-[500px] text-accent-target pointer-events-none" />
 
       <div className="relative w-full max-w-sm px-6">

@@ -7,6 +7,18 @@ const nextConfig: NextConfig = {
     // (instrumentation-client.ts). Vazio = Sentry desligado.
     SENTRY_DSN: process.env.SENTRY_DSN ?? "",
   },
+  async headers() {
+    return [
+      {
+        // O navegador precisa rechecar o service worker a cada visita (FUC22)
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {

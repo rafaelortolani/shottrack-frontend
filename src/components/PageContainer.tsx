@@ -23,7 +23,7 @@ export function PageContainer({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`relative mx-auto w-full ${WIDTHS[width]} px-5 md:px-6 py-6 pb-20 md:pb-6`}>
+    <div className={`relative mx-auto w-full ${WIDTHS[width]} px-5 md:px-6 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6`}>
       <TargetRings
         className={`absolute -top-14 -right-14 z-0 w-[380px] h-[380px] pointer-events-none text-accent-target`}
       />
