@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { IconCircle, IconCircleCheck } from "@tabler/icons-react";
 import { AppNav } from "@/components/AppNav";
+import { InstallApp } from "@/components/InstallApp";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { TargetRings } from "@/components/TargetRings";
 
@@ -103,12 +104,12 @@ export default function BoasVindasPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-dvh bg-background text-foreground flex">
       <AppNav />
 
-      <main className="flex-1 relative overflow-hidden min-h-screen flex items-center justify-center px-5 py-10 pb-24 md:pb-10">
+      <main className="flex-1 min-w-0 relative overflow-clip min-h-dvh flex items-center justify-center px-5 py-10 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-10">
         {/* Maior e mais presente que nas outras telas: aqui não compete com formulário */}
-        <TargetRings className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 w-[min(max(96vw,560px),92vh,760px)] h-[min(max(96vw,560px),92vh,760px)] text-accent-target pointer-events-none" />
+        <TargetRings className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 w-[min(max(96vw,560px),92dvh,760px)] h-[min(max(96vw,560px),92dvh,760px)] text-accent-target pointer-events-none" />
 
         {/* Placa por trás do texto: o centro da retícula (cruz e pontos) não corta a saudação */}
         <div className="relative z-10 w-full max-w-sm text-center rounded-lg bg-background/85 px-5 py-6">
@@ -127,6 +128,12 @@ export default function BoasVindasPage() {
             </>
           ) : (
             <Greeting name={name} dashboard={dashboard} />
+          )}
+
+          {dashboard && name !== null && !error && (
+            <div className="mt-5 text-left">
+              <InstallApp variant="card" />
+            </div>
           )}
         </div>
       </main>

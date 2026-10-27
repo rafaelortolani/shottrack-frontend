@@ -8,7 +8,7 @@ export async function LegalPage({ document }: { document: LegalDocument }) {
   const content = renderLegalMarkdown(await readLegalDocument(document));
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <main className="relative min-h-dvh overflow-hidden bg-background text-foreground">
       <TargetRings className="absolute -right-24 -top-24 w-[500px] h-[500px] text-accent-target pointer-events-none" />
 
       <div className="relative w-full max-w-2xl mx-auto px-6 py-10">

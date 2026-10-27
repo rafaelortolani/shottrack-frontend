@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { InstallApp } from "@/components/InstallApp";
 
 type ExperienceLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 type Modality = { id: string; name: string };
@@ -210,13 +211,13 @@ function PerfilTabForm() {
           </Link>
         </div>
         <div className="flex items-center justify-between">
-          <div>
+          <div className="min-w-0">
             <p className="text-sm text-foreground-muted">Email</p>
-            <p className="text-foreground">{email}</p>
+            <p className="text-foreground [overflow-wrap:anywhere]">{email}</p>
           </div>
           <Link
             href="/usuario/email"
-            className="text-sm text-accent-brass-soft hover:text-accent-brass transition-colors"
+            className="shrink-0 pl-3 text-sm text-accent-brass-soft hover:text-accent-brass transition-colors"
           >
             Alterar
           </Link>
@@ -233,6 +234,10 @@ function PerfilTabForm() {
             Alterar
           </Link>
         </div>
+      </div>
+
+      <div className="mt-4">
+        <InstallApp variant="section" />
       </div>
     </>
   );

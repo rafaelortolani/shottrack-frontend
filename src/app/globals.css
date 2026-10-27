@@ -45,7 +45,44 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
+  /* Notch e cantos arredondados (viewport-fit=cover). Em navegador comum o
+     env() vale 0. O inset de baixo fica por conta da nav e dos rodapés. */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
+/* Toque (FUC22): alvos de 44px e campos com 16px (sem zoom do iOS). Vale pra
+   qualquer aparelho com ponteiro "coarse" — não é um tema mobile, só o
+   tamanho mínimo do que se toca. Na camada base, pra as utilidades do
+   Tailwind (min-h-*, text-*, flex...) continuarem mandando. Links dentro de
+   frases (p, li, títulos) ficam de fora, como a própria WCAG 2.5.8 prevê. */
+@layer base {
+  @media (pointer: coarse) {
+    button,
+    [role="button"],
+    select,
+    summary,
+    textarea,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+      min-height: 2.75rem;
+    }
+    button,
+    [role="button"] {
+      min-width: 2.75rem;
+    }
+    select,
+    textarea,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+      font-size: max(1rem, 1em);
+    }
+    a:not(p a, li a, h1 a, h2 a) {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+    }
+  }
+}
+
 /* Animação de entrada do login (FUC02) — roda uma vez: retícula se
    desenha, ponto do logo "acerta", formulário sobe. Fora do
    no-preference (prefers-reduced-motion) a tela já nasce pronta. */

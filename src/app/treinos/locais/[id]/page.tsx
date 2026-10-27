@@ -197,7 +197,7 @@ export default function EditarLocalTreinoPage() {
 
   if (loading || !values) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-dvh bg-background text-foreground flex items-center justify-center">
         <p className="text-foreground-muted">Carregando local de treino...</p>
       </div>
     );
@@ -205,7 +205,7 @@ export default function EditarLocalTreinoPage() {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-dvh bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <p className="text-foreground-muted mb-4">Local de treino não encontrado.</p>
           <Link href="/treinos/locais" className="text-sm text-accent-target hover:text-accent-target-hover transition-colors">

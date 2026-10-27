@@ -36,6 +36,7 @@ const PUBLIC_ROUTES = [
   "/cadastro/completar?token=qualquer",
   "/esqueci-senha",
   "/redefinir-senha?token=qualquer",
+  "/offline",
   "/termos",
   "/privacidade",
 ];

@@ -238,7 +238,7 @@ export default function EditarMunicaoPage() {
 
   if (loading || !values) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-dvh bg-background text-foreground flex items-center justify-center">
         <p className="text-foreground-muted">Carregando munição...</p>
       </div>
     );
@@ -246,7 +246,7 @@ export default function EditarMunicaoPage() {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="min-h-dvh bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <p className="text-foreground-muted mb-4">Munição não encontrada.</p>
           <Link href="/acervo/municoes" className="text-sm text-accent-target hover:text-accent-target-hover transition-colors">

@@ -75,7 +75,7 @@ export default function CadastroPage() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background text-foreground">
+    <main className="relative min-h-dvh flex items-center justify-center overflow-hidden bg-background text-foreground">
       <TargetRings className="absolute -right-24 -top-24 w-[500px] h-[500px] text-accent-target pointer-events-none" />
 
       <div className="relative w-full max-w-sm px-6">

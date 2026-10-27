@@ -100,10 +100,10 @@ export default function DashboardPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-dvh bg-background text-foreground flex">
       <AppNav />
 
-      <main className="flex-1 relative overflow-hidden">
+      <main className="flex-1 min-w-0 relative overflow-clip">
         <PageContainer width="wide">
           <p className="text-foreground-muted mb-1">Bem-vindo de volta</p>
           <h1 className="font-display text-lg font-semibold mb-4">

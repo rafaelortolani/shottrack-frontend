@@ -59,11 +59,11 @@ function LoginForm() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background text-foreground">
+    <main className="relative min-h-dvh flex items-center justify-center overflow-hidden bg-background text-foreground">
       {/* Alvo grande centralizado atrás do formulário: o anel externo e os
           postes ficam à mostra em volta dos campos */}
       <TargetRings
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 w-[min(max(96vw,560px),92vh,760px)] h-[min(max(96vw,560px),92vh,760px)] text-accent-target pointer-events-none"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 w-[min(max(96vw,560px),92dvh,760px)] h-[min(max(96vw,560px),92dvh,760px)] text-accent-target pointer-events-none"
         animated
       />
 

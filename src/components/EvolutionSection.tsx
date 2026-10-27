@@ -24,7 +24,7 @@ const MODES: { value: Mode; label: string }[] = [
 ];
 
 const SELECT_CLASS =
-  "rounded-md bg-background border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
+  "rounded-md bg-background border border-border px-3 py-2 text-sm pointer-coarse:text-base text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
 
 function segmentClass(selected: boolean): string {
   return `px-3 py-1.5 text-sm rounded transition-colors ${

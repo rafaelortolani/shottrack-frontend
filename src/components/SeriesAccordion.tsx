@@ -737,7 +737,9 @@ export function SeriesForm({
         </p>
       )}
 
-      <div className="flex items-center gap-3 pt-1">
+      {/* No celular a barra de ações fica presa acima da nav inferior, ao alcance do
+          polegar, mesmo com o formulário mais alto que a tela (FUC22). */}
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-3 -mb-3 flex items-center gap-3 rounded-b-md border-t border-border bg-surface px-3 py-2 md:static md:z-auto md:m-0 md:border-0 md:bg-transparent md:p-0 md:pt-1">
         <button
           type="submit"
           disabled={saving}

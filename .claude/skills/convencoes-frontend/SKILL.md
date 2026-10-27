@@ -143,6 +143,50 @@ família tipográfica, ou a presença/ausência do motivo dos anéis
 concêntricos. Qualquer variação visual entre tamanhos de tela que não seja
 puramente estrutural é um erro, não uma escolha de responsividade.
 
+## PWA e mobile
+O app é instalável (PWA) e usado no estande, pelo celular, com uma mão. Um
+único código web — sem tema mobile separado (ver "Consistência entre mobile e
+desktop"). Detalhes em `docs/use-cases/FUC22-pwa-mobile.md`.
+
+- **Service worker mínimo, à mão** (`public/sw.js`, sem next-pwa/serwist). Só
+  cacheia arquivos estáticos (`/_next/static`, `/icons`, fontes, imagens);
+  navegação vai à rede e, se falhar, devolve `/offline`. **Nunca** intercepta
+  `/api/*` nem requisição que não seja GET, e **nunca** guarda ou serve página
+  autenticada do cache — dados pessoais não ficam no aparelho (ADR-0019).
+  Mudou a estratégia ou o pré-cache? Suba `CACHE_VERSION`.
+- **Registro só em produção** (`PwaProvider`, `NODE_ENV === "production"`). Em
+  `next dev` o provider remove worker e cache antigos — cache-first sobre
+  chunks sem hash serviria código velho.
+- Sem escrita offline: sem conexão aparece o banner e os botões de envio ficam
+  desabilitados (`PwaProvider`). Nada de dados em cache.
+- `manifest.ts`, `/icons/*`, `/sw.js` e `/offline` ficam **fora** do matcher do
+  `proxy.ts` (públicos). Ícones são PNGs commitados em `public/icons`, gerados
+  por `node scripts/generate-icons.mjs` a partir de `src/app/icon.svg`.
+- **Alvos de toque ≥ 44px.** A regra global em `globals.css` (`@media (pointer:
+  coarse)`, camada `base`) já dá 44px a botões, campos, selects e links fora de
+  frase. Link dentro de `p`/`li` é exceção. Elemento novo que não seja nada
+  disso (ex.: ícone clicável) precisa de `min-h-11 min-w-11` próprio.
+- **Safe areas:** o que é fixo em baixo (nav, barras de ação) soma
+  `env(safe-area-inset-bottom)`; o `body` já compensa topo e laterais.
+  Conteúdo com nav inferior usa `pb-[calc(5rem+env(safe-area-inset-bottom))]`.
+- **Altura de tela é `dvh`**, nunca `vh`/`min-h-screen` (barra do navegador
+  móvel). Para `sticky` dentro do conteúdo, o `<main>` usa `overflow-clip`, não
+  `overflow-hidden` (este vira contêiner de rolagem e quebra o sticky).
+- **Campos ≥ 16px** no toque (senão o iOS dá zoom). Se uma classe `text-sm` num
+  campo vencer a regra global, use `pointer-coarse:text-base` — não `md:` (o
+  celular deitado passa de 768px).
+- **Sem rolagem horizontal.** Filho de flex que contém texto longo (e-mail,
+  nome) leva `min-w-0` e `[overflow-wrap:anywhere]`; `<main>` de layout leva
+  `min-w-0`.
+- Ação principal de um formulário alto fica ao alcance do polegar: barra de
+  ações `sticky bottom-[calc(4rem+env(safe-area-inset-bottom))]` no mobile (ver
+  formulário de série em `SeriesAccordion`).
+- **Teste de viewport de celular é obrigatório para tela nova** (como o E2E):
+  inclua o fluxo em `tests/mobile-*.spec.ts` (projetos `mobile-iphone` e
+  `mobile-pixel`), conferindo ao menos sem rolagem horizontal, alvos de 44px e
+  campos de 16px. Service worker/manifest se testam em `tests/pwa.spec.ts`,
+  contra o build de produção (`npm run build && npm run start -- -p 3100`).
+
 ## Autenticação
 - Cookies: `shottrack_access` (1h) e `shottrack_refresh` (7d), sempre
   `httpOnly`, `sameSite: lax`, `secure` em produção.
