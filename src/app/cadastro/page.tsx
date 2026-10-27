@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
+import { LegalLinks } from "@/components/LegalLinks";
 import { TargetRings } from "@/components/TargetRings";
 import { tooManyRequestsMessage } from "@/lib/rateLimit";
 
@@ -121,6 +122,8 @@ export default function CadastroPage() {
                 Entrar
               </Link>
             </p>
+
+            <LegalLinks />
           </>
         ) : (
           <>
