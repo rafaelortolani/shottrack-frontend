@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
+import { LegalLinks } from "@/components/LegalLinks";
 import { TargetRings } from "@/components/TargetRings";
 import { tooManyRequestsMessage } from "@/lib/rateLimit";
 
@@ -141,6 +142,8 @@ function LoginForm() {
                 Cadastre-se
               </Link>
             </p>
+
+            <LegalLinks />
           </div>
         </div>
       </div>
