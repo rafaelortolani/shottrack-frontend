@@ -37,6 +37,18 @@ async function findModelsOfDistinctTypes(token: string): Promise<[WeaponCatalogM
   return [modelA, modelB];
 }
 
+/** Modelo com mais de um calibre permitido, procurando em todas as marcas do catálogo. */
+async function findModelWithMultipleCalibers(token: string) {
+  const { brands } = await getWeaponCatalog(token);
+  for (const brand of brands) {
+    for (const model of await getWeaponModels(token, brand.id)) {
+      const calibers = await getModelCalibers(token, model.id);
+      if (calibers.length > 1) return { brand, model, calibers };
+    }
+  }
+  throw new Error("Catálogo de teste sem modelo com mais de um calibre");
+}
+
 test.describe("Acervo > Armas (FUC07)", () => {
   test("mostra o estado vazio e cadastra uma arma em cascata Marca → Modelo → Calibre, com tipo derivado do modelo", async ({
     page,
@@ -119,6 +131,81 @@ test.describe("Acervo > Armas (FUC07)", () => {
 
     await expect(page).toHaveURL(/\/acervo\/armas$/);
     await expect(page.getByText("Minha Glockinha")).toBeVisible();
+  });
+
+  test("edita a arma trocando só o calibre, mantendo o apelido", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { model, calibers } = await findModelWithMultipleCalibers(token);
+    const [original, other] = calibers;
+    const weapon = await registerWeapon(token, { modelId: model.id, caliberId: original.id });
+
+    await login(page, email);
+    await page.goto(`/acervo/armas/${weapon.id}`);
+    await expect(page.getByLabel("Calibre")).toHaveValue(original.id);
+    await page.getByLabel("Apelido").fill("Troca de calibre");
+
+    await page.getByLabel("Calibre").selectOption({ label: other.name });
+    await page.getByRole("button", { name: "Salvar" }).click();
+
+    await expect(page).toHaveURL(/\/acervo\/armas$/);
+    await expect(page.getByText("Troca de calibre")).toBeVisible();
+    await expect(page.getByText(`${model.type.name} · ${other.name}`)).toBeVisible();
+  });
+
+  test("mostra erro inline quando o backend recusa o calibre para o modelo (WEAPON_CALIBER_NOT_ALLOWED_FOR_MODEL)", async ({
+    page,
+  }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { model, caliber } = await getValidWeaponCombo(token);
+    const weapon = await registerWeapon(token, { modelId: model.id, caliberId: caliber.id });
+
+    await login(page, email);
+    await page.goto(`/acervo/armas/${weapon.id}`);
+    await expect(page.getByLabel("Calibre")).toHaveValue(caliber.id);
+
+    // A UI só oferece calibres válidos; simula o backend recusando (ex.: catálogo
+    // alterado entre o carregamento da tela e o envio) interceptando o BFF.
+    await page.route(`**/api/weapons/${weapon.id}`, (route) =>
+      route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "WEAPON_CALIBER_NOT_ALLOWED_FOR_MODEL", message: "Calibre não é válido para o modelo informado" },
+        }),
+      })
+    );
+    await page.getByRole("button", { name: "Salvar" }).click();
+
+    await expect(page.getByRole("alert").filter({ hasText: "Calibre não é válido para o modelo informado" })).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/acervo/armas/${weapon.id}$`));
+  });
+
+  test("o BFF repassa o erro real do backend para calibre fora da lista do modelo", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { brands, calibers: allCalibers } = await getWeaponCatalog(token);
+    const brand = brands[0];
+    const models = await getWeaponModels(token, brand.id);
+    let target: { modelId: string; caliberId: string } | undefined;
+    for (const m of models) {
+      const allowed = await getModelCalibers(token, m.id);
+      const notAllowed = allCalibers.find((c) => !allowed.some((a) => a.id === c.id));
+      if (notAllowed) {
+        target = { modelId: m.id, caliberId: notAllowed.id };
+        break;
+      }
+    }
+    test.skip(!target, "Catálogo de teste sem modelo com calibre não permitido");
+
+    await login(page, email);
+    const response = await page.request.post("/api/weapons", { data: target });
+    expect(response.status()).toBe(400);
+    expect((await response.json()).error.code).toBe("WEAPON_CALIBER_NOT_ALLOWED_FOR_MODEL");
   });
 
   test("filtra a lista por tipo", async ({ page }) => {

@@ -42,6 +42,7 @@ export default function EditarArmaPage() {
   const [nickname, setNickname] = useState("");
   const [summary, setSummary] = useState<{ primary: string; secondary: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [caliberError, setCaliberError] = useState<string | null>(null);
   const [deleteBlocked, setDeleteBlocked] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -151,6 +152,9 @@ export default function EditarArmaPage() {
         if (!cancelled) {
           setCalibers(data);
           setCalibersForModelId(modelId);
+          if (data.length === 1) {
+            setCaliberId((current) => current || data[0].id);
+          }
         }
       });
 
@@ -172,12 +176,14 @@ export default function EditarArmaPage() {
   function handleModelChange(newModelId: string) {
     setModelId(newModelId);
     setCaliberId("");
+    setCaliberError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     setError(null);
+    setCaliberError(null);
     setSaving(true);
 
     const response = await fetch(`/api/weapons/${weaponId}`, {
@@ -199,6 +205,10 @@ export default function EditarArmaPage() {
 
     if (!response.ok) {
       const { error } = await response.json();
+      if (error?.code === "WEAPON_CALIBER_NOT_ALLOWED_FOR_MODEL") {
+        setCaliberError(error.message ?? "Calibre não é válido para o modelo informado");
+        return;
+      }
       setError(error?.message ?? "Não foi possível salvar as alterações");
       return;
     }
@@ -350,7 +360,10 @@ export default function EditarArmaPage() {
               required
               disabled={!modelId || loadingCalibers}
               value={caliberId}
-              onChange={(e) => setCaliberId(e.target.value)}
+              onChange={(e) => {
+                setCaliberId(e.target.value);
+                setCaliberError(null);
+              }}
               className={SELECT_CLASS}
             >
               <option value="" disabled>
@@ -360,6 +373,11 @@ export default function EditarArmaPage() {
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
+            {caliberError && (
+              <p className="text-sm text-accent-target mt-1" role="alert">
+                {caliberError}
+              </p>
+            )}
           </div>
 
           {error && (

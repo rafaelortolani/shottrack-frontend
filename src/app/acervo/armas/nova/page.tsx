@@ -27,6 +27,7 @@ export default function NovaArmaPage() {
   const [modelId, setModelId] = useState("");
   const [caliberId, setCaliberId] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [caliberError, setCaliberError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -112,6 +113,9 @@ export default function NovaArmaPage() {
         if (!cancelled) {
           setCalibers(data);
           setCalibersForModelId(modelId);
+          if (data.length === 1) {
+            setCaliberId((current) => current || data[0].id);
+          }
         }
       });
 
@@ -133,12 +137,14 @@ export default function NovaArmaPage() {
   function handleModelChange(newModelId: string) {
     setModelId(newModelId);
     setCaliberId("");
+    setCaliberError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     setError(null);
+    setCaliberError(null);
     setSaving(true);
 
     const response = await fetch("/api/weapons", {
@@ -156,6 +162,10 @@ export default function NovaArmaPage() {
 
     if (!response.ok) {
       const { error } = await response.json();
+      if (error?.code === "WEAPON_CALIBER_NOT_ALLOWED_FOR_MODEL") {
+        setCaliberError(error.message ?? "Calibre não é válido para o modelo informado");
+        return;
+      }
       setError(error?.message ?? "Não foi possível cadastrar a arma");
       return;
     }
@@ -252,7 +262,10 @@ export default function NovaArmaPage() {
             required
             disabled={!modelId || loadingCalibers}
             value={caliberId}
-            onChange={(e) => setCaliberId(e.target.value)}
+            onChange={(e) => {
+                setCaliberId(e.target.value);
+                setCaliberError(null);
+              }}
             className={SELECT_CLASS}
           >
             <option value="" disabled>
@@ -262,6 +275,11 @@ export default function NovaArmaPage() {
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+            {caliberError && (
+              <p className="text-sm text-accent-target mt-1" role="alert">
+                {caliberError}
+              </p>
+            )}
         </div>
 
         {error && (
