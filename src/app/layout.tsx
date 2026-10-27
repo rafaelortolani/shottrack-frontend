@@ -26,7 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${rajdhani.variable} ${plexSans.variable} antialiased`}>
+      <body
+        className={`${rajdhani.variable} ${plexSans.variable} antialiased`}
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>
