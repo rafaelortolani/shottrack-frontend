@@ -120,7 +120,7 @@ test.describe("Boas-vindas (FUC17)", () => {
     // Dashboard segue acessível pela nav
     await page.getByRole("link", { name: "Dashboard" }).click();
     await expect(page).toHaveURL(/\/dashboard/);
-    await expect(page.getByRole("heading", { name: "Sua evolução" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible();
   });
 
   test("logo do menu leva de volta pra boas-vindas, expandido ou recolhido", async ({ page }) => {

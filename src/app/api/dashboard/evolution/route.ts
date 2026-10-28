@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
 
-const PARAMS = ["modalityId", "resultTypeId", "period", "mode"] as const;
+const PARAMS = ["modalityId", "resultTypeId", "period", "mode", "comparePrevious"] as const;
 
 /**
  * BFF da evolução (UC46): repassa só os parâmetros conhecidos pro backend,
  * que valida período/modo e se modalidade/tipo pertencem ao atleta.
- * Período sem dado → lista vazia, não é erro.
+ * Período sem dado → lista vazia, não é erro. Com `comparePrevious=true` a
+ * resposta passa de lista para `{ points, previousPoints }` (período anterior
+ * de mesma duração).
  */
 export async function GET(request: NextRequest) {
   const accessToken = request.cookies.get("shottrack_access")?.value;

@@ -13,9 +13,7 @@ import {
   closeTraining,
   registerSeries,
   registerSeriesResult,
-  getValidWeaponCombo,
-  registerWeapon,
-  updateWeapon,
+  waitForDashboardRecords,
 } from "./helpers";
 
 async function submitLogin(page: Page, email: string, password = "senha12345") {
@@ -25,15 +23,6 @@ async function submitLogin(page: Page, email: string, password = "senha12345") {
   await page.getByRole("button", { name: "Entrar" }).click();
 }
 
-async function registerAnyWeapon(token: string, nickname?: string) {
-  const { model, caliber } = await getValidWeaponCombo(token);
-  const weapon = await registerWeapon(token, { modelId: model.id, caliberId: caliber.id });
-  // Apelido não entra no cadastro, só na edição (UC06/UC10)
-  if (nickname) {
-    await updateWeapon(token, weapon.id, { modelId: model.id, caliberId: caliber.id, nickname });
-  }
-}
-
 // Login cai em Boas-vindas (FUC17); o Dashboard segue acessível pela nav
 async function openDashboardFromNav(page: Page) {
   await expect(page).toHaveURL(/\/boas-vindas/);
@@ -41,8 +30,55 @@ async function openDashboardFromNav(page: Page) {
   await expect(page).toHaveURL(/\/dashboard/);
 }
 
-test.describe("Dashboard Onda 1 e landing condicional (FUC15/FUC17)", () => {
-  test("atleta novo vê convite pra treinar e seções vazias sem indicador artificial, sem onboarding", async ({
+async function loginAndOpen(page: Page, email: string, path = "/dashboard") {
+  await submitLogin(page, email);
+  await expect(page).toHaveURL(/\/boas-vindas/);
+  await page.goto(path);
+}
+
+/**
+ * Precisão (3 treinos): Agrupamento 4,4 e 3,2 (menor é melhor), Pontuação 92.
+ * Trap (1 treino, o mais recente): Acertos 20, Erros 5.
+ * Recordes (ordem do nome): Acertos, Agrupamento, Erros, Pontuação.
+ */
+async function seedAthlete(token: string) {
+  const location = await registerTrainingLocation(token, { name: "Clube de Tiro Alvorada", city: "Curitiba", state: "PR" });
+  const catalog = await getModalityCatalog(token);
+  const precisao = catalog.find((m) => m.name === "Precisão")!;
+  const trap = catalog.find((m) => m.name === "Trap")!;
+  await addPracticedModality(token, precisao.id);
+  await addPracticedModality(token, trap.id);
+  const precisaoTypes = await getConfiguredResultTypes(token, precisao.id);
+  const trapTypes = await getConfiguredResultTypes(token, trap.id);
+  const agrupamento = precisaoTypes.find((r) => r.name === "Agrupamento")!;
+  const pontuacao = precisaoTypes.find((r) => r.name === "Pontuação")!;
+  const acertos = trapTypes.find((r) => r.name === "Acertos")!;
+  const erros = trapTypes.find((r) => r.name === "Erros")!;
+
+  const visit = await startVisit(token, location.id);
+  for (const [grouping, score] of [["4.4", null], ["3.2", "92"], ["3.9", null]] as const) {
+    const training = await openTraining(token, visit.id, precisao.id);
+    const series = await registerSeries(token, { trainingId: training.id, shotCount: 10 });
+    await registerSeriesResult(token, series.id, agrupamento.id, grouping);
+    if (score) await registerSeriesResult(token, series.id, pontuacao.id, score);
+    await closeTraining(token, training.id);
+  }
+  const trapTraining = await openTraining(token, visit.id, trap.id);
+  const trapSeries = await registerSeries(token, { trainingId: trapTraining.id, shotCount: 25 });
+  await registerSeriesResult(token, trapSeries.id, acertos.id, "20");
+  await registerSeriesResult(token, trapSeries.id, erros.id, "5");
+  await closeTraining(token, trapTraining.id);
+  await closeVisit(token, visit.id);
+
+  await waitForDashboardRecords(token, 4);
+  return { location, precisao, trap };
+}
+
+const tabLink = (page: Page, name: string) =>
+  page.getByRole("navigation", { name: "Seções do dashboard" }).getByRole("link", { name, exact: true });
+
+test.describe("Dashboard em abas — Resumo (FUC15 v6)", () => {
+  test("atleta novo: convite pra treinar, indicadores zerados sem comparação, sem blocos vazios nem acervo", async ({
     page,
   }) => {
     const email = randomEmail();
@@ -51,22 +87,23 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15/FUC17)", () => {
     await submitLogin(page, email);
     await openDashboardFromNav(page);
 
-    // Onboarding vive só em Boas-vindas agora (FUC17)
-    await expect(page.getByRole("heading", { name: "Sua evolução" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible();
+    // Onboarding vive só em Boas-vindas (FUC17)
     await expect(page.getByRole("region", { name: "Configuração inicial" })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Continuar configuração" })).toHaveCount(0);
 
-    const mainAction = page.getByRole("region", { name: "Ação principal" });
-    await expect(mainAction.getByText("Pronto pra treinar?")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Ação principal" }).getByText("Pronto pra treinar?")).toBeVisible();
 
-    // Sem resultado registrado, nenhum recorde "vazio"
-    await expect(page.getByRole("region", { name: "Recordes" })).toHaveCount(0);
-    await expect(page.getByRole("group", { name: "Treinos esse mês" }).getByText("0", { exact: true })).toBeVisible();
+    const trainings = page.getByRole("group", { name: "Treinos esse mês" });
+    await expect(trainings.getByText("0", { exact: true })).toBeVisible();
+    await expect(trainings.getByLabel("Sem dados do mês anterior para comparar")).toHaveText("—");
     await expect(page.getByText("NaN")).toHaveCount(0);
 
     await expect(page.getByRole("region", { name: "Últimos treinos" }).getByText(/Ainda não há treinos/)).toBeVisible();
-    await expect(page.getByRole("region", { name: "Modalidades" }).getByText(/Nenhum treino registrado/)).toBeVisible();
-    await expect(page.getByRole("region", { name: "Acervo" }).getByText("Nenhuma arma cadastrada ainda.")).toBeVisible();
+    // sem dado: nem mini evolução, nem recordes, e o acervo e o resumo de modalidades saíram do dashboard
+    await expect(page.getByRole("region", { name: "Evolução" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Recordes" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Acervo" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Modalidades" })).toHaveCount(0);
   });
 
   test("ação principal muda pra 'Continuar treino' ao iniciar uma visita", async ({ page }) => {
@@ -95,75 +132,114 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15/FUC17)", () => {
     await expect(page).toHaveURL(/\/treinos\/visitas/);
   });
 
-  test("recordes em lista, últimos treinos com e sem métrica, resumo de modalidades e de acervo", async ({ page }) => {
+  test("com dados: indicadores, mini evolução, 3 últimos treinos e 3 recordes, com os links entre abas", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     const token = await loginAndGetToken(email);
+    const { location } = await seedAthlete(token);
 
-    const location = await registerTrainingLocation(token, { name: "Clube de Tiro Alvorada", city: "Curitiba", state: "PR" });
-    const catalog = await getModalityCatalog(token);
-    const precisao = catalog.find((m) => m.name === "Precisão")!;
-    const outra = catalog.find((m) => m.name !== "Precisão")!;
-    await addPracticedModality(token, precisao.id);
-    await addPracticedModality(token, outra.id);
-    const configured = await getConfiguredResultTypes(token, precisao.id);
-    const agrupamento = configured.find((r) => r.name === "Agrupamento")!;
-    const pontuacao = configured.find((r) => r.name === "Pontuação")!;
-    await registerAnyWeapon(token, "Minha pistola");
+    await loginAndOpen(page, email);
 
-    const visit = await startVisit(token, location.id);
-    // Treino com resultado: melhor agrupamento = menor = 3,2 cm
-    const comMetrica = await openTraining(token, visit.id, precisao.id);
-    const serieA = await registerSeries(token, { trainingId: comMetrica.id, shotCount: 10 });
-    await registerSeriesResult(token, serieA.id, agrupamento.id, "4.4");
-    const serieB = await registerSeries(token, { trainingId: comMetrica.id, shotCount: 15 });
-    await registerSeriesResult(token, serieB.id, agrupamento.id, "3.2");
-    await registerSeriesResult(token, serieB.id, pontuacao.id, "92");
-    await closeTraining(token, comMetrica.id);
-    // Treino sem nenhum resultado
-    const semMetrica = await openTraining(token, visit.id, outra.id);
-    await registerSeries(token, { trainingId: semMetrica.id, shotCount: 5 });
-    await closeTraining(token, semMetrica.id);
-    await closeVisit(token, visit.id);
+    // Indicadores: valor do mês; sem mês anterior, o delta é "—"
+    await expect(page.getByRole("group", { name: "Treinos esse mês" }).getByText("4", { exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Disparos esse mês" }).getByText("55", { exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Modalidades praticadas" }).getByText("2", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("Sem dados do mês anterior para comparar")).toHaveCount(3);
 
-    await submitLogin(page, email);
-    await openDashboardFromNav(page);
+    // Mini evolução do suggestedEvolution: sem controles, com link "Ver evolução"
+    const mini = page.getByRole("region", { name: "Evolução" });
+    await expect(mini).toBeVisible();
+    await expect(mini.getByRole("table")).toHaveCount(1);
+    await expect(mini.getByRole("tab")).toHaveCount(0);
+    await expect(mini.getByRole("combobox")).toHaveCount(0);
+    await expect(mini.getByRole("link", { name: "Ver evolução" })).toHaveAttribute("href", /aba=evolucao.*tipo=|tipo=.*aba=evolucao/);
 
-    // Recordes: um por tipo com registro, cada um com o melhor valor
-    const records = page.getByRole("region", { name: "Recordes" }).getByRole("listitem");
-    await expect(records).toHaveCount(2);
-    await expect(records.filter({ hasText: "Agrupamento" })).toContainText("3,2");
-    await expect(records.filter({ hasText: "Agrupamento" })).toContainText("cm");
-    await expect(records.filter({ hasText: "Pontuação" })).toContainText("92");
-    await expect(page.getByRole("group", { name: "Disparos esse mês" }).getByText("30", { exact: true })).toBeVisible();
-
-    // Últimos treinos: um com métrica, outro só com data/local/modalidade
+    // Só 3 treinos (o 4º, mais antigo, fica de fora), mais recente primeiro, com a métrica de cada um
     const recent = page.getByRole("region", { name: "Últimos treinos" });
-    const rowComMetrica = recent.getByRole("link", { name: new RegExp(precisao.name) });
-    await expect(rowComMetrica).toContainText("Agrupamento: 3,2 cm");
-    await expect(rowComMetrica).toContainText(location.name);
-    const rowSemMetrica = recent.getByRole("link", { name: new RegExp(outra.name) });
-    await expect(rowSemMetrica).toContainText(location.name);
-    await expect(rowSemMetrica).not.toContainText(":");
-    await expect(recent.getByRole("link", { name: "Ver histórico completo" })).toHaveAttribute("href", "/treinos/historico");
+    await expect(recent.getByRole("listitem")).toHaveCount(3);
+    await expect(recent.getByRole("listitem").first()).toContainText("Trap");
+    await expect(recent.getByRole("listitem").first()).toContainText(location.name);
+    // o destaque do treino é o tipo com mais registros (empate: o mais recente) — Acertos ou Erros
+    await expect(recent.getByRole("listitem").first()).toContainText(/(Acertos: 20|Erros: 5)/);
+    await expect(recent.getByRole("link", { name: "Ver histórico" })).toHaveAttribute("href", "/treinos/historico");
 
-    // Resumo de modalidades: contagem e melhor valor por modalidade
-    const modalities = page.getByRole("region", { name: "Modalidades" });
-    const precisaoRow = modalities.getByRole("listitem").filter({ hasText: precisao.name });
-    await expect(precisaoRow).toContainText("1 treino");
-    await expect(precisaoRow).toContainText("Melhor Agrupamento: 3,2 cm");
-    await expect(modalities.getByRole("listitem").filter({ hasText: outra.name })).not.toContainText("Melhor");
-    await expect(modalities.getByRole("link", { name: "Ver modalidades" })).toHaveAttribute("href", "/usuario/modalidades");
+    // 3 recordes (ordem do nome) e "Ver todos" leva à aba Recordes
+    const records = page.getByRole("region", { name: "Recordes" });
+    await expect(records.getByRole("listitem")).toHaveCount(3);
+    await expect(records.getByRole("listitem").first()).toContainText("Acertos");
+    await records.getByRole("link", { name: "Ver todos" }).click();
+    await expect(page).toHaveURL(/aba=recordes/);
+    await expect(page.getByRole("region", { name: "Recordes" }).getByRole("listitem")).toHaveCount(4);
 
-    // Resumo de acervo
-    const acervo = page.getByRole("region", { name: "Acervo" });
-    await expect(acervo.getByText("1 arma", { exact: true })).toBeVisible();
-    await expect(acervo.getByText("Minha pistola")).toBeVisible();
-    await expect(acervo.getByRole("link", { name: "Gerenciar acervo" })).toHaveAttribute("href", "/acervo");
+    // "Ver evolução" abre a aba Evolução já com a seleção sugerida
+    await tabLink(page, "Resumo").click();
+    await page.getByRole("region", { name: "Evolução" }).getByRole("link", { name: "Ver evolução" }).click();
+    await expect(page).toHaveURL(/aba=evolucao/);
+    await expect(page.getByRole("heading", { name: "Evolução", level: 2 })).toBeVisible();
+    await expect(page.getByLabel("Tipo de resultado")).toBeVisible();
+  });
 
-    // Linha do treino leva pro detalhe da visita
-    await rowComMetrica.click();
-    await expect(page).toHaveURL(new RegExp(`/treinos/${visit.id}`));
+  test("os deltas comparam com o período anterior: melhora em verde, piora e igual neutros, nunca vermelho", async ({
+    page,
+  }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    await seedAthlete(token);
+
+    // O treino sempre nasce "hoje", então não há como criar dado do mês anterior pela API:
+    // o teste usa a resposta real e só substitui o campo `previous` dos indicadores.
+    await page.route("**/api/dashboard", async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      body.data.trainingsThisMonth = { value: 4, previous: 1 }; // melhora
+      body.data.shotsThisMonth = { value: 55, previous: 80 }; // piora
+      body.data.modalitiesPracticed = { value: 2, previous: 2 }; // igual
+      await route.fulfill({ response, json: body });
+    });
+
+    await loginAndOpen(page, email);
+
+    const improved = page.getByRole("group", { name: "Treinos esse mês" }).getByLabel("3 a mais que no mês anterior");
+    await expect(improved).toHaveText("▲ 3 vs mês anterior");
+    await expect(improved).toHaveClass(/text-positive/);
+
+    const worse = page.getByRole("group", { name: "Disparos esse mês" }).getByLabel("25 a menos que no mês anterior");
+    await expect(worse).toHaveText("▼ 25 vs mês anterior");
+    await expect(worse).not.toHaveClass(/text-positive/);
+
+    const same = page.getByRole("group", { name: "Modalidades praticadas" }).getByLabel("Igual ao mês anterior");
+    await expect(same).toHaveText("= igual ao mês anterior");
+
+    // nenhum delta usa as cores de alerta (vermelho)
+    for (const delta of [improved, worse, same]) {
+      await expect(delta).not.toHaveClass(/accent-brass|accent-target/);
+    }
+  });
+
+  test("erro ao carregar mostra a mensagem e 'Tentar de novo' recarrega", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    let failures = 0;
+    await page.route("**/api/dashboard", async (route) => {
+      if (failures-- > 0) {
+        await route.fulfill({ status: 500, json: { error: { code: "X", message: "falhou" } } });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Boas-vindas também consulta /api/dashboard: a falha só vale pra tela do dashboard
+    await submitLogin(page, email);
+    await expect(page).toHaveURL(/\/boas-vindas/);
+    await expect(page.getByText(/Bem-vindo/)).toBeVisible();
+    failures = 1;
+    await page.goto("/dashboard");
+    await expect(page.getByRole("alert").filter({ hasText: "Não foi possível carregar o dashboard" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Tentar de novo" }).click();
+    await expect(page.getByRole("region", { name: "Ação principal" })).toBeVisible();
   });
 
   test("login com visita ativa cai em Treinos > Visitas, e o Dashboard segue acessível", async ({ page }) => {
@@ -177,7 +253,7 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15/FUC17)", () => {
     await expect(page).toHaveURL(/\/treinos\/visitas/);
 
     await page.goto("/dashboard");
-    await expect(page.getByRole("heading", { name: "Sua evolução" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible();
   });
 
   test("sessão inválida no carregamento manda pro login", async ({ page, context }) => {
@@ -192,5 +268,163 @@ test.describe("Dashboard Onda 1 e landing condicional (FUC15/FUC17)", () => {
     await context.addCookies([{ name: "shottrack_access", value: "token-invalido", url: "http://localhost:3000" }]);
     await page.reload();
     await expect(page).toHaveURL(/\/login/);
+  });
+});
+
+test.describe("Dashboard em abas — abas, URL e filtro global (FUC15 v6)", () => {
+  test("a aba ativa vive na URL, sobrevive ao recarregar e o Resumo é a padrão", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    await seedAthlete(token);
+
+    await loginAndOpen(page, email);
+    await expect(tabLink(page, "Resumo")).toHaveAttribute("aria-current", "page");
+    expect(new URL(page.url()).search).toBe(""); // padrão: sem ?aba=
+
+    for (const [name, aba] of [["Evolução", "evolucao"], ["Recordes", "recordes"], ["Modalidades", "modalidades"]]) {
+      await tabLink(page, name).click();
+      await expect(page).toHaveURL(new RegExp(`aba=${aba}`));
+      await expect(tabLink(page, name)).toHaveAttribute("aria-current", "page");
+    }
+
+    await page.reload();
+    await expect(page).toHaveURL(/aba=modalidades/);
+    await expect(tabLink(page, "Modalidades")).toHaveAttribute("aria-current", "page");
+
+    // voltar do navegador percorre as abas
+    await page.goBack();
+    await expect(page).toHaveURL(/aba=recordes/);
+    await expect(tabLink(page, "Recordes")).toHaveAttribute("aria-current", "page");
+
+    // aba inválida cai no Resumo
+    await page.goto("/dashboard?aba=nao-existe");
+    await expect(tabLink(page, "Resumo")).toHaveAttribute("aria-current", "page");
+  });
+
+  test("o filtro global vale pra Resumo, Evolução e Recordes, persiste ao trocar de aba e não afeta Modalidades", async ({
+    page,
+  }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { precisao, trap } = await seedAthlete(token);
+    await waitForDashboardRecords(token, 2, trap.id);
+
+    await loginAndOpen(page, email);
+    const filter = page.locator("#dashboard-modality");
+    await expect(filter.locator("option")).toHaveText(["Todas as modalidades", precisao.name, trap.name].sort((a, b) => (a === "Todas as modalidades" ? -1 : b === "Todas as modalidades" ? 1 : a.localeCompare(b))));
+
+    await filter.selectOption(trap.id);
+    await expect(page).toHaveURL(new RegExp(`modalidade=${trap.id}`));
+
+    // Resumo: só o treino do Trap; e só os recordes do Trap
+    const recent = page.getByRole("region", { name: "Últimos treinos" });
+    await expect(recent.getByRole("listitem")).toHaveCount(1);
+    await expect(recent.getByRole("listitem")).toContainText("Trap");
+    const records = page.getByRole("region", { name: "Recordes" });
+    await expect(records.getByRole("listitem")).toHaveText([/Acertos/, /Erros/]);
+    // indicador de treinos respeita o filtro; "Modalidades praticadas" não
+    await expect(page.getByRole("group", { name: "Treinos esse mês" }).getByText("1", { exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Modalidades praticadas" }).getByText("2", { exact: true })).toBeVisible();
+
+    // O filtro persiste ao trocar de aba
+    await tabLink(page, "Recordes").click();
+    await expect(page).toHaveURL(new RegExp(`aba=recordes.*modalidade=${trap.id}|modalidade=${trap.id}.*aba=recordes`));
+    await expect(filter).toHaveValue(trap.id);
+    await expect(page.getByRole("region", { name: "Recordes" }).getByRole("listitem")).toHaveCount(2);
+
+    // Evolução: a modalidade vem do filtro (sem seletor local), com os tipos dela
+    await tabLink(page, "Evolução").click();
+    const evolution = page.getByRole("region", { name: "Evolução" });
+    await expect(evolution.getByText(/^Modalidade:/)).toContainText(trap.name);
+    await expect(evolution.getByLabel("Modalidade")).toHaveCount(0);
+    await expect
+      .poll(() => page.getByLabel("Tipo de resultado").locator("option").allTextContents())
+      .toEqual(expect.arrayContaining(["Acertos", "Erros"]));
+
+    // Modalidades ignora o filtro: lista todas, e o seletor mostra "Todas" desabilitado
+    await tabLink(page, "Modalidades").click();
+    await expect(filter).toBeDisabled();
+    await expect(filter).toHaveValue("");
+    await expect(page.getByText("Esta aba mostra todas as modalidades.")).toBeVisible();
+    const list = page.getByRole("region", { name: "Modalidades" }).getByRole("listitem");
+    await expect(list).toHaveCount(2);
+    await expect(list.filter({ hasText: precisao.name })).toContainText("3 treinos");
+    await expect(list.filter({ hasText: trap.name })).toContainText("1 treino");
+
+    // ...e voltar pro Resumo restaura o filtro que a URL guardou
+    await tabLink(page, "Resumo").click();
+    await expect(filter).toHaveValue(trap.id);
+    await expect(filter).toBeEnabled();
+
+    // "Todas as modalidades" limpa o filtro
+    await filter.selectOption("");
+    await expect(page).not.toHaveURL(/modalidade=/);
+    await expect(page.getByRole("region", { name: "Últimos treinos" }).getByRole("listitem")).toHaveCount(3);
+  });
+
+  test("modalidade inválida na URL vira 'Todas' sem quebrar a tela", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    await seedAthlete(token);
+
+    await loginAndOpen(page, email, "/dashboard?modalidade=00000000-0000-0000-0000-000000000000");
+    await expect(page.locator("#dashboard-modality")).toHaveValue("");
+    await expect(page.getByRole("region", { name: "Últimos treinos" }).getByRole("listitem")).toHaveCount(3);
+  });
+
+  test("Modalidades: nome, nº de treinos e melhor valor; vazio sem treino", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { precisao } = await seedAthlete(token);
+
+    await loginAndOpen(page, email, "/dashboard?aba=modalidades");
+    const row = page.getByRole("region", { name: "Modalidades" }).getByRole("listitem").filter({ hasText: precisao.name });
+    await expect(row).toContainText("3 treinos");
+    await expect(row).toContainText("Melhor");
+
+    // atleta sem treino
+    const empty = randomEmail();
+    await createUser(empty);
+    await page.context().clearCookies();
+    await loginAndOpen(page, empty, "/dashboard?aba=modalidades");
+    await expect(page.getByText("Nenhum treino registrado em nenhuma modalidade ainda.")).toBeVisible();
+  });
+
+  test("Recordes: lista completa, e tocar num recorde abre a Evolução com a seleção correspondente", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { precisao, trap } = await seedAthlete(token);
+
+    await loginAndOpen(page, email, "/dashboard?aba=recordes");
+    const records = page.getByRole("region", { name: "Recordes" }).getByRole("listitem");
+    await expect(records).toHaveCount(4);
+    await expect(records.filter({ hasText: "Agrupamento" })).toContainText("3,2");
+    await expect(records.filter({ hasText: "Agrupamento" })).toContainText("cm");
+    await expect(records.filter({ hasText: "Pontuação" })).toContainText("92");
+
+    // Pontuação é da Precisão; Acertos é do Trap — o modo "Todas" escolhe a modalidade certa
+    await records.filter({ hasText: "Acertos" }).getByRole("link").click();
+    await expect(page).toHaveURL(/aba=evolucao/);
+    await expect(page.getByRole("region", { name: "Evolução" }).getByLabel("Modalidade")).toHaveValue(trap.id);
+    await expect(page.getByLabel("Tipo de resultado").locator("option:checked")).toHaveText("Acertos");
+    await expect(page.getByRole("table").getByRole("cell", { name: "20", exact: true })).toBeVisible();
+
+    await page.goBack();
+    await page.getByRole("region", { name: "Recordes" }).getByRole("listitem").filter({ hasText: "Pontuação" }).getByRole("link").click();
+    await expect(page.getByRole("region", { name: "Evolução" }).getByLabel("Modalidade")).toHaveValue(precisao.id);
+    await expect(page.getByLabel("Tipo de resultado").locator("option:checked")).toHaveText("Pontuação");
+  });
+
+  test("Recordes vazio sem resultado registrado", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    await loginAndOpen(page, email, "/dashboard?aba=recordes");
+    await expect(page.getByText(/Nenhum recorde ainda/)).toBeVisible();
   });
 });

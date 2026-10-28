@@ -9,6 +9,9 @@ type BackendRecentTraining = { trainingId: string };
  * backend. Atleta sem dados recebe onboarding completo, zeros e listas
  * vazias — não é erro.
  *
+ * `?modalityId=` (opcional) filtra tudo, menos `modalitiesPracticed` (UC42
+ * v7); modalidade que o atleta não pratica devolve 404 MODALITY_NOT_PRACTICED.
+ *
  * "Últimos treinos" do backend não traz a visita de cada treino, e a tela
  * precisa dela pro link do detalhe da visita — completada aqui a partir de
  * GET /api/visits, que já traz os treinos de cada visita.
@@ -23,8 +26,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const query = new URLSearchParams();
+  const modalityId = request.nextUrl.searchParams.get("modalityId");
+  if (modalityId) query.set("modalityId", modalityId);
+
   const [dashboard, visits] = await Promise.all([
-    backendFetch("/api/dashboard", { accessToken }),
+    backendFetch(`/api/dashboard${query.size > 0 ? `?${query}` : ""}`, { accessToken }),
     backendFetch("/api/visits", { accessToken }),
   ]);
 

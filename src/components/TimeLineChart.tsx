@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export type TimePoint = { date: string; value: number };
+/** `date` é onde o ponto é desenhado; `realDate` (só no período anterior) é o dia verdadeiro, mostrado no tooltip. */
+export type TimePoint = { date: string; value: number; realDate?: string };
 
-const HEIGHT = 180;
+const DEFAULT_HEIGHT = 180;
 const MARGIN = { top: 12, right: 56, bottom: 24, left: 44 };
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -43,25 +44,34 @@ function niceTicks(min: number, max: number): number[] {
   return ticks;
 }
 
+type Series = "current" | "previous";
+type PlottedPoint = TimePoint & { series: Series };
+
 /**
- * Gráfico de linha de uma série no tempo (inline SVG). Eixo X proporcional
- * ao calendário entre `startDate` e `endDate`: dia sem ponto é só um vão na
- * linha, nunca zero. Uma série só → sem legenda (o título nomeia); rótulo
- * direto só no último valor; crosshair com tooltip no hover/teclado; a
- * tabela (só pra leitor de tela) traz todos os valores.
+ * Gráfico de linha no tempo (inline SVG). Eixo X proporcional ao calendário
+ * entre `startDate` e `endDate`: dia sem ponto é só um vão na linha, nunca
+ * zero. Uma série só → sem legenda (o título nomeia); com `previousPoints`
+ * (comparação com o período anterior, já deslocado pra mesma janela) entra uma
+ * segunda linha, tracejada e mais discreta, e a legenda "Atual × Anterior".
+ * Rótulo direto só no último valor atual; crosshair com tooltip no
+ * hover/teclado; a tabela (só pra leitor de tela) traz todos os valores.
  */
 export function TimeLineChart({
   label,
   points,
+  previousPoints = [],
   startDate,
   endDate,
   formatValue,
+  height = DEFAULT_HEIGHT,
 }: {
   label: string;
   points: TimePoint[];
+  previousPoints?: TimePoint[];
   startDate: string;
   endDate: string;
   formatValue: (value: number) => string;
+  height?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
@@ -75,29 +85,36 @@ export function TimeLineChart({
     return () => observer.disconnect();
   }, []);
 
+  const hasPrevious = previousPoints.length > 0;
   const innerWidth = Math.max(width - MARGIN.left - MARGIN.right, 0);
-  const innerHeight = HEIGHT - MARGIN.top - MARGIN.bottom;
+  const innerHeight = height - MARGIN.top - MARGIN.bottom;
 
   const firstDay = dayNumber(startDate);
   const totalDays = Math.max(dayNumber(endDate) - firstDay, 1);
   const x = (date: string) => MARGIN.left + ((dayNumber(date) - firstDay) / totalDays) * innerWidth;
 
-  const values = points.map((p) => p.value);
+  const values = [...points, ...previousPoints].map((p) => p.value);
   const ticks = niceTicks(Math.min(...values), Math.max(...values));
   const yMin = ticks[0];
   const yMax = ticks[ticks.length - 1];
   const y = (value: number) => MARGIN.top + (1 - (value - yMin) / (yMax - yMin)) * innerHeight;
 
-  const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.date)},${y(p.value)}`).join(" ");
+  const pathOf = (list: TimePoint[]) => list.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.date)},${y(p.value)}`).join(" ");
   const last = points[points.length - 1];
-  const active = activeIndex !== null ? points[activeIndex] : null;
+
+  // Todos os pontos em ordem no eixo — hover e setas percorrem as duas séries
+  const all: PlottedPoint[] = [
+    ...points.map((p) => ({ ...p, series: "current" as const })),
+    ...previousPoints.map((p) => ({ ...p, series: "previous" as const })),
+  ].sort((a, b) => dayNumber(a.date) - dayNumber(b.date) || (a.series === "current" ? -1 : 1));
+  const active = activeIndex !== null ? all[activeIndex] : null;
 
   function handlePointerMove(e: React.PointerEvent<SVGRectElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
     const pointerX = MARGIN.left + (e.clientX - rect.left);
     let nearest = 0;
-    points.forEach((p, i) => {
-      if (Math.abs(x(p.date) - pointerX) < Math.abs(x(points[nearest].date) - pointerX)) nearest = i;
+    all.forEach((p, i) => {
+      if (Math.abs(x(p.date) - pointerX) < Math.abs(x(all[nearest].date) - pointerX)) nearest = i;
     });
     setActiveIndex(nearest);
   }
@@ -105,24 +122,33 @@ export function TimeLineChart({
   function handleKeyDown(e: React.KeyboardEvent<SVGSVGElement>) {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     e.preventDefault();
-    const current = activeIndex ?? points.length - 1;
-    const next = e.key === "ArrowLeft" ? Math.max(current - 1, 0) : Math.min(current + 1, points.length - 1);
-    setActiveIndex(next);
+    const current = activeIndex ?? all.length - 1;
+    setActiveIndex(e.key === "ArrowLeft" ? Math.max(current - 1, 0) : Math.min(current + 1, all.length - 1));
   }
 
   const middleDate = new Date((firstDay + totalDays / 2) * DAY_MS).toISOString().slice(0, 10);
 
   return (
     <div ref={containerRef} className="relative">
+      {hasPrevious && (
+        <p role="group" aria-label="Legenda" className="flex items-center gap-1.5 text-xs text-foreground-muted mb-1">
+          <span aria-hidden className="inline-block w-4 border-t-2 border-accent-target-soft" />
+          Atual
+          <span aria-hidden>×</span>
+          <span aria-hidden className="inline-block w-4 border-t-2 border-dashed border-foreground-muted" />
+          Anterior
+        </p>
+      )}
+
       {width > 0 && (
         <svg
           width={width}
-          height={HEIGHT}
+          height={height}
           role="img"
           aria-label={`${label}. Use as setas pra percorrer os pontos.`}
           tabIndex={0}
           onKeyDown={handleKeyDown}
-          onFocus={() => setActiveIndex(points.length - 1)}
+          onFocus={() => setActiveIndex(all.length - 1)}
           onBlur={() => setActiveIndex(null)}
           className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-target/50 rounded-md"
         >
@@ -145,7 +171,7 @@ export function TimeLineChart({
             <text
               key={date}
               x={x(date)}
-              y={HEIGHT - 6}
+              y={height - 6}
               textAnchor={i === 0 ? "start" : i === 2 ? "end" : "middle"}
               className="fill-foreground-muted text-[11px] tabular-nums"
             >
@@ -164,14 +190,39 @@ export function TimeLineChart({
             />
           )}
 
-          <path d={path} fill="none" stroke="var(--accent-target-soft)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+          {hasPrevious && (
+            <>
+              <path
+                d={pathOf(previousPoints)}
+                fill="none"
+                stroke="var(--foreground-muted)"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+              {previousPoints.map((p) => (
+                <circle
+                  key={`previous-${p.date}`}
+                  cx={x(p.date)}
+                  cy={y(p.value)}
+                  r={active?.series === "previous" && active.date === p.date ? 4 : 3}
+                  fill="var(--foreground-muted)"
+                  stroke="var(--surface)"
+                  strokeWidth={1.5}
+                />
+              ))}
+            </>
+          )}
 
-          {points.map((p, i) => (
+          <path d={pathOf(points)} fill="none" stroke="var(--accent-target-soft)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+
+          {points.map((p) => (
             <circle
               key={p.date}
               cx={x(p.date)}
               cy={y(p.value)}
-              r={i === activeIndex ? 5 : 4}
+              r={active?.series === "current" && active.date === p.date ? 5 : 4}
               fill="var(--accent-target-soft)"
               stroke="var(--surface)"
               strokeWidth={2}
@@ -209,7 +260,10 @@ export function TimeLineChart({
           }}
         >
           <span className="block font-medium text-foreground">{formatValue(active.value)}</span>
-          <span className="block text-foreground-muted">{formatFullDate(active.date)}</span>
+          <span className="block text-foreground-muted">
+            {formatFullDate(active.realDate ?? active.date)}
+            {active.series === "previous" && " · período anterior"}
+          </span>
         </div>
       )}
 
@@ -230,6 +284,26 @@ export function TimeLineChart({
           ))}
         </tbody>
       </table>
+
+      {hasPrevious && (
+        <table className="sr-only">
+          <caption>{label} — período anterior</caption>
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {previousPoints.map((p) => (
+              <tr key={p.date}>
+                <td>{formatFullDate(p.realDate ?? p.date)}</td>
+                <td>{formatValue(p.value)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

@@ -1,50 +1,34 @@
-# FUC16 - Evolução (Dashboard Onda 2)
+# FUC16 — Evolução (aba do dashboard) — SUBSTITUI a versão anterior
 
-## Objetivo
-Área de maior destaque do dashboard: gráfico de evolução do atleta,
-parametrizado por modalidade, tipo de resultado e período.
+Única tela do dashboard com controles. Modalidade vem do **filtro global**.
+- Filtro "Todas": seletor de modalidade da aba pré-preenchido com a mais praticada
+  (alterá-lo não muda o filtro global).
+- Controles: tipo de resultado (encadeado à modalidade), período 7d/30d/3m/1a, Média/Melhor.
+- Novo: **Comparar com período anterior** (alternar) → segunda série (`previousPoints`),
+  traço mais discreto, legenda "Atual × Anterior".
+- Estados vazios e erros do FUC16 original (modalidade não praticada, tipo não configurado,
+  sem pontos) mantidos; sem pontos no anterior → mostrar só a série atual com aviso curto.
+- Recebe seleção por URL (vinda do link "Ver evolução" do Resumo ou dos Recordes).
 
-## Referência backend
-UC46 — `GET /api/dashboard/evolution` (conferir rota exata no Swagger)
+## URL (seleção)
+`?aba=evolucao` mais: `modalidade` (filtro global), `mod` (modalidade escolhida na aba,
+só com "Todas"), `tipo` (id do tipo de resultado), `periodo` (`7d|30d|3m|1a`),
+`modo` (`media|melhor`) e `comparar=1`. Valores inválidos caem nos padrões (30d, Média,
+comparação desligada; modalidade = a mais treinada; tipo = o primeiro com recorde).
+O link "Ver evolução" do Resumo e os Recordes abrem a aba já com `tipo` (e `mod`).
 
-## Layout
-Posicionado no topo do dashboard, acima da Ação Principal (hierarquia do
-documento de produto).
+## Comparação com o período anterior
+Com `comparePrevious=true` o backend devolve `{ points, previousPoints }` (período anterior de
+mesma duração). O gráfico desloca o anterior pra mesma janela (mesma posição no eixo), traço
+tracejado e discreto, e mostra a legenda "Atual × Anterior"; o tooltip traz a data real do
+ponto anterior. Há uma tabela por série pra leitor de tela. O interruptor é um
+`role="switch"` controlado pela URL.
 
-- Seletor de **modalidade** (dentre as praticadas) e, dentro dela, de
-  **tipo de resultado** (dentre os configurados naquela modalidade) —
-  dois dropdowns encadeados, mesmo padrão do cadastro em cascata já usado
-  no Acervo
-- Abas de **período**: 7 dias / 30 dias / 3 meses / 1 ano
-- Toggle **Média / Melhor** — alterna o modo de agregação, mesmo gráfico
-- Gráfico de linha, um ponto por dia com dado (dias sem registro não
-  aparecem como zero, só não têm ponto)
-- Seletor de tipo mostra só tipos numéricos ("Exercício concluído" e
-  "Anotação livre" não têm valor agregável nem orientação)
-- Seleção inicial: a modalidade com mais treinos e, nela, o primeiro
-  tipo que já tem recorde (senão, o primeiro tipo); período 30 dias,
-  modo Média
-
-## Estados
-- Sem modalidade praticada ainda: seção não aparece (não faz sentido
-  mostrar seletor vazio)
-- Modalidade praticada mas sem tipo de resultado configurado: seção não
-  aparece (mesma lógica)
-- Combinação escolhida sem nenhum dado no período: gráfico mostra estado
-  vazio ("Nenhum registro nesse período"), não gráfico vazio com eixos
-  soltos
-- Trocar modalidade/tipo/período/modo: recarrega o gráfico, sem sair da
-  tela
+## Como foi feito
+`src/app/dashboard/_components/EvolutionTab.tsx` e `src/components/TimeLineChart.tsx`
+(`previousPoints`, `height`). O Resumo usa o mesmo gráfico, pequeno (120px) e sem controles.
 
 ## Definição de pronto
-- [ ] Seletores encadeados funcionam (modalidade → tipo)
-- [ ] As 4 abas de período funcionam
-- [ ] Toggle Média/Melhor funciona, mesmo gráfico
-- [ ] Estado vazio (sem dado no período) tratado sem gráfico solto
-- [ ] Seção ausente quando não há modalidade/tipo configurado
-- [ ] Teste E2E (Playwright) cobrindo: trocar período, trocar modo,
-  trocar modalidade, e o estado vazio de período sem dado
-
-## Referências
-- Backend: UC46, ADR-0016
-- FUC15 (Dashboard — este use case se integra no topo dele)
+- [ ] Modalidade herdada do filtro global; pré-seleção com "Todas"
+- [ ] Comparação ligada/desligada; estados vazios
+- [ ] Seleção por URL; E2E; lint/build
