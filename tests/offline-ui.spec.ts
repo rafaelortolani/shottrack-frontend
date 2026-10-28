@@ -55,7 +55,7 @@ test.describe("Sem conexão (FUC22)", () => {
     await expect(submit).toBeDisabled();
   });
 
-  test("em desenvolvimento não registra service worker nem cria cache (só produção)", async ({ page }) => {
+  test("@dev em desenvolvimento não registra service worker nem cria cache (só produção)", async ({ page }) => {
     await page.goto("/login");
     await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
 

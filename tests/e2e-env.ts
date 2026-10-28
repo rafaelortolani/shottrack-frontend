@@ -10,8 +10,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 export const E2E_BACKEND_PORT = 8090;
-export const E2E_FRONT_PORT = 3091; // next dev (projetos chromium e mobile)
-export const E2E_PWA_PORT = 3092; // next build + start (projeto pwa)
+export const E2E_FRONT_PORT = 3091; // next build + start (chromium, mobile e pwa)
+export const E2E_DEV_PORT = 3093; // next dev (só o projeto "dev", testes marcados com @dev)
 export const E2E_MAILPIT_PORT = 8026;
 export const E2E_DB = "shottrack_test";
 export const E2E_RABBIT_VHOST = "shottrack_test";
@@ -21,7 +21,7 @@ const DEV_PORTS = [8080, 3000];
 
 export const BACKEND_URL = process.env.E2E_BACKEND_URL ?? `http://localhost:${E2E_BACKEND_PORT}`;
 export const BASE_URL = process.env.E2E_BASE_URL ?? `http://localhost:${E2E_FRONT_PORT}`;
-export const PWA_BASE_URL = process.env.E2E_PWA_BASE_URL ?? `http://localhost:${E2E_PWA_PORT}`;
+export const DEV_BASE_URL = process.env.E2E_DEV_BASE_URL ?? `http://localhost:${E2E_DEV_PORT}`;
 export const MAILPIT_URL = process.env.E2E_MAILPIT_URL ?? `http://localhost:${E2E_MAILPIT_PORT}`;
 
 function expectLocalPort(name: string, value: string, expectedPort: number) {
@@ -41,7 +41,7 @@ function expectLocalPort(name: string, value: string, expectedPort: number) {
 export function assertTestEnvironment() {
   expectLocalPort("E2E_BACKEND_URL", BACKEND_URL, E2E_BACKEND_PORT);
   expectLocalPort("E2E_BASE_URL", BASE_URL, E2E_FRONT_PORT);
-  expectLocalPort("E2E_PWA_BASE_URL", PWA_BASE_URL, E2E_PWA_PORT);
+  expectLocalPort("E2E_DEV_BASE_URL", DEV_BASE_URL, E2E_DEV_PORT);
   expectLocalPort("E2E_MAILPIT_URL", MAILPIT_URL, E2E_MAILPIT_PORT);
 }
 

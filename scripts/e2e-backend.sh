@@ -43,10 +43,22 @@ export SERVER_PORT="$PORT"
 export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/$DB"
 export SPRING_RABBITMQ_VIRTUAL_HOST="$VHOST"
 export SPRING_MAIL_PORT=1026
-# Limites por IP altos (a suíte cria milhares de contas do mesmo IP); os limites por e-mail/usuário
-# seguem os reais, que é o que os testes de 429 exercitam.
-export SPRING_APPLICATION_JSON='{"app":{"rate-limit":{"registration":{"per-ip":1000000},"password-reset-request":{"per-ip":1000000}}}}'
+# Limites POR IP altos: a suíte cria milhares de contas do mesmo IP. Os limites por e-mail e por
+# usuário seguem os reais, que é o que os testes de 429 exercitam.
+export SPRING_APPLICATION_JSON='{"app":{"rate-limit":{
+  "registration":{"per-ip":1000000},
+  "password-reset-request":{"per-ip":1000000},
+  "registration-completion":{"attempts":1000000},
+  "password-reset-confirm":{"attempts":1000000},
+  "refresh":{"attempts":1000000}}}}'
+
+# Compila uma CÓPIA do backend: o target/ do repositório (e do IDE) pode ter classes velhas de outra
+# branch (NoClassDefFoundError) e o `clean` nele atrapalharia o desenvolvimento.
+BUILD_DIR="${TMPDIR:-/tmp}/shottrack-e2e-backend"
+echo "[e2e] copiando o backend para $BUILD_DIR"
+rm -rf "$BUILD_DIR" && mkdir -p "$BUILD_DIR"
+tar -C "$BACKEND_DIR" --exclude=./target --exclude=./.git --exclude=./logs -cf - . | tar -C "$BUILD_DIR" -xf -
 
 echo "[e2e] backend de teste na porta $PORT (banco $DB)"
-cd "$BACKEND_DIR"
-exec ./mvnw -q spring-boot:run
+cd "$BUILD_DIR"
+exec ./mvnw -q clean spring-boot:run

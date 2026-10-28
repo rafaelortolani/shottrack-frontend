@@ -1,6 +1,5 @@
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { chromium } from "@playwright/test";
 import { assertTestEnvironment, BACKEND_URL, BASE_URL, E2E_BACKEND_PORT, E2E_DB } from "./e2e-env";
 import { createUser, randomEmail, runSql } from "./helpers";
 
@@ -19,39 +18,6 @@ function backendProcessEnvironment(): string | null {
     return pid ? readFileSync(`/proc/${pid}/environ`, "utf8") : null;
   } catch {
     return null; // sem /proc (não-Linux) ou sem permissão: a sonda (3) cobre
-  }
-}
-
-/** Telas estáticas mais usadas: o `next dev` compila cada rota na 1ª visita e isso estoura os timeouts do 1º teste. */
-const WARM_UP_PATHS = [
-  "/login",
-  "/boas-vindas",
-  "/dashboard",
-  "/dashboard?aba=habitualidade",
-  "/treinos/visitas",
-  "/treinos/nova",
-  "/treinos/locais",
-  "/treinos/historico",
-  "/acervo/armas",
-  "/usuario/perfil",
-  "/usuario/modalidades",
-  "/cadastro",
-];
-
-async function warmUp(email: string) {
-  const browser = await chromium.launch();
-  try {
-    const page = await browser.newPage();
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Senha").fill("senha12345");
-    await page.getByRole("button", { name: "Entrar" }).click();
-    await page.waitForURL(/boas-vindas/, { timeout: 60_000 });
-    for (const path of WARM_UP_PATHS) {
-      await page.goto(`${BASE_URL}${path}`, { waitUntil: "networkidle", timeout: 60_000 }).catch(() => undefined);
-    }
-  } finally {
-    await browser.close();
   }
 }
 
@@ -78,6 +44,4 @@ export default async function globalSetup() {
   if (!login.ok) {
     throw new Error(`E2E recusado: o front ${BASE_URL} não está ligado ao backend de teste ${BACKEND_URL}.`);
   }
-
-  await warmUp(email);
 }

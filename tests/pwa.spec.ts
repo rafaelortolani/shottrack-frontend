@@ -3,13 +3,13 @@ import { createUser, randomEmail, loginAndGetToken, getValidWeaponCombo, registe
 
 /**
  * PWA (FUC22 / ADR-0020) — roda no projeto "pwa", contra o BUILD DE PRODUÇÃO
- * (o service worker só é registrado em produção):
- *   npm run build && npm run start -- -p 3100
+ * (o service worker só é registrado em produção). O `npm run test:e2e` já sobe esse
+ * build (ver "Ambiente de teste do E2E" no README).
  */
 test.beforeAll(async ({ baseURL }) => {
   const response = await fetch(`${baseURL}/offline`).catch(() => null);
   if (!response?.ok) {
-    throw new Error(`Servidor de produção fora do ar em ${baseURL}. Rode: npm run build && npm run start -- -p 3100`);
+    throw new Error(`Servidor de produção fora do ar em ${baseURL}. Rode o E2E por \`npm run test:e2e\` (README: Ambiente de teste do E2E).`);
   }
 });
 

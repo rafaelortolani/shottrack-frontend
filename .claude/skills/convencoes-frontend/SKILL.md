@@ -269,9 +269,10 @@ já aplicada no backend.
 - Selo de estado ("Ativa"/"Inativa") ao lado de botão de mesmo texto: use
   `getByText(..., { exact: true })`, senão o botão satisfaz a asserção.
 - **O E2E nunca roda contra o desenvolvimento.** Ambiente de teste próprio (backend 8090, banco
-  `shottrack_test`, vhost e Mailpit próprios, front em 3091/3092), recriado do zero a cada execução
+  `shottrack_test`, vhost e Mailpit próprios, front de produção em 3091), recriado do zero a cada execução
   por `scripts/e2e-backend.sh`; a trava está em `tests/e2e-env.ts` e `tests/global-setup.ts`. Porta
   isolada **sem** banco isolado não é isolamento: o backend escreve no banco da sua configuração.
   Helpers novos: URLs vêm de `tests/e2e-env.ts` (nunca `localhost:8080`/`3000` fixos) e SQL direto só
-  por `runSql` (banco `shottrack_test`). Como subir: README, "Ambiente de teste do E2E".
+  por `runSql` (banco `shottrack_test`). O front do E2E é build de produção; teste que só vale em `next dev` leva `@dev` no título (projeto `dev`).
+  Como subir: README, "Ambiente de teste do E2E".
 - Rodar com `npm run test:e2e` (ou `test:e2e:ui` pra depurar visualmente).
