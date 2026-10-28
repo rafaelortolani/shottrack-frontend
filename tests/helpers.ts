@@ -97,6 +97,36 @@ export function expireRegistrationToken(token: string) {
   );
 }
 
+/**
+ * Promove (ou rebaixa) um usuário direto no banco (ADR-0021: o papel só muda
+ * por SQL, não existe endpoint pra isso). Mesmo mecanismo do
+ * `expireRegistrationToken`: `docker exec psql` no container do Postgres da
+ * porta 5432, base `shottrack` — a mesma que o backend dos testes usa.
+ */
+export function setUserRole(email: string, role: "USER" | "ADMIN") {
+  if (!/^[\w.+-]+@[\w.-]+$/.test(email)) {
+    throw new Error(`E-mail de teste com formato inesperado: ${email}`);
+  }
+
+  const containerId = execSync(`docker ps --filter "publish=5432" --format "{{.ID}}"`)
+    .toString()
+    .trim()
+    .split("\n")[0];
+
+  if (!containerId) {
+    throw new Error("Não encontrei o container do Postgres (porta 5432) pra alterar o papel do usuário");
+  }
+
+  const output = execSync(
+    `docker exec ${containerId} psql -U shottrack -d shottrack -tA -c "UPDATE users SET role = '${role}' WHERE email = '${email}' RETURNING 1"`,
+    { stdio: "pipe" }
+  ).toString();
+
+  if (!output.includes("1")) {
+    throw new Error(`Nenhum usuário com o e-mail ${email} pra mudar o papel`);
+  }
+}
+
 export type Modality = { id: string; name: string };
 
 export async function loginAndGetToken(email: string, password = "senha12345") {

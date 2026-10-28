@@ -21,6 +21,7 @@ import {
   IconIdBadge2,
   IconCategory2,
   IconShieldLock,
+  IconShieldCheck,
   type TablerIcon,
 } from "@tabler/icons-react";
 import { LogoIcon } from "@/components/LogoIcon";
@@ -87,6 +88,18 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+/**
+ * Só aparece pra quem tem role ADMIN (ADR-0021). É conveniência de interface:
+ * o proxy barra o acesso a /admin e o backend é quem autoriza de verdade.
+ */
+const ADMIN_NAV_ITEM: NavItem = {
+  href: "/admin",
+  label: "Admin",
+  icon: IconShieldCheck,
+  color: "text-foreground-muted",
+  enabled: true,
+};
+
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -105,6 +118,7 @@ export function AppNav() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [manualGroups, setManualGroups] = useState<Record<string, boolean>>({});
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Só dá pra ler localStorage depois de montar (SSR não tem window) —
@@ -118,6 +132,26 @@ export function AppNav() {
       // modo privado ou storage bloqueado — mantém expandido
     }
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/users/me")
+      .then(async (response) => {
+        if (!response.ok) return;
+        const { data } = await response.json();
+        if (!cancelled) setIsAdmin(data?.role === "ADMIN");
+      })
+      .catch(() => {
+        // sem rede ou sem sessão: o item de admin simplesmente não aparece
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const navItems = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
 
   function toggleCollapsed() {
     const next = !collapsed;
@@ -166,7 +200,7 @@ export function AppNav() {
         </div>
 
         <nav className="space-y-1 text-sm">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const active = isActive(pathname, item.href);
             const expanded = manualGroups[item.href] ?? active;
             return (
@@ -200,7 +234,7 @@ export function AppNav() {
 
       <nav className="flex md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-background items-center pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <div className="flex flex-1 items-center justify-around">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <MobileNavLink key={item.href} item={item} active={isActive(pathname, item.href)} />
           ))}
         </div>
