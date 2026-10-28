@@ -22,6 +22,8 @@ const PROTECTED_ROUTES = [
   "/acervo/acessorios",
   "/acervo/comparar",
   "/acervo/armas/nova",
+  "/admin",
+  "/admin/qualquer-coisa",
   "/usuario",
   "/usuario/perfil",
   "/usuario/modalidades",

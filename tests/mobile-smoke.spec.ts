@@ -3,6 +3,7 @@ import {
   createUser,
   randomEmail,
   loginAndGetToken,
+  setUserRole,
   getModalityCatalog,
   addPracticedModality,
   registerTrainingLocation,
@@ -180,6 +181,34 @@ test.describe("Mobile smoke (FUC22)", () => {
     await login(page, email);
     await page.goto("/usuario/perfil");
     await expect(page.getByText(email)).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
+  test("admin vê o item Admin na nav inferior, junto dos outros, sem estourar a tela; atleta comum não vê", async ({ page }) => {
+    const athlete = randomEmail();
+    await createUser(athlete);
+    await login(page, athlete);
+    const nav = page.locator("nav.fixed");
+    await expect(nav.getByRole("link", { name: "Dashboard" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Admin" })).toHaveCount(0);
+
+    const admin = randomEmail();
+    await createUser(admin);
+    setUserRole(admin, "ADMIN");
+    await page.context().clearCookies();
+    await login(page, admin);
+
+    const adminLink = nav.getByRole("link", { name: "Admin" });
+    await expect(adminLink).toBeVisible();
+    for (const name of ["Dashboard", "Treinos", "Acervo", "Usuário", "Admin"]) {
+      const box = (await nav.getByRole("link", { name }).boundingBox())!;
+      expect(box.height, `${name} abaixo de 44px`).toBeGreaterThanOrEqual(43.5);
+    }
+    await expectNoHorizontalScroll(page);
+
+    await adminLink.click();
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.getByRole("heading", { name: "Administração" })).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
 });

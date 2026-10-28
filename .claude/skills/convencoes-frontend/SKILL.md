@@ -77,6 +77,7 @@ diferente pra pistola vs. revólver) — biblioteca: `@tabler/icons-react`.
 | Perfil (submenu de Usuário) | `IconIdBadge2` | neutro (`foreground-muted`) |
 | Modalidades (submenu de Usuário) | `IconCategory2` | neutro (`foreground-muted`) |
 | Privacidade (submenu de Usuário) | `IconShieldLock` | neutro (`foreground-muted`) |
+| Admin (nav, só ADMIN) | `IconShieldCheck` | neutro (`foreground-muted`) |
 
 Itens de submenu (ex: Armas/Munições/Acessórios dentro de Acervo; Perfil/
 Modalidades dentro de Usuário) também levam ícone — o mesmo ícone fixo já
@@ -186,6 +187,31 @@ desktop"). Detalhes em `docs/use-cases/FUC22-pwa-mobile.md`.
   `mobile-pixel`), conferindo ao menos sem rolagem horizontal, alvos de 44px e
   campos de 16px. Service worker/manifest se testam em `tests/pwa.spec.ts`,
   contra o build de produção (`npm run build && npm run start -- -p 3100`).
+
+## Administração
+Papel de administrador (ADR-0021 do backend): `GET /api/users/me` devolve
+`role` (`USER` | `ADMIN`); o papel só muda direto no banco. O frontend só evita
+navegação inútil — **o backend é sempre a autoridade** (confere o papel no
+banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própria).
+
+- **Item "Admin" no menu só para ADMIN** (`AppNav` consulta `/api/users/me` e
+  acrescenta o item, igual no desktop e na barra inferior do mobile). Atleta
+  comum nunca vê o item.
+- **Route Handlers de `src/app/api/admin/**` começam com `requireAdmin`**
+  (`src/lib/admin.ts`): `const admin = await requireAdmin(request); if (admin
+  instanceof NextResponse) return admin;`. Depois repassam status e erro do
+  backend, inclusive o 403 (`FORBIDDEN`). Modelo: `api/admin/session/route.ts`.
+- **O `proxy.ts` só confere o papel em `/admin/**`** (consulta o backend a cada
+  navegação ao módulo): sem sessão → `/login`; logado e não ADMIN → `/dashboard`,
+  sem renderizar a página. As demais rotas continuam só checando o cookie —
+  não adicione consulta de papel a toda navegação.
+- Telas de administração ficam em `src/app/admin/**` (layout próprio com
+  `AppNav`) e **não expõem dado de atleta** (ADR-0021: admin edita catálogos e
+  regras; rota que mostre dado de atleta exige novo ADR).
+- Teste: admin criado por `setUserRole(email, "ADMIN")` em `tests/helpers.ts`
+  (UPDATE direto em `users.role` via `docker exec psql`, como o projeto já faz
+  pra expirar token). Cobrir sempre: atleta comum sem item e redirecionado,
+  admin com item, sem login → `/login`, BFF 401/403/200.
 
 ## Autenticação
 - Cookies: `shottrack_access` (1h) e `shottrack_refresh` (7d), sempre
