@@ -637,7 +637,7 @@ export async function trackHabituality(accessToken: string, ruleId: string, leve
 export async function closedVisit(
   accessToken: string,
   trainingLocationId: string,
-  extra: { visitType?: "TREINO" | "COMPETICAO"; competitionScope?: string } = {}
+  extra: { visitType?: "TREINO" | "COMPETICAO"; competitionScope?: string; startedAt?: string } = {}
 ) {
   const started = await backendJson(accessToken, "/api/visits", "POST", { trainingLocationId, ...extra });
   if (started.status !== 201) throw new Error(`Falha ao iniciar visita de teste: ${started.status}`);

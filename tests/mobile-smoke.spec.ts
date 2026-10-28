@@ -12,6 +12,7 @@ import {
   getValidWeaponCombo,
   registerWeapon,
   createAdmin,
+  closedVisit,
   createHabitualityRule,
   uniqueRuleName,
 } from "./helpers";
@@ -287,6 +288,28 @@ test.describe("Mobile smoke (FUC22)", () => {
 
     await page.goto(`/admin/habitualidade/${ruleId}/versoes/nova`);
     await expect(page.getByLabel("Vigente a partir de")).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectTouchFriendly(page);
+  });
+
+  test("visita retroativa: campo de data ao iniciar e edição de datas cabem na tela, com alvos de toque adequados", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const location = await registerTrainingLocation(token, { name: "Clube Celular", city: "Curitiba", state: "PR" });
+    const visit = await closedVisit(token, location.id);
+    await login(page, email);
+
+    await page.goto("/treinos/nova");
+    await page.getByLabel("Local de treino").selectOption({ label: "Clube Celular · Curitiba/PR" });
+    await expect(page.getByLabel("Quando foi?")).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectTouchFriendly(page);
+
+    await page.goto(`/treinos/${visit.id}`);
+    await page.getByRole("button", { name: "Editar datas" }).click();
+    await expect(page.getByLabel("Início")).toBeVisible();
+    await expect(page.getByLabel("Fim")).toBeVisible();
     await expectNoHorizontalScroll(page);
     await expectTouchFriendly(page);
   });
