@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { LegalLinks } from "@/components/LegalLinks";
+import { PasswordInput } from "@/components/PasswordInput";
 import { TargetRings } from "@/components/TargetRings";
 import { tooManyRequestsMessage } from "@/lib/rateLimit";
 
@@ -107,9 +108,8 @@ function LoginForm() {
                 <label htmlFor="password" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
                   Senha
                 </label>
-                <input
+                <PasswordInput
                   id="password"
-                  type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

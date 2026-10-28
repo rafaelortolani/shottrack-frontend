@@ -14,6 +14,7 @@ import {
   registerSeries,
   registerSeriesResult,
   waitForDashboardRecords,
+  BASE_URL,
 } from "./helpers";
 
 async function submitLogin(page: Page, email: string, password = "senha12345") {
@@ -265,7 +266,7 @@ test.describe("Dashboard em abas — Resumo (FUC15 v6)", () => {
 
     // Cookie presente (o proxy deixa passar) mas token inválido: o backend
     // responde 401 e a tela precisa tratar como sessão expirada.
-    await context.addCookies([{ name: "shottrack_access", value: "token-invalido", url: "http://localhost:3000" }]);
+    await context.addCookies([{ name: "shottrack_access", value: "token-invalido", url: BASE_URL }]);
     await page.reload();
     await expect(page).toHaveURL(/\/login/);
   });

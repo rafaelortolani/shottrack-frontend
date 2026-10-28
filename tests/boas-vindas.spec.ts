@@ -13,6 +13,7 @@ import {
   closeTraining,
   getValidWeaponCombo,
   registerWeapon,
+  BASE_URL,
 } from "./helpers";
 
 async function submitLogin(page: Page, email: string, password = "senha12345") {
@@ -157,7 +158,7 @@ test.describe("Boas-vindas (FUC17)", () => {
 
     // Cookie presente (o proxy deixa passar) mas token inválido: o backend
     // responde 401 e a tela precisa tratar como sessão expirada.
-    await context.addCookies([{ name: "shottrack_access", value: "token-invalido", url: "http://localhost:3000" }]);
+    await context.addCookies([{ name: "shottrack_access", value: "token-invalido", url: BASE_URL }]);
     await page.goto("/boas-vindas");
     await expect(page).toHaveURL(/\/login/);
   });

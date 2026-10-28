@@ -1,5 +1,6 @@
 "use client";
 
+import { visitTypeLabel, type CompetitionScope, type VisitType } from "@/lib/visitType";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -26,6 +27,8 @@ type Visit = {
   status: "IN_PROGRESS" | "CLOSED";
   startedAt: string;
   endedAt: string | null;
+  visitType?: VisitType;
+  competitionScope?: CompetitionScope | null;
   trainings: Training[];
 };
 
@@ -194,7 +197,7 @@ export default function DetalheVisitaPage() {
             {visit.status === "IN_PROGRESS" ? "Em andamento" : "Encerrada"}
           </span>
           <span className="text-sm text-foreground-muted">
-            Início: {formatDateTime(visit.startedAt)}
+            {visitTypeLabel(visit.visitType, visit.competitionScope)} · Início: {formatDateTime(visit.startedAt)}
             {visit.endedAt && ` · Fim: ${formatDateTime(visit.endedAt)}`}
           </span>
         </div>

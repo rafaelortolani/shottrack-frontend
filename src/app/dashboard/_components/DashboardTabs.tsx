@@ -11,8 +11,11 @@ import { DASHBOARD_TABS, type DashboardTabId } from "@/lib/dashboard";
 export function DashboardTabs({
   active,
   hrefFor,
+  attention = [],
 }: {
   active: DashboardTabId;
+  /** Abas com selo (algo pede atenção do atleta). */
+  attention?: DashboardTabId[];
   hrefFor: (overrides: Record<string, string | null>) => string;
 }) {
   const activeRef = useRef<HTMLAnchorElement>(null);
@@ -42,6 +45,12 @@ export function DashboardTabs({
                 }`}
               >
                 {tab.label}
+                {attention.includes(tab.id) && (
+                  <>
+                    <span aria-hidden="true" className="ml-1.5 h-2 w-2 rounded-full bg-accent-brass" />
+                    <span className="sr-only"> (requer atenção)</span>
+                  </>
+                )}
               </Link>
             </li>
           );

@@ -58,6 +58,7 @@ export const DASHBOARD_TABS = [
   { id: "evolucao", label: "Evolução" },
   { id: "recordes", label: "Recordes" },
   { id: "modalidades", label: "Modalidades" },
+  { id: "habitualidade", label: "Habitualidade" },
 ] as const;
 
 export type DashboardTabId = (typeof DASHBOARD_TABS)[number]["id"];

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createUser, randomEmail, refreshSession } from "./helpers";
+import { BASE_URL, createUser, randomEmail, refreshSession } from "./helpers";
 
 test.describe("Usuário > Perfil (FUC03)", () => {
   test("carrega dados existentes e edita nome e nível com sucesso", async ({ page }) => {
@@ -113,7 +113,7 @@ test.describe("Usuário > Perfil (FUC03)", () => {
     // com o cookie adulterado o logout do backend é idempotente e a sessão local
     // termina do mesmo jeito.
     await context.addCookies([
-      { name: "shottrack_refresh", value: "token-invalido", url: "http://localhost:3000" },
+      { name: "shottrack_refresh", value: "token-invalido", url: BASE_URL },
     ]);
     const response = await page.request.post("/api/auth/logout");
     expect(response.status()).toBe(200);

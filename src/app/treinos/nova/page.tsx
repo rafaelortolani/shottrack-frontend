@@ -6,8 +6,9 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
+import { COMPETITION_SCOPES, VISIT_TYPES, type CompetitionScope, type VisitType } from "@/lib/visitType";
 
-type TrainingLocation = { id: string; name: string; city: string; state: string };
+type TrainingLocation = { id: string; name: string; city: string; state: string; club?: boolean };
 
 const INPUT_CLASS =
   "w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
@@ -17,6 +18,8 @@ export default function IniciarVisitaPage() {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<TrainingLocation[]>([]);
   const [locationId, setLocationId] = useState("");
+  const [visitType, setVisitType] = useState<VisitType>("TREINO");
+  const [scope, setScope] = useState<"" | CompetitionScope>("");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -68,7 +71,12 @@ export default function IniciarVisitaPage() {
     const response = await fetch("/api/visits", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ trainingLocationId: locationId }),
+      body: JSON.stringify({
+        trainingLocationId: locationId,
+        visitType,
+        // Âmbito só faz sentido em competição; opcional
+        ...(visitType === "COMPETICAO" && scope ? { competitionScope: scope } : {}),
+      }),
     });
 
     setSaving(false);
@@ -139,6 +147,44 @@ export default function IniciarVisitaPage() {
               </p>
             )}
           </div>
+
+          <div>
+            <label htmlFor="visitType" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
+              Tipo
+            </label>
+            <select
+              id="visitType"
+              value={visitType}
+              onChange={(e) => {
+                setVisitType(e.target.value as VisitType);
+                setScope("");
+              }}
+              className={INPUT_CLASS}
+            >
+              {VISIT_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {visitType === "COMPETICAO" && (
+            <div>
+              <label htmlFor="competitionScope" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
+                Âmbito (opcional)
+              </label>
+              <select
+                id="competitionScope"
+                value={scope}
+                onChange={(e) => setScope(e.target.value as "" | CompetitionScope)}
+                className={INPUT_CLASS}
+              >
+                <option value="">Não informar</option>
+                {COMPETITION_SCOPES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {error && (
             <p className="text-sm text-accent-target" role="alert">

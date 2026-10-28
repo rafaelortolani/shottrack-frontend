@@ -8,10 +8,11 @@ import {
   registerTrainingLocation,
   startVisit,
   openTraining,
+  BACKEND_URL,
 } from "./helpers";
 
 async function practicedModalityIds(token: string): Promise<string[]> {
-  const response = await fetch("http://localhost:8080/api/practiced-modalities", {
+  const response = await fetch(`${BACKEND_URL}/api/practiced-modalities`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const { data } = await response.json();

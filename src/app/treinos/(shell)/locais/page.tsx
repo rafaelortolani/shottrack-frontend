@@ -10,6 +10,7 @@ type TrainingLocation = {
   name: string;
   city: string;
   state: string;
+  club?: boolean;
 };
 
 function distinctStates(locations: TrainingLocation[]): string[] {
@@ -133,7 +134,7 @@ export default function LocaisTabPage() {
                   >
                     <div>
                       <p className="text-foreground">{location.name}</p>
-                      <p className="text-sm text-foreground-muted">{location.city} · {location.state}</p>
+                      <p className="text-sm text-foreground-muted">{location.city} · {location.state}{location.club ? " · Clube" : ""}</p>
                     </div>
                   </Link>
                 </li>

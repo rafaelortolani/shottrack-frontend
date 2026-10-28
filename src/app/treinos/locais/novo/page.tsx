@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
+import { ClubField } from "@/components/ClubField";
 import { PageContainer } from "@/components/PageContainer";
 import { BRAZILIAN_STATES } from "@/lib/brazilianStates";
 
@@ -33,6 +34,7 @@ export default function NovoLocalTreinoPage() {
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
+  const [club, setClub] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -53,7 +55,7 @@ export default function NovoLocalTreinoPage() {
     const response = await fetch("/api/training-locations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), city: city.trim(), state }),
+      body: JSON.stringify({ name: name.trim(), city: city.trim(), state, club }),
     });
 
     setSaving(false);
@@ -147,6 +149,8 @@ export default function NovoLocalTreinoPage() {
             </p>
           )}
         </div>
+
+        <ClubField checked={club} onChange={setClub} />
 
         {error && (
           <p className="text-sm text-accent-target" role="alert">
