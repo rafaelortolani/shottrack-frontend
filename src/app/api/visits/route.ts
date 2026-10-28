@@ -37,12 +37,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { trainingLocationId, observations, visitType, competitionScope } = await request.json();
+  const { trainingLocationId, observations, visitType, competitionScope, startedAt } = await request.json();
 
   const { status, body } = await backendFetch("/api/visits", {
     method: "POST",
     accessToken,
-    body: JSON.stringify({ trainingLocationId, observations, visitType, competitionScope }),
+    body: JSON.stringify({ trainingLocationId, observations, visitType, competitionScope, startedAt }),
   });
 
   if (status !== 201 || body.error) {

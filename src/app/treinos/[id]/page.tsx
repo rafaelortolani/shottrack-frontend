@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { SeriesAccordion } from "@/components/SeriesAccordion";
+import { VisitDatesEditor } from "@/components/VisitDatesEditor";
 import { PageContainer } from "@/components/PageContainer";
 import { formatDateTime } from "@/lib/datetime";
 import { deleteTrainingMessage, deleteVisitMessage } from "@/lib/deleteConfirmation";
@@ -200,6 +201,10 @@ export default function DetalheVisitaPage() {
             {visitTypeLabel(visit.visitType, visit.competitionScope)} · Início: {formatDateTime(visit.startedAt)}
             {visit.endedAt && ` · Fim: ${formatDateTime(visit.endedAt)}`}
           </span>
+        </div>
+
+        <div className="mb-4">
+          <VisitDatesEditor visit={visit} onSaved={setVisit} />
         </div>
 
         <h2 className="text-xs uppercase tracking-wide text-foreground-muted mb-2">Treinos</h2>

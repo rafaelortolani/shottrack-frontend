@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
+import { fromDateTimeLocal, oldestVisitStart, toDateTimeLocal, validateVisitDate } from "@/lib/visitDates";
 import { COMPETITION_SCOPES, VISIT_TYPES, type CompetitionScope, type VisitType } from "@/lib/visitType";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string; club?: boolean };
@@ -20,6 +21,10 @@ export default function IniciarVisitaPage() {
   const [locationId, setLocationId] = useState("");
   const [visitType, setVisitType] = useState<VisitType>("TREINO");
   const [scope, setScope] = useState<"" | CompetitionScope>("");
+  // Fixo na montagem: é o "agora" do campo e o teto do `max` (sem recalcular a cada render)
+  const [initialStartedAt] = useState(() => toDateTimeLocal(new Date()));
+  const [startedAt, setStartedAt] = useState(initialStartedAt);
+  const [dateError, setDateError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -64,7 +69,14 @@ export default function IniciarVisitaPage() {
       return;
     }
 
+    const invalidDate = validateVisitDate(startedAt, "a data e o horário", { checkAge: true });
+    if (invalidDate) {
+      setDateError(invalidDate);
+      return;
+    }
+
     setFieldError(null);
+    setDateError(null);
     setError(null);
     setSaving(true);
 
@@ -74,6 +86,8 @@ export default function IniciarVisitaPage() {
       body: JSON.stringify({
         trainingLocationId: locationId,
         visitType,
+        // Sem alteração do campo, o backend usa "agora" (não mandamos o minuto fixado na montagem)
+        ...(startedAt !== initialStartedAt ? { startedAt: fromDateTimeLocal(startedAt) } : {}),
         // Âmbito só faz sentido em competição; opcional
         ...(visitType === "COMPETICAO" && scope ? { competitionScope: scope } : {}),
       }),
@@ -144,6 +158,30 @@ export default function IniciarVisitaPage() {
             {fieldError && (
               <p className="text-sm text-accent-target mt-1" role="alert">
                 {fieldError}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="startedAt" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
+              Quando foi?
+            </label>
+            <input
+              id="startedAt"
+              type="datetime-local"
+              value={startedAt}
+              min={toDateTimeLocal(oldestVisitStart())}
+              max={initialStartedAt}
+              onChange={(e) => setStartedAt(e.target.value)}
+              aria-describedby="startedAt-help"
+              className={INPUT_CLASS}
+            />
+            <p id="startedAt-help" className="text-xs text-foreground-muted mt-1">
+              Para treino que já aconteceu, altere a data (até 12 meses atrás).
+            </p>
+            {dateError && (
+              <p className="text-sm text-accent-target mt-1" role="alert">
+                {dateError}
               </p>
             )}
           </div>
