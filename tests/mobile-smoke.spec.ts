@@ -11,6 +11,9 @@ import {
   openTraining,
   getValidWeaponCombo,
   registerWeapon,
+  createAdmin,
+  createHabitualityRule,
+  uniqueRuleName,
 } from "./helpers";
 
 /**
@@ -252,5 +255,39 @@ test.describe("Mobile smoke (FUC22)", () => {
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByRole("heading", { name: "Administração" })).toBeVisible();
     await expectNoHorizontalScroll(page);
+  });
+
+  test("habitualidade: aba do atleta e telas do admin cabem na tela, com alvos de toque adequados", async ({ page }) => {
+    const admin = await createAdmin();
+    const ruleName = uniqueRuleName("Mobile");
+    const { ruleId } = await createHabitualityRule(admin.token, ruleName, [
+      { name: "Iniciante", requirements: [{ activityType: "TREINO", minQuantity: 2 }] },
+    ]);
+
+    const athlete = randomEmail();
+    await createUser(athlete);
+    await login(page, athlete);
+    await page.goto("/dashboard?aba=habitualidade");
+    await expect(page.getByText("Controle pessoal. A comprovação oficial é feita pelo seu clube.")).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectTouchFriendly(page);
+
+    await page.context().clearCookies();
+    await login(page, admin.email);
+    await page.goto("/admin/habitualidade");
+    await expect(page.getByRole("heading", { name: "Regras de habitualidade" })).toBeVisible();
+    await expect(page.getByText(ruleName)).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectTouchFriendly(page);
+
+    await page.goto(`/admin/habitualidade/${ruleId}`);
+    await expect(page.getByRole("heading", { name: ruleName })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectTouchFriendly(page);
+
+    await page.goto(`/admin/habitualidade/${ruleId}/versoes/nova`);
+    await expect(page.getByLabel("Vigente a partir de")).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectTouchFriendly(page);
   });
 });

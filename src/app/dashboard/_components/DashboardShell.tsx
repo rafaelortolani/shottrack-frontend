@@ -11,8 +11,11 @@ import {
   type ModalitySummary,
   type TabContext,
 } from "@/lib/dashboard";
+import { callApi } from "@/lib/clientApi";
+import { needsAttention, type HabitualityProgress } from "@/lib/habituality";
 import { resultTypeKind } from "@/lib/resultTypeFormat";
 import { DashboardTabs } from "./DashboardTabs";
+import { HabitualityTab } from "./HabitualityTab";
 import { EvolutionTab } from "./EvolutionTab";
 import { ModalitiesTab } from "./ModalitiesTab";
 import { RecordsTab } from "./RecordsTab";
@@ -20,10 +23,11 @@ import { SummaryTab } from "./SummaryTab";
 import { FIELD_LABEL_CLASS, SELECT_CLASS } from "./shared";
 
 /**
- * Abas do dashboard. Pra incluir uma nova (ex.: Habitualidade): acrescente em
- * DASHBOARD_TABS (src/lib/dashboard.ts) e o componente aqui.
+ * Abas do dashboard. Pra incluir uma nova: acrescente em DASHBOARD_TABS
+ * (src/lib/dashboard.ts) e o componente aqui. A Habitualidade (FUC23) tem dados
+ * próprios (o progresso) e ignora o filtro global, então o shell a trata à parte.
  */
-const TAB_COMPONENTS: Record<DashboardTabId, (context: TabContext) => React.ReactNode> = {
+const TAB_COMPONENTS: Record<Exclude<DashboardTabId, "habitualidade">, (context: TabContext) => React.ReactNode> = {
   resumo: (context) => <SummaryTab {...context} />,
   evolucao: (context) => <EvolutionTab {...context} />,
   recordes: (context) => <RecordsTab {...context} />,
@@ -31,6 +35,12 @@ const TAB_COMPONENTS: Record<DashboardTabId, (context: TabContext) => React.Reac
 };
 
 type Option = { id: string; name: string };
+
+function fetchProgress() {
+  return callApi<HabitualityProgress>("/api/habituality/progress", {
+    fallback: "Não foi possível carregar a habitualidade",
+  });
+}
 
 /** Modalidades praticadas com só os tipos numéricos (os únicos com evolução) — as que não têm nenhum ficam de fora. */
 async function loadEvolutionOptions(): Promise<ModalityOption[]> {
@@ -58,6 +68,8 @@ export function DashboardShell() {
   const [loaded, setLoaded] = useState<{ filterId: string; dashboard: Dashboard } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [progress, setProgress] = useState<HabitualityProgress | null>(null);
+  const [progressError, setProgressError] = useState<string | null>(null);
 
   // Filtro global: só vale modalidade em que o atleta já treinou (a lista do backend); outra coisa na URL = "Todas"
   const filterId = modalities?.some((m) => m.modalityId === params.modalidade) ? params.modalidade : "";
@@ -102,6 +114,32 @@ export function DashboardShell() {
     };
   }, [router, attempt]);
 
+  const applyProgress = useCallback(
+    (result: Awaited<ReturnType<typeof fetchProgress>>) => {
+      if (result.ok) {
+        setProgress(result.data);
+        setProgressError(null);
+      } else if (result.status === 401) {
+        router.push("/login");
+      } else {
+        setProgressError(result.message);
+      }
+    },
+    [router]
+  );
+
+  const loadProgress = useCallback(async () => applyProgress(await fetchProgress()), [applyProgress]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchProgress().then((result) => {
+      if (!cancelled) applyProgress(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [applyProgress, attempt]);
+
   useEffect(() => {
     if (modalities === null) return;
     let cancelled = false;
@@ -129,7 +167,13 @@ export function DashboardShell() {
     };
   }, [router, modalities, filterId, attempt]);
 
-  const onModalitiesTab = params.aba === "modalidades";
+  const onHabituality = params.aba === "habitualidade";
+  const ignoresFilter =
+    params.aba === "modalidades"
+      ? "Esta aba mostra todas as modalidades."
+      : onHabituality
+        ? "Esta aba não usa o filtro de modalidade."
+        : null;
   const ready = loaded && loaded.filterId === filterId && modalities && options;
   const context: TabContext | null = ready
     ? { dashboard: loaded.dashboard, modalities, options, filterId, params, hrefFor, setParams }
@@ -146,8 +190,8 @@ export function DashboardShell() {
           </label>
           <select
             id="dashboard-modality"
-            value={onModalitiesTab ? "" : filterId}
-            disabled={onModalitiesTab || modalities === null}
+            value={ignoresFilter ? "" : filterId}
+            disabled={ignoresFilter !== null || modalities === null}
             onChange={(e) => setParams({ modalidade: e.target.value, tipo: null, mod: null })}
             className={`${SELECT_CLASS} min-w-48`}
           >
@@ -156,16 +200,31 @@ export function DashboardShell() {
               <option key={m.modalityId} value={m.modalityId}>{m.modalityName}</option>
             ))}
           </select>
-          {onModalitiesTab && (
-            <p className="text-xs text-foreground-muted mt-1">Esta aba mostra todas as modalidades.</p>
-          )}
+          {ignoresFilter && <p className="text-xs text-foreground-muted mt-1">{ignoresFilter}</p>}
         </div>
       </div>
 
-      <DashboardTabs active={params.aba} hrefFor={hrefFor} />
+      <DashboardTabs active={params.aba} hrefFor={hrefFor} attention={needsAttention(progress) ? ["habitualidade"] : []} />
 
       <div className="pt-4">
-        {error ? (
+        {onHabituality ? (
+          progressError ? (
+            <div role="alert" className="space-y-2">
+              <p className="text-sm text-accent-target">{progressError}</p>
+              <button
+                type="button"
+                onClick={() => loadProgress()}
+                className="rounded-md border border-border px-4 py-2 text-sm text-foreground-muted hover:text-foreground hover:border-accent-target transition-colors"
+              >
+                Tentar de novo
+              </button>
+            </div>
+          ) : progress ? (
+            <HabitualityTab progress={progress} reload={loadProgress} />
+          ) : (
+            <Skeleton />
+          )
+        ) : error ? (
           <div role="alert" className="space-y-2">
             <p className="text-sm text-accent-target">{error}</p>
             <button
@@ -177,7 +236,7 @@ export function DashboardShell() {
             </button>
           </div>
         ) : context ? (
-          TAB_COMPONENTS[params.aba](context)
+          TAB_COMPONENTS[params.aba as Exclude<DashboardTabId, "habitualidade">](context)
         ) : (
           <Skeleton />
         )}

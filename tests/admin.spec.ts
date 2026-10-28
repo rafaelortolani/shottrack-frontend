@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { createUser, randomEmail, loginAndGetToken, setUserRole } from "./helpers";
+import { BACKEND_URL, createUser, randomEmail, loginAndGetToken, setUserRole } from "./helpers";
 
 /**
  * Papel de administrador (ADR-0021). Pra criar um admin, o teste faz um
@@ -44,7 +44,7 @@ test.describe("Administração (ADR-0021)", () => {
     expect(new URL(response.headers()["location"], response.url()).pathname).toBe("/dashboard");
   });
 
-  test("admin vê o item no menu e abre /admin com o cartão desabilitado", async ({ page }) => {
+  test("admin vê o item no menu e abre /admin com o cartão de habitualidade ativo", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     setUserRole(email, "ADMIN");
@@ -55,11 +55,10 @@ test.describe("Administração (ADR-0021)", () => {
     await expect(page).toHaveURL(/\/admin$/);
 
     await expect(page.getByRole("heading", { name: "Administração", level: 1 })).toBeVisible();
-    const card = page.getByText("Regras de habitualidade — em breve");
+    const card = page.getByRole("main").getByRole("link", { name: "Regras de habitualidade" });
     await expect(card).toBeVisible();
-    await expect(page.locator('[aria-disabled="true"]').filter({ has: card })).toHaveCount(1);
-    // só o cartão: nenhum link nem outra tela
-    await expect(page.getByRole("main").getByRole("link")).toHaveCount(0);
+    await expect(card).toHaveAttribute("href", "/admin/habitualidade");
+    await expect(page.getByRole("main").getByRole("link")).toHaveCount(1);
   });
 
   test("sem login, /admin leva ao /login (no servidor)", async ({ page, request }) => {
@@ -104,7 +103,7 @@ test.describe("Administração (ADR-0021)", () => {
   });
 
   test("o backend é a autoridade: /api/admin/** devolve 401 sem token e 403 FORBIDDEN para atleta comum", async () => {
-    const backend = "http://localhost:8080/api/admin/qualquer-rota";
+    const backend = `${BACKEND_URL}/api/admin/qualquer-rota`;
     expect((await fetch(backend)).status).toBe(401);
 
     const email = randomEmail();

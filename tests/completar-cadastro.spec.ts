@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { randomEmail, getLatestRegistrationToken, expireRegistrationToken } from "./helpers";
+import { BASE_URL, randomEmail, getLatestRegistrationToken, expireRegistrationToken } from "./helpers";
 
 /**
  * Os seletores assumem os rótulos usados no FUC10
@@ -36,7 +36,7 @@ test.describe("Completar cadastro (FUC10)", () => {
   test("mostra erro claro quando o token já foi usado", async ({ page }) => {
     const email = randomEmail();
 
-    await fetch("http://localhost:3000/api/users/registration", {
+    await fetch(`${BASE_URL}/api/users/registration`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -63,7 +63,7 @@ test.describe("Completar cadastro (FUC10)", () => {
   test("mostra erro claro quando o token expirou", async ({ page }) => {
     const email = randomEmail();
 
-    await fetch("http://localhost:3000/api/users/registration", {
+    await fetch(`${BASE_URL}/api/users/registration`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -96,7 +96,7 @@ test.describe("Completar cadastro (FUC10)", () => {
     page,
   }) => {
     const email = randomEmail();
-    await fetch("http://localhost:3000/api/users/registration", {
+    await fetch(`${BASE_URL}/api/users/registration`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -133,7 +133,7 @@ test.describe("Completar cadastro (FUC10)", () => {
 
   test("o backend recusa o cadastro sem aceite (TERMS_NOT_ACCEPTED) e a tela mostra o erro", async ({ page }) => {
     const email = randomEmail();
-    await fetch("http://localhost:3000/api/users/registration", {
+    await fetch(`${BASE_URL}/api/users/registration`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),

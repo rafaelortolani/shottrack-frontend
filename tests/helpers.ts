@@ -5,7 +5,8 @@
  */
 import { execSync } from "node:child_process";
 
-const BACKEND_URL = "http://localhost:8080";
+export const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://localhost:8080";
+export const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const MAILPIT_URL = "http://localhost:8025";
 
 export function randomEmail() {
@@ -537,4 +538,115 @@ export async function waitForDashboardRecords(accessToken: string, minRecords: n
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
   throw new Error(`O resumo do dashboard não chegou a ${minRecords} recorde(s) a tempo`);
+}
+
+// ---- habitualidade (ADR-0023) ----
+
+function runSql(sql: string): string {
+  const containerId = execSync(`docker ps --filter "publish=5432" --format "{{.ID}}"`)
+    .toString()
+    .trim()
+    .split("\n")[0];
+  if (!containerId) {
+    throw new Error("Não encontrei o container do Postgres (porta 5432)");
+  }
+  return execSync(`docker exec ${containerId} psql -U shottrack -d shottrack -tA -c "${sql}"`, { stdio: "pipe" }).toString();
+}
+
+/** Cria um usuário ADMIN (papel via SQL, como em produção) e devolve e-mail e token do backend. */
+export async function createAdmin() {
+  const email = randomEmail();
+  await createUser(email);
+  setUserRole(email, "ADMIN");
+  return { email, token: await loginAndGetToken(email) };
+}
+
+export async function backendJson(accessToken: string, path: string, method = "GET", body?: unknown) {
+  const response = await fetch(`${BACKEND_URL}${path}`, {
+    method,
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const text = await response.text();
+  return { status: response.status, body: text ? JSON.parse(text) : null };
+}
+
+export type RequirementInput = {
+  activityType: "TREINO" | "COMPETICAO" | "QUALQUER";
+  minQuantity: number;
+  onlyInClub?: boolean;
+  distinctEvents?: boolean;
+  minScope?: "ESTADUAL" | "NACIONAL" | "INTERNACIONAL" | null;
+};
+export type LevelInput = { name: string; requirements: RequirementInput[] };
+
+export function versionBody(validFrom: string, levels: LevelInput[], windowMonths = 12) {
+  return {
+    validFrom,
+    windowMonths,
+    levels: levels.map((level, index) => ({ name: level.name, position: index + 1, requirements: level.requirements })),
+  };
+}
+
+/** Cria regra ativa com a 1ª versão (vigente desde 2026-01-01). */
+export async function createHabitualityRule(adminToken: string, name: string, levels: LevelInput[]) {
+  const rule = await backendJson(adminToken, "/api/admin/habituality/rules", "POST", {
+    name,
+    legalReference: "Portaria de teste",
+    active: true,
+  });
+  if (rule.status !== 201) throw new Error(`Falha ao criar regra de teste: ${rule.status}`);
+  const ruleId = rule.body.data.id as string;
+
+  const version = await backendJson(
+    adminToken,
+    `/api/admin/habituality/rules/${ruleId}/versions`,
+    "POST",
+    versionBody("2026-01-01", levels)
+  );
+  if (version.status !== 201) throw new Error(`Falha ao criar versão de teste: ${version.status}`);
+  return { ruleId, versionId: version.body.data.id as string };
+}
+
+/** Versão futura da regra (data de amanhã em diante). */
+export async function createFutureVersion(adminToken: string, ruleId: string, validFrom: string, levels: LevelInput[]) {
+  const version = await backendJson(
+    adminToken,
+    `/api/admin/habituality/rules/${ruleId}/versions`,
+    "POST",
+    versionBody(validFrom, levels)
+  );
+  if (version.status !== 201) throw new Error(`Falha ao criar versão futura de teste: ${version.status}`);
+  return version.body.data.id as string;
+}
+
+/** Faz a versão futura valer agora (a vigência só chega com o tempo; no teste vai direto no banco). */
+export function backdateVersion(versionId: string, validFrom: string) {
+  if (!/^[0-9a-f-]{36}$/.test(versionId) || !/^\d{4}-\d{2}-\d{2}$/.test(validFrom)) {
+    throw new Error("Formato inesperado ao retroceder a versão");
+  }
+  runSql(`UPDATE habituality_rule_versions SET valid_from = '${validFrom}' WHERE id = '${versionId}'`);
+}
+
+export async function trackHabituality(accessToken: string, ruleId: string, levelName: string) {
+  const result = await backendJson(accessToken, "/api/habituality/tracking", "PUT", { ruleId, levelName });
+  if (result.status !== 200) throw new Error(`Falha ao acompanhar a regra de teste: ${result.status}`);
+}
+
+/** Visita (com tipo/âmbito) já encerrada. */
+export async function closedVisit(
+  accessToken: string,
+  trainingLocationId: string,
+  extra: { visitType?: "TREINO" | "COMPETICAO"; competitionScope?: string } = {}
+) {
+  const started = await backendJson(accessToken, "/api/visits", "POST", { trainingLocationId, ...extra });
+  if (started.status !== 201) throw new Error(`Falha ao iniciar visita de teste: ${started.status}`);
+  const closed = await backendJson(accessToken, `/api/visits/${started.body.data.id}/closure`, "POST");
+  if (closed.status !== 200) throw new Error(`Falha ao encerrar visita de teste: ${closed.status}`);
+  return closed.body.data;
+}
+
+/** Nome único de regra: o atleta enxerga todas as regras ativas, então o teste procura a sua pelo nome. */
+export function uniqueRuleName(prefix = "Regra") {
+  return `${prefix} ${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 }

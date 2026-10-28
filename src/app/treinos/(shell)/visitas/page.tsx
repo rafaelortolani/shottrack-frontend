@@ -1,5 +1,6 @@
 "use client";
 
+import { visitTypeLabel, type CompetitionScope, type VisitType } from "@/lib/visitType";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -30,6 +31,8 @@ type Visit = {
   status: "IN_PROGRESS" | "CLOSED";
   startedAt: string;
   endedAt: string | null;
+  visitType?: VisitType;
+  competitionScope?: CompetitionScope | null;
   trainings: Training[];
 };
 
@@ -430,6 +433,7 @@ function ActiveVisitCard({
       <p className="text-sm text-accent-brass-soft font-medium mb-1">Visita em andamento</p>
       <p className="text-foreground">{location ? location.name : "Local"}</p>
       {location && <p className="text-sm text-foreground-muted">{location.city} · {location.state}</p>}
+      <p className="text-sm text-foreground-muted">{visitTypeLabel(visit.visitType, visit.competitionScope)}</p>
       <p className="text-sm text-foreground-muted mb-3">Início: {formatDateTime(visit.startedAt)}</p>
 
       {visit.trainings.length > 0 && (
@@ -677,7 +681,7 @@ function HistorySection({
                       <div>
                         <p className="text-foreground">{location ? location.name : "Local"}</p>
                         <p className="text-sm text-foreground-muted">
-                          {formatDate(visit.startedAt)}
+                          {formatDate(visit.startedAt)} · {visitTypeLabel(visit.visitType, visit.competitionScope)}
                           {modalityNames.length > 0 ? ` · ${modalityNames.join(", ")}` : ""}
                         </p>
                       </div>

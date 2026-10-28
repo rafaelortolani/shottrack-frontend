@@ -15,12 +15,12 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { name, city, state } = await request.json();
+  const { name, city, state, club } = await request.json();
 
   const { status, body } = await backendFetch(`/api/training-locations/${id}`, {
     method: "PATCH",
     accessToken,
-    body: JSON.stringify({ name, city, state }),
+    body: JSON.stringify({ name, city, state, club }),
   });
 
   if (status !== 200 || body.error) {

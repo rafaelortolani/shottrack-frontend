@@ -33,12 +33,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { name, city, state } = await request.json();
+  const { name, city, state, club } = await request.json();
 
   const { status, body } = await backendFetch("/api/training-locations", {
     method: "POST",
     accessToken,
-    body: JSON.stringify({ name, city, state }),
+    body: JSON.stringify({ name, city, state, club }),
   });
 
   if (status !== 201 || body.error) {

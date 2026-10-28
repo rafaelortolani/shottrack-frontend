@@ -232,7 +232,15 @@ banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própri
   pra expirar token). Cobrir sempre: atleta comum sem item e redirecionado,
   admin com item, sem login → `/login`, BFF 401/403/200.
 
-## Autenticação
+## Route Handlers passa-prato e chamada do cliente
+- Handler que só repassa ao backend usa `proxyToBackend` (`src/lib/bffProxy.ts`):
+  confere o cookie (ou `admin: true` → `requireAdmin`), repassa o corpo e devolve
+  `{ data }` ou o `error` do backend **com o mesmo status** (403/409/429 inclusos).
+  Modelo: `api/habituality/tracking/route.ts`. Handler com lógica própria continua escrito à mão.
+- Componente client chama o BFF por `callApi` (`src/lib/clientApi.ts`): nunca lança,
+  devolve `{ ok, data }` ou `{ ok: false, status, code, message }`; a mensagem do backend
+  é exibida inline (`role="alert"`), não engolida.
+
 - Cookies: `shottrack_access` (1h) e `shottrack_refresh` (7d), sempre
   `httpOnly`, `sameSite: lax`, `secure` em produção.
 - `src/proxy.ts` (antigo middleware) protege rotas autenticadas checando a
@@ -253,4 +261,15 @@ já aplicada no backend.
 - Dados de teste (usuários, etc.) são criados direto via chamada ao
   backend (`tests/helpers.ts`), não preenchendo formulário — só a parte
   que o teste realmente quer validar passa pela UI.
+- `role="alert"` do Next (`#__next-route-announcer__`) também casa com `getByRole("alert")`:
+  filtre com `page.locator('[role="alert"]:not(#__next-route-announcer__)')`.
+- Logo após `goto`, `fill` pode ser anulado pela hidratação do React (o DOM guarda o valor,
+  o estado não). Em formulário controlado, faça antes uma ação que só funciona hidratada
+  (clique que muda a tela) dentro de `expect(...).toPass()`, e só então preencha.
+- Selo de estado ("Ativa"/"Inativa") ao lado de botão de mesmo texto: use
+  `getByText(..., { exact: true })`, senão o botão satisfaz a asserção.
+- Instância isolada (backend com rate limit de cadastro esgotado dá 429): suba o backend com
+  `SERVER_PORT=8081 SPRING_APPLICATION_JSON='{"app":{"rate-limit":{"enabled":false}}}'`, o front
+  com `BACKEND_URL=http://localhost:8081 npx next dev -p 3001` e rode com
+  `E2E_BACKEND_URL=http://localhost:8081 E2E_BASE_URL=http://localhost:3001`.
 - Rodar com `npm run test:e2e` (ou `test:e2e:ui` pra depurar visualmente).

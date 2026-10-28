@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
+import { ClubField } from "@/components/ClubField";
 import { PageContainer } from "@/components/PageContainer";
 import { BRAZILIAN_STATES } from "@/lib/brazilianStates";
 
@@ -16,18 +17,20 @@ type TrainingLocation = {
   name: string;
   city: string;
   state: string;
+  club?: boolean;
 };
 
 type FormValues = {
   name: string;
   city: string;
   state: string;
+  club: boolean;
 };
 
 type FieldErrors = Partial<Record<"name" | "city" | "state", string>>;
 
 function toFormValues(location: TrainingLocation): FormValues {
-  return { name: location.name, city: location.city, state: location.state };
+  return { name: location.name, city: location.city, state: location.state, club: location.club === true };
 }
 
 function validate(values: FormValues): FieldErrors {
@@ -57,6 +60,9 @@ function buildDiff(initial: FormValues, current: FormValues): Record<string, unk
   }
   if (current.state !== initial.state) {
     diff.state = current.state;
+  }
+  if (current.club !== initial.club) {
+    diff.club = current.club;
   }
 
   return diff;
@@ -289,6 +295,8 @@ export default function EditarLocalTreinoPage() {
             </p>
           )}
         </div>
+
+        <ClubField checked={values.club} onChange={(value) => updateField("club", value)} />
 
         {error && (
           <p className="text-sm text-accent-target" role="alert">
