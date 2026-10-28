@@ -15,7 +15,8 @@ type OnboardingStep = "CREATE_PROFILE" | "CONFIGURE_MODALITIES" | "REGISTER_WEAP
 type Dashboard = {
   // ausente quando não há pendência de configuração
   onboarding?: { pendingSteps: OnboardingStep[] };
-  trainingsThisMonth: number;
+  // UC42 v7: indicador { value, previous } — aqui só importa o valor do mês
+  trainingsThisMonth: { value: number; previous: number };
   // mais recente primeiro
   recentTrainings: { startedAt: string }[];
 };
@@ -45,7 +46,7 @@ function daysAgoLabel(iso: string, now: Date): string {
 }
 
 function contextLine(dashboard: Dashboard, now: Date): string {
-  const count = dashboard.trainingsThisMonth;
+  const count = dashboard.trainingsThisMonth.value;
   const parts = [count === 0 ? "Nenhum treino este mês" : `${count} ${count === 1 ? "treino" : "treinos"} este mês`];
   const [latest] = dashboard.recentTrainings;
   if (latest) {

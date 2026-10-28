@@ -186,11 +186,11 @@ test.describe("Histórico completo (FUC18)", () => {
     await expect(seriesRows(page).filter({ hasText: "Agrupamento: 2.9" })).toHaveCount(1);
   });
 
-  test("link Ver histórico completo do Dashboard leva pro histórico", async ({ page }) => {
+  test("link Ver histórico do Dashboard leva pro histórico", async ({ page }) => {
     await setupAndOpen(page);
     await page.goto("/dashboard");
 
-    await page.getByRole("region", { name: "Últimos treinos" }).getByRole("link", { name: "Ver histórico completo" }).click();
+    await page.getByRole("region", { name: "Últimos treinos" }).getByRole("link", { name: "Ver histórico" }).click();
     await expect(page).toHaveURL(/\/treinos\/historico$/);
     await expect(seriesRows(page)).toHaveCount(3);
   });

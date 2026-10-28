@@ -1,3 +1,5 @@
+> **Substituído** por `FUC15-dashboard-abas-v6.md` (dashboard em abas). Este documento fica só como histórico da Onda 1.
+
 # FUC15 - Dashboard com dados reais (Onda 1)
 
 ## Objetivo

@@ -171,7 +171,7 @@ test.describe("PWA em produção (FUC22)", () => {
     // nem uma rota autenticada vira conteúdo do cache: é a mesma tela de aviso
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Sem conexão" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Sua evolução" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toHaveCount(0);
 
     await context.setOffline(false);
     await page.getByRole("button", { name: "Tentar de novo" }).click();

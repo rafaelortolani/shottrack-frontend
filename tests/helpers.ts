@@ -520,3 +520,21 @@ export async function refreshSession(refreshToken: string) {
     body: JSON.stringify({ refreshToken }),
   });
 }
+
+/**
+ * O resumo do dashboard (recordes, evolução sugerida) é recalculado depois do
+ * evento de série/resultado, de forma assíncrona (ADR-0015). Espera até o
+ * backend refletir `records.length >= minRecords` antes de abrir a tela.
+ */
+export async function waitForDashboardRecords(accessToken: string, minRecords: number, modalityId?: string) {
+  const query = modalityId ? `?modalityId=${modalityId}` : "";
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const response = await fetch(`${BACKEND_URL}/api/dashboard${query}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const { data } = await response.json();
+    if (data?.records?.length >= minRecords) return data;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error(`O resumo do dashboard não chegou a ${minRecords} recorde(s) a tempo`);
+}

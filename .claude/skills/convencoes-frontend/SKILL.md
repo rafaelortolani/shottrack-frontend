@@ -188,6 +188,25 @@ desktop"). Detalhes em `docs/use-cases/FUC22-pwa-mobile.md`.
   campos de 16px. Service worker/manifest se testam em `tests/pwa.spec.ts`,
   contra o build de produção (`npm run build && npm run start -- -p 3100`).
 
+## Abas com estado na URL (dashboard)
+Padrão do dashboard em abas (FUC15 v6), a seguir em telas com abas parecidas:
+- **A aba ativa e os filtros moram na query string** (`?aba=`, `?modalidade=`...), não
+  em `useState`: sobrevive ao recarregar, ao voltar do navegador e a links diretos. Use
+  `parseParams`/`dashboardHref` (`src/lib/dashboard.ts`): trocar de aba preserva os
+  demais parâmetros, o valor padrão não aparece na URL e valor inválido cai no padrão.
+- Cada aba é um `<Link>` (`aria-current="page"`) numa `<nav aria-label>`, não `role="tab"`.
+  A barra rola na horizontal no celular (`overflow-x-auto`) e leva a ativa à vista; a
+  página nunca rola na horizontal. Sem `-mb-px` no sublinhado (o overflow da barra corta).
+- Uma aba nova entra na lista de abas e no mapa de componentes do shell — o resto não muda.
+- Dados compartilhados entre abas (filtro, listas) carregam **uma vez no shell** e descem
+  por props; a aba só busca o que é só dela. `router.replace` pra ajustes de controle,
+  `push`/link pra trocar de aba.
+- **Delta/melhora usa `text-positive` (verde) ou neutro; nunca vermelho** pra piora —
+  vermelho é "atenção" na identidade. O verde só aparece aí, nunca como decoração.
+- Controle que o usuário liga/desliga e vive na URL (ex.: comparar) é `checkbox` com
+  `role="switch"` e `min-h-11`; em teste, `click()` + `toBeChecked()` (o estado muda
+  depois da navegação, então `check()` falha).
+
 ## Administração
 Papel de administrador (ADR-0021 do backend): `GET /api/users/me` devolve
 `role` (`USER` | `ADMIN`); o papel só muda direto no banco. O frontend só evita

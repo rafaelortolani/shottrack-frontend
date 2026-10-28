@@ -143,10 +143,52 @@ test.describe("Mobile smoke (FUC22)", () => {
 
     await login(page, email, /\/treinos\/visitas/);
     await page.goto("/dashboard");
-    await expect(page.getByRole("heading", { name: "Sua evolução" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible();
     await expect(page.getByText("Visita em andamento")).toBeVisible();
     await expectNoHorizontalScroll(page);
     await expectTouchFriendly(page);
+  });
+
+  test("dashboard em abas: a barra de abas rola na horizontal, a página não, e cada aba é tocável", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const location = await registerTrainingLocation(token, { name: "Clube Alvo", city: "Curitiba", state: "PR" });
+    const [modality] = await getModalityCatalog(token);
+    await addPracticedModality(token, modality.id);
+    const visit = await startVisit(token, location.id);
+    await openTraining(token, visit.id, modality.id);
+
+    await page.setViewportSize({ width: 360, height: 640 });
+    await login(page, email, /\/treinos\/visitas/);
+    await page.goto("/dashboard");
+
+    const tabs = page.getByRole("navigation", { name: "Seções do dashboard" });
+    await expect(tabs.getByRole("link", { name: "Resumo" })).toBeVisible();
+
+    // quatro abas não cabem em 360px: a barra rola sozinha; a página, não
+    const scrolls = await tabs.evaluate((el) => el.scrollWidth > el.clientWidth);
+    expect(scrolls, "a barra de abas deveria rolar na horizontal").toBe(true);
+    await expectNoHorizontalScroll(page);
+
+    for (const name of ["Resumo", "Evolução", "Recordes", "Modalidades"]) {
+      const box = (await tabs.getByRole("link", { name, exact: true }).boundingBox())!;
+      expect(box.height, `aba ${name} abaixo de 44px`).toBeGreaterThanOrEqual(43.5);
+    }
+
+    // a última aba fica à vista ao tocar nela (a barra rola até ela)
+    await tabs.getByRole("link", { name: "Modalidades", exact: true }).click();
+    await expect(page).toHaveURL(/aba=modalidades/);
+    await expect(tabs.getByRole("link", { name: "Modalidades", exact: true })).toBeInViewport({ ratio: 1 });
+    await expectNoHorizontalScroll(page);
+
+    // Evolução (a tela com mais controles) também cabe e é tocável
+    await tabs.getByRole("link", { name: "Evolução", exact: true }).click();
+    await expect(page.getByRole("switch", { name: "Comparar com período anterior" })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+    await expectTouchFriendly(page);
+    const toggleBox = (await page.getByRole("switch", { name: "Comparar com período anterior" }).locator("xpath=..").boundingBox())!;
+    expect(toggleBox.height).toBeGreaterThanOrEqual(43.5);
   });
 
   test("acervo: cadastra uma arma pelo formulário no celular", async ({ page }) => {

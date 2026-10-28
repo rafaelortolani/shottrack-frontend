@@ -21,6 +21,10 @@
   --accent-target-soft: #edc969;
   --accent-brass-soft: #ef5d68;
   --accent-sage-soft: #a6906b;
+
+  /* verde discreto: só pra melhora num indicador (delta do dashboard) — nunca
+     decoração, e o vermelho nunca indica piora (ver skill, "Dashboard") */
+  --positive: #6fbf8a;
 }
 
 @theme inline {
@@ -37,6 +41,7 @@
   --color-accent-target-soft: var(--accent-target-soft);
   --color-accent-brass-soft: var(--accent-brass-soft);
   --color-accent-sage-soft: var(--accent-sage-soft);
+  --color-positive: var(--positive);
   --font-display: var(--font-rajdhani);
   --font-sans: var(--font-plex-sans);
 }
