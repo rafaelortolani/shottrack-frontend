@@ -4,10 +4,12 @@
  * o teste realmente quer validar passa pela interface.
  */
 import { execSync } from "node:child_process";
+import { assertTestEnvironment, BACKEND_URL, BASE_URL, E2E_DB, MAILPIT_URL } from "./e2e-env";
 
-export const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://localhost:8080";
-export const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
-const MAILPIT_URL = "http://localhost:8025";
+// Trava: qualquer spec que importe os helpers já recusa rodar fora do ambiente de teste
+assertTestEnvironment();
+
+export { BACKEND_URL, BASE_URL };
 
 export function randomEmail() {
   return `teste.${Date.now()}.${Math.floor(Math.random() * 10000)}@shottrack.com`;
@@ -72,6 +74,21 @@ export async function createUser(email: string, password = "senha12345") {
 }
 
 /**
+ * SQL direto no banco DE TESTE (`shottrack_test`), via `docker exec psql` no container
+ * do Postgres. O nome do banco é fixo (E2E_DB): nada aqui alcança o banco de desenvolvimento.
+ */
+export function runSql(sql: string): string {
+  const containerId = execSync(`docker ps --filter "publish=5432" --format "{{.ID}}"`)
+    .toString()
+    .trim()
+    .split("\n")[0];
+  if (!containerId) {
+    throw new Error("Não encontrei o container do Postgres (porta 5432)");
+  }
+  return execSync(`docker exec ${containerId} psql -U shottrack -d ${E2E_DB} -tA -c "${sql}"`, { stdio: "pipe" }).toString();
+}
+
+/**
  * Força a expiração de um token de cadastro pendente pra testar o estado de
  * link expirado (FUC10) sem esperar 24h de verdade — não existe endpoint
  * pra isso, então ajusta a linha direto no Postgres (mesmo container que já
@@ -83,45 +100,21 @@ export function expireRegistrationToken(token: string) {
     throw new Error(`Token de cadastro com formato inesperado: ${token}`);
   }
 
-  const containerId = execSync(`docker ps --filter "publish=5432" --format "{{.ID}}"`)
-    .toString()
-    .trim()
-    .split("\n")[0];
-
-  if (!containerId) {
-    throw new Error("Não encontrei o container do Postgres (porta 5432) pra simular expiração de token");
-  }
-
-  execSync(
-    `docker exec ${containerId} psql -U shottrack -d shottrack -c "UPDATE pending_registrations SET expires_at = now() - interval '1 day' WHERE token = '${token}'"`,
-    { stdio: "pipe" }
-  );
+  runSql(`UPDATE pending_registrations SET expires_at = now() - interval '1 day' WHERE token = '${token}'`);
 }
 
 /**
  * Promove (ou rebaixa) um usuário direto no banco (ADR-0021: o papel só muda
  * por SQL, não existe endpoint pra isso). Mesmo mecanismo do
  * `expireRegistrationToken`: `docker exec psql` no container do Postgres da
- * porta 5432, base `shottrack` — a mesma que o backend dos testes usa.
+ * porta 5432, base `shottrack_test`, a do backend de teste.
  */
 export function setUserRole(email: string, role: "USER" | "ADMIN") {
   if (!/^[\w.+-]+@[\w.-]+$/.test(email)) {
     throw new Error(`E-mail de teste com formato inesperado: ${email}`);
   }
 
-  const containerId = execSync(`docker ps --filter "publish=5432" --format "{{.ID}}"`)
-    .toString()
-    .trim()
-    .split("\n")[0];
-
-  if (!containerId) {
-    throw new Error("Não encontrei o container do Postgres (porta 5432) pra alterar o papel do usuário");
-  }
-
-  const output = execSync(
-    `docker exec ${containerId} psql -U shottrack -d shottrack -tA -c "UPDATE users SET role = '${role}' WHERE email = '${email}' RETURNING 1"`,
-    { stdio: "pipe" }
-  ).toString();
+  const output = runSql(`UPDATE users SET role = '${role}' WHERE email = '${email}' RETURNING 1`);
 
   if (!output.includes("1")) {
     throw new Error(`Nenhum usuário com o e-mail ${email} pra mudar o papel`);
@@ -541,17 +534,6 @@ export async function waitForDashboardRecords(accessToken: string, minRecords: n
 }
 
 // ---- habitualidade (ADR-0023) ----
-
-function runSql(sql: string): string {
-  const containerId = execSync(`docker ps --filter "publish=5432" --format "{{.ID}}"`)
-    .toString()
-    .trim()
-    .split("\n")[0];
-  if (!containerId) {
-    throw new Error("Não encontrei o container do Postgres (porta 5432)");
-  }
-  return execSync(`docker exec ${containerId} psql -U shottrack -d shottrack -tA -c "${sql}"`, { stdio: "pipe" }).toString();
-}
 
 /** Cria um usuário ADMIN (papel via SQL, como em produção) e devolve e-mail e token do backend. */
 export async function createAdmin() {

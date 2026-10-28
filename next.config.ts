@@ -2,6 +2,8 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // O E2E usa diretórios próprios (.next-e2e*) para não colidir com o `next dev` do desenvolvimento
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   allowedDevOrigins: ["192.168.100.16"],
   devIndicators: false,
   env: {
