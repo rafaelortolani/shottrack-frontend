@@ -263,6 +263,25 @@ banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própri
 - Teste: `tests/seguranca-bff.spec.ts` (travessia, origem, corpo inválido, sem rede). Rota nova com parâmetro
   ou corpo entra nas listas desse spec.
 
+## Cabeçalhos de segurança e cache (auditoria A03, A06)
+- **`next.config.ts` → `headers()`** concentra os cabeçalhos fixos: `X-Frame-Options: DENY`, `nosniff`,
+  `Referrer-Policy`, `Permissions-Policy` (`camera=(self)`, microfone/geolocalização bloqueados) em `/:path*`;
+  `Cache-Control: no-store` + `Vary: Cookie` em `/api/:path*`; `private, no-store` + `Vary: Cookie` nas áreas
+  protegidas. Área protegida nova entra aqui **e** em `PROTECTED_PATHS` (`proxy.ts`). `poweredByHeader: false`.
+  Cache longo só em `/_next/static` (padrão do Next); `/sw.js` segue `no-cache`. Ícones e demais arquivos de
+  `public/` não são versionados por hash: não ganham `immutable`.
+- **CSP com nonce em `src/lib/csp.ts`, aplicada pelo `src/proxy.ts`** (o nonce é por requisição, então não cabe
+  em `headers()`). O layout raiz chama `await connection()`: **toda página é renderizada por requisição** — não
+  reintroduza página estática. Hoje é `Content-Security-Policy-Report-Only`: **não bloqueia nada**. Virar
+  bloqueante = trocar `CSP_HEADER` em `csp.ts`, só depois de observar violações reais em produção.
+- Script/estilo inline novo precisa do nonce: o Next aplica nos que ele gera; `<Script>`/`<style>` manual lê
+  `(await headers()).get("x-nonce")`. Nada de `dangerouslySetInnerHTML` com script, `eval`, handler inline
+  (`onclick="..."`) nem recurso de outra origem (a política é `default-src 'self'`).
+- Teste: `tests/seguranca-cabecalhos.spec.ts` (cabeçalhos, cache e navegação pelas telas sem nenhuma violação de
+  CSP). Tela nova entra na lista de navegação desse spec.
+- `Vary` das páginas renderizadas é reescrito pelo Next (não dá para forçar `Cookie`); o `private, no-store` é
+  o que garante que nada é guardado.
+
 - `src/proxy.ts` (antigo middleware) protege rotas autenticadas checando a
   presença do cookie — validação de verdade do token acontece no backend a
   cada chamada.

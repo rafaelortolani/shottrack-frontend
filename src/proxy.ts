@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { buildCsp, createNonce, CSP_HEADER } from "@/lib/csp";
 import { rejectUnsafeCrossOrigin } from "@/lib/sameOrigin";
 
 /**
@@ -13,6 +14,7 @@ import { rejectUnsafeCrossOrigin } from "@/lib/sameOrigin";
  *
  * `/api/**` passa só pela checagem de origem dos métodos de escrita (A05, ver
  * `sameOrigin.ts`); a sessão continua sendo conferida em cada Route Handler.
+ * Toda página recebe a CSP em modo relatório com nonce (A03, ver `csp.ts`).
  */
 const PROTECTED_PATHS = ["/dashboard", "/boas-vindas", "/usuario", "/acervo", "/treinos", "/admin"];
 
@@ -29,6 +31,20 @@ async function checkAdmin(accessToken: string): Promise<"admin" | "anonymous" | 
   } catch {
     return "denied"; // na dúvida, nega — o backend continua sendo a autoridade
   }
+}
+
+/** Segue a requisição com a CSP (modo relatório) e o nonce que o Next aplica nos scripts. */
+function nextWithCsp(request: NextRequest) {
+  const nonce = createNonce();
+  const csp = buildCsp(nonce);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  // O Next extrai o nonce do cabeçalho de CSP da requisição (inclusive o de relatório)
+  requestHeaders.set(CSP_HEADER, csp);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set(CSP_HEADER, csp);
+  return response;
 }
 
 export async function proxy(request: NextRequest) {
@@ -49,18 +65,15 @@ export async function proxy(request: NextRequest) {
     if (access === "denied") return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  return NextResponse.next();
+  return nextWithCsp(request);
 }
 
 export const config = {
-  // Deve listar os mesmos prefixos de PROTECTED_PATHS (o matcher precisa ser literal), mais /api.
+  // /api: checagem de origem (A05). Páginas: CSP com nonce (A03) e proteção de sessão. Ficam de fora
+  // arquivos estáticos, o service worker, o manifest e o túnel do Sentry (/monitoring), que não
+  // devem passar por aqui.
   matcher: [
     "/api/:path*",
-    "/dashboard/:path*",
-    "/boas-vindas/:path*",
-    "/usuario/:path*",
-    "/acervo/:path*",
-    "/treinos/:path*",
-    "/admin/:path*",
+    "/((?!api|monitoring|_next/static|_next/image|icons/|sw\\.js|favicon\\.ico|icon\\.svg|manifest\\.webmanifest).*)",
   ],
 };

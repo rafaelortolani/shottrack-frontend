@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import { Rajdhani, IBM_Plex_Sans } from "next/font/google";
 import { PwaProvider } from "@/components/PwaProvider";
 import "./globals.css";
@@ -31,11 +32,14 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Renderização dinâmica em toda página: o nonce da CSP (src/proxy.ts) é por requisição
+  await connection();
+
   return (
     <html lang="pt-BR">
       <body

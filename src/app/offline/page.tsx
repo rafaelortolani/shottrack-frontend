@@ -6,8 +6,8 @@ import { TargetRings } from "@/components/TargetRings";
 export const metadata: Metadata = { title: "Sem conexão — ShotTrack" };
 
 /**
- * Fallback do service worker (FUC22): pública e estática. É a única página
- * pré-cacheada — nada de dados do atleta fica no aparelho.
+ * Fallback do service worker (FUC22): pública, sem dado de atleta. É a única página
+ * pré-cacheada (renderizada por requisição como as demais, por causa do nonce da CSP) — nada de dados do atleta fica no aparelho.
  */
 export default function OfflinePage() {
   return (
