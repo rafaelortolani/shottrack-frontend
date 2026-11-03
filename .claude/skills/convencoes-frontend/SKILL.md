@@ -247,6 +247,16 @@ banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própri
   presença do cookie — validação de verdade do token acontece no backend a
   cada chamada.
 
+## Dependências e Next.js
+- `package.json` fixa versão **exata** de `next` e `eslint-config-next` (sempre a mesma versão entre os
+  dois). Atualização de segurança: `npm install --save-exact next@X eslint-config-next@X`, depois
+  `npm audit fix` e `npm audit` (meta: 0 vulnerabilidades). O teste `tests/seguranca-dependencias.spec.ts`
+  trava a versão mínima: suba o piso ali quando surgir aviso novo.
+- O app **não usa `next/image`**: `images.unoptimized: true` em `next.config.ts` desliga o otimizador
+  (`/_next/image` responde 404). Se um dia usar `next/image`, decida o otimizador com remotePatterns
+  restritos em vez de religar o padrão.
+- `public/` só guarda o que o app usa (`icons/`, `sw.js`). Sobras do `create-next-app` (SVGs) não ficam.
+
 ## Testes (obrigatório)
 Toda tela nova (FUCxx) é entregue com teste E2E em Playwright, cobrindo o
 fluxo principal e pelo menos um erro relevante — mesmo espírito da regra
@@ -268,8 +278,11 @@ já aplicada no backend.
   (clique que muda a tela) dentro de `expect(...).toPass()`, e só então preencha.
 - Selo de estado ("Ativa"/"Inativa") ao lado de botão de mesmo texto: use
   `getByText(..., { exact: true })`, senão o botão satisfaz a asserção.
-- Instância isolada (backend com rate limit de cadastro esgotado dá 429): suba o backend com
-  `SERVER_PORT=8081 SPRING_APPLICATION_JSON='{"app":{"rate-limit":{"enabled":false}}}'`, o front
-  com `BACKEND_URL=http://localhost:8081 npx next dev -p 3001` e rode com
-  `E2E_BACKEND_URL=http://localhost:8081 E2E_BASE_URL=http://localhost:3001`.
+- **O E2E nunca roda contra o desenvolvimento.** Ambiente de teste próprio (backend 8090, banco
+  `shottrack_test`, vhost e Mailpit próprios, front de produção em 3091), recriado do zero a cada execução
+  por `scripts/e2e-backend.sh`; a trava está em `tests/e2e-env.ts` e `tests/global-setup.ts`. Porta
+  isolada **sem** banco isolado não é isolamento: o backend escreve no banco da sua configuração.
+  Helpers novos: URLs vêm de `tests/e2e-env.ts` (nunca `localhost:8080`/`3000` fixos) e SQL direto só
+  por `runSql` (banco `shottrack_test`). O front do E2E é build de produção; teste que só vale em `next dev` leva `@dev` no título (projeto `dev`).
+  Como subir: README, "Ambiente de teste do E2E".
 - Rodar com `npm run test:e2e` (ou `test:e2e:ui` pra depurar visualmente).
