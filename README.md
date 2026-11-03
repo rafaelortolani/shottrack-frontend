@@ -49,6 +49,13 @@ spec; os dados acumulam até a próxima subida limpa). O front do E2E é um **bu
 sem compilar rota na primeira visita); o `next dev` de teste só sobe para o projeto `dev`, que roda os testes
 marcados `@dev` (comportamento que só existe em desenvolvimento). Para remover o Mailpit de teste: `docker rm -f shottrack-e2e-mailpit`.
 
+**`next-env.d.ts` e `tsconfig.json` modificados**: ao subir ou compilar com um `distDir` diferente de `.next`
+(`.next-e2e*`, ou `NEXT_DIST_DIR=...`), o próprio Next reescreve esses dois arquivos versionados: aponta o
+`next-env.d.ts` para `<distDir>/types` e acrescenta `<distDir>/types/**/*.ts` ao `include` do `tsconfig.json`
+(reformatando o JSON). Não há opção do Next para evitar isso. O `npm run test:e2e` os restaura sozinho ao
+terminar (`restoreNextGeneratedFilesOnExit`); depois de um `next build`/`next dev` manual com outro
+`distDir`, descarte com `git checkout -- next-env.d.ts tsconfig.json`. As pastas `.next-*/` estão no `.gitignore`.
+
 ## Sistema de design
 | Token | Cor | Uso |
 |---|---|---|

@@ -17,6 +17,22 @@ DB=shottrack_test
 VHOST=shottrack_test
 MAILPIT=shottrack-e2e-mailpit
 
+# Trava de portas: ANTES de recriar banco, vhost ou Mailpit, recusa subir se o ambiente de teste já estiver em uso
+# (por exemplo, o backend de outra sessão). Recriar o banco com o backend de outra execução no ar derruba essa execução.
+port_in_use() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+for p in "$PORT" 1026 8026; do
+  if port_in_use "$p"; then
+    # SMTP/web do Mailpit de teste: só é "nosso" se for o container shottrack-e2e-mailpit deste script (recriado abaixo)
+    if [ "$p" != "$PORT" ] && [ -n "$(docker ps --filter "name=^${MAILPIT}$" --filter "publish=$p" --format '{{.ID}}' 2>/dev/null)" ]; then
+      continue
+    fi
+    echo "[e2e] RECUSADO: a porta $p já está em uso (outro backend/E2E rodando, ou outro processo)." >&2
+    echo "[e2e] Nada foi alterado: banco $DB, vhost $VHOST e Mailpit continuam como estavam." >&2
+    echo "[e2e] Veja quem usa: ss -ltnp | grep :$p — espere a outra execução terminar (ou encerre-a) e rode de novo." >&2
+    exit 1
+  fi
+done
+
 [ -x "$BACKEND_DIR/mvnw" ] || { echo "Backend não encontrado em $BACKEND_DIR (use SHOTTRACK_BACKEND_DIR)" >&2; exit 1; }
 
 PG=$(docker ps --filter "publish=5432" --format "{{.ID}}" | head -n1)
