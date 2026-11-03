@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteAccountDialog } from "@/components/DeleteAccountDialog";
+import { ExportDataDialog } from "@/components/ExportDataDialog";
 import { tooManyRequestsMessage } from "@/lib/rateLimit";
 import { safeFetch } from "@/lib/safeFetch";
 
@@ -24,27 +25,33 @@ export default function PrivacidadeTabPage() {
   const router = useRouter();
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  async function handleDownload() {
+  async function handleDownload(password: string) {
     setDownloadError(null);
     setDownloading(true);
 
-    const response = await safeFetch("/api/users/me/export");
-
-    if (response.status === 401) {
-      router.push("/login");
-      return;
-    }
+    const response = await safeFetch("/api/users/me/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword: password }),
+    });
 
     if (!response.ok) {
       setDownloading(false);
-      if (response.status === 429) {
+      const { error } = await response.json().catch(() => ({ error: null }));
+
+      // o backend responde 401 também para senha errada: confere o código antes de tratar como sessão expirada
+      if (error?.code === "INVALID_CURRENT_PASSWORD") {
+        setDownloadError("Senha atual incorreta");
+      } else if (response.status === 401) {
+        router.push("/login");
+      } else if (response.status === 429) {
         setDownloadError(tooManyRequestsMessage(response.headers.get("Retry-After")));
       } else {
-        const { error } = await response.json().catch(() => ({ error: null }));
         setDownloadError(error?.message ?? "Não foi possível baixar seus dados");
       }
       return;
@@ -60,6 +67,12 @@ export default function PrivacidadeTabPage() {
     link.remove();
     URL.revokeObjectURL(url);
     setDownloading(false);
+    setExportDialogOpen(false);
+  }
+
+  function closeExportDialog() {
+    setExportDialogOpen(false);
+    setDownloadError(null);
   }
 
   async function handleDelete(password: string) {
@@ -111,17 +124,11 @@ export default function PrivacidadeTabPage() {
         </p>
         <button
           type="button"
-          onClick={handleDownload}
-          disabled={downloading}
-          className="rounded-md bg-accent-target hover:bg-accent-target-hover disabled:opacity-60 text-background text-sm font-medium py-2 px-4 transition-colors"
+          onClick={() => setExportDialogOpen(true)}
+          className="rounded-md bg-accent-target hover:bg-accent-target-hover text-background text-sm font-medium py-2 px-4 transition-colors"
         >
-          {downloading ? "Preparando..." : "Baixar meus dados"}
+          Baixar meus dados
         </button>
-        {downloadError && (
-          <p className="text-sm text-accent-target mt-2" role="alert">
-            {downloadError}
-          </p>
-        )}
       </section>
 
       <section aria-labelledby="excluir-conta" className="rounded-md bg-surface p-5 border-l-2 border-accent-brass">
@@ -150,6 +157,10 @@ export default function PrivacidadeTabPage() {
           Política de Privacidade
         </Link>
       </p>
+
+      {exportDialogOpen && (
+        <ExportDataDialog busy={downloading} error={downloadError} onConfirm={handleDownload} onCancel={closeExportDialog} />
+      )}
 
       {dialogOpen && (
         <DeleteAccountDialog busy={deleting} error={deleteError} onConfirm={handleDelete} onCancel={closeDialog} />

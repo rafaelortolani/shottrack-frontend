@@ -194,7 +194,7 @@ test.describe("A03 — cabeçalhos de segurança", () => {
 
 test.describe("A06 — cache de respostas autenticadas", () => {
   test("a API nunca é guardada em cache (com e sem sessão) e varia por cookie", async ({ request }) => {
-    const paths = ["/api/users/me", "/api/dashboard", "/api/weapons", "/api/users/me/export"];
+    const paths = ["/api/users/me", "/api/dashboard", "/api/weapons"];
     for (const path of paths) {
       const response = await request.get(path);
       expect(response.headers()["cache-control"], path).toBe("no-store");
@@ -202,7 +202,7 @@ test.describe("A06 — cache de respostas autenticadas", () => {
     }
 
     await loginApi(request);
-    for (const path of paths.filter((path) => !path.endsWith("/export"))) {
+    for (const path of paths) {
       const response = await request.get(path);
       expect(response.status(), path).toBe(200);
       expect(response.headers()["cache-control"], path).toBe("no-store");
