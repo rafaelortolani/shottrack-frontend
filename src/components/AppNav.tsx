@@ -27,6 +27,7 @@ import {
 import { LogoIcon } from "@/components/LogoIcon";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { safeFetch } from "@/lib/safeFetch";
+import { clearServiceWorkerCaches } from "@/lib/serviceWorkerCache";
 
 const NAV_COLLAPSED_KEY = "shottrack:nav-collapsed";
 
@@ -176,6 +177,7 @@ export function AppNav() {
       setLoggingOut(false);
       return;
     }
+    await clearServiceWorkerCaches();
     router.push("/login");
   }
 

@@ -9,11 +9,9 @@ import { PageContainer } from "@/components/PageContainer";
 import { fromDateTimeLocal, oldestVisitStart, toDateTimeLocal, validateVisitDate } from "@/lib/visitDates";
 import { COMPETITION_SCOPES, VISIT_TYPES, type CompetitionScope, type VisitType } from "@/lib/visitType";
 import { safeFetch } from "@/lib/safeFetch";
+import { INPUT_CLASS } from "@/lib/formStyles";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string; club?: boolean };
-
-const INPUT_CLASS =
-  "w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
 
 export default function IniciarVisitaPage() {
   const router = useRouter();

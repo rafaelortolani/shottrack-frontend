@@ -129,6 +129,7 @@ function RedefinirSenhaForm() {
             </label>
             <input
               id="password"
+              autoComplete="new-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -147,6 +148,7 @@ function RedefinirSenhaForm() {
             </label>
             <input
               id="confirmation"
+              autoComplete="new-password"
               type="password"
               value={confirmation}
               onChange={(e) => setConfirmation(e.target.value)}

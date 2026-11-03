@@ -14,6 +14,7 @@ import { SeriesAccordion } from "@/components/SeriesAccordion";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { formatDate, formatDateTime } from "@/lib/datetime";
 import { safeFetch } from "@/lib/safeFetch";
+import { INPUT_CLASS } from "@/lib/formStyles";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string };
 type Modality = { id: string; name: string };
@@ -36,9 +37,6 @@ type Visit = {
   competitionScope?: CompetitionScope | null;
   trainings: Training[];
 };
-
-const INPUT_CLASS =
-  "w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
 
 export default function VisitasTabPage() {
   const router = useRouter();
