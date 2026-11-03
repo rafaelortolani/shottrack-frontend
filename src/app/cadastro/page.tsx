@@ -50,11 +50,7 @@ export default function CadastroPage() {
         return;
       }
       const { error } = await response.json();
-      if (error?.code === "EMAIL_ALREADY_REGISTERED") {
-        setEmailError("Já existe uma conta com esse email");
-      } else {
-        setEmailError(error?.message ?? "Não foi possível solicitar o cadastro");
-      }
+      setEmailError(error?.message ?? "Não foi possível solicitar o cadastro");
       return;
     }
 
@@ -69,7 +65,7 @@ export default function CadastroPage() {
     setResending(false);
 
     if (response.ok) {
-      setResendMessage("Link reenviado");
+      setResendMessage("Se o e-mail puder ser cadastrado, reenviamos o link.");
     } else if (response.status === 429) {
       setResendMessage(tooManyRequestsMessage(response.headers.get("Retry-After")));
     }
@@ -130,8 +126,7 @@ export default function CadastroPage() {
           <>
             <p className="text-foreground-muted mb-1">Verifique seu email</p>
             <p className="text-sm text-foreground-muted mb-6">
-              Enviamos um link de confirmação pra <span className="text-foreground">{sentEmail}</span>.
-              Ele expira em 24 horas.
+              Se o e-mail puder ser cadastrado, enviamos um link para continuar. Confira sua caixa de entrada.
             </p>
 
             <button

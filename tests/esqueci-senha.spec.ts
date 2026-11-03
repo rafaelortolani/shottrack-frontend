@@ -90,6 +90,27 @@ test.describe("Esqueci minha senha / Redefinir senha (FUC20)", () => {
     await expect(page).toHaveURL(/\/redefinir-senha/);
   });
 
+  test("e-mail digitado com outra capitalização recebe o link e redefine a senha", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email, "senha12345");
+
+    await requestReset(page, email.toUpperCase());
+    await expect(page.getByText(SENT_MESSAGE)).toBeVisible();
+
+    // o backend normaliza para minúsculas: o link chega ao endereço em minúsculas
+    const token = await getLatestPasswordResetToken(email);
+    await page.goto(`/redefinir-senha?token=${token}`);
+    await page.getByLabel("Nova senha", { exact: true }).fill("novaSenha789");
+    await page.getByLabel("Confirmar nova senha").fill("novaSenha789");
+    await page.getByRole("button", { name: "Redefinir senha" }).click();
+    await expect(page).toHaveURL(/\/login\?senha=redefinida/);
+
+    await page.getByLabel("Email").fill(email.toUpperCase());
+    await page.getByLabel("Senha").fill("novaSenha789");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page).toHaveURL(/\/boas-vindas/);
+  });
+
   test("e-mail inexistente mostra a mesma mensagem de uma conta real", async ({ page }) => {
     await requestReset(page, `nao-existe.${Date.now()}@shottrack.com`);
     await expect(page.getByText(SENT_MESSAGE)).toBeVisible();

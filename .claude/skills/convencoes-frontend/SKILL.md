@@ -276,6 +276,14 @@ banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própri
   `?conta=excluida`); 401 por sessão ausente vai a `?sessao=expirada`. Os avisos moram em `login/page.tsx`.
 - Sucesso do backend é qualquer 2xx (alguns endpoints respondem 202): o BFF testa `status >= 300`, não `!== 200`.
 
+## Fluxos públicos de e-mail: resposta neutra (auditoria A08)
+- Cadastro e esqueci-senha **não revelam se o e-mail tem conta**: a tela mostra sempre a mesma mensagem
+  (cadastro: "Se o e-mail puder ser cadastrado, enviamos um link para continuar. Confira sua caixa de entrada.").
+  Não ramifique texto por código de erro que denuncie a existência (`EMAIL_ALREADY_REGISTERED` não volta nessas
+  rotas). O erro que sobra é genérico/429. Teste novo nesses fluxos compara a tela de e-mail novo com a de existente.
+- O backend grava e-mails em minúsculas; o front envia o que o usuário digitou. Nos E2E, procure no Mailpit pelo
+  endereço em minúsculas, e lembre que e-mail já cadastrado só recebe um aviso (sem `token=`).
+
 ## Acabamento (auditoria A11, A13)
 - **`autoComplete` em todo campo de e-mail/senha**: e-mail do login `username`; senha do login e senha atual
   `current-password`; nova senha (cadastro, redefinição, troca) e a confirmação dela `new-password`.
