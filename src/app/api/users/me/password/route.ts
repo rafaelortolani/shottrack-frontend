@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
 import { readJsonObject } from "@/lib/requestBody";
+import { clearSessionCookies } from "@/lib/sessionCookies";
 
 /**
  * BFF de troca de senha: repassa o cookie de sessão como Authorization
@@ -35,7 +36,6 @@ export async function PATCH(request: NextRequest) {
 
   // O backend revogou todas as sessões (ADR-0018): limpa os cookies também.
   const response = NextResponse.json({ ok: true });
-  response.cookies.delete("shottrack_access");
-  response.cookies.delete("shottrack_refresh");
+  clearSessionCookies(response);
   return response;
 }

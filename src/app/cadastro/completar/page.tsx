@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TargetRings } from "@/components/TargetRings";
@@ -33,7 +33,13 @@ export default function CompletarCadastroPage() {
 function CompletarCadastroForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  // O token é de uso único e não pode ficar na URL (histórico, favoritos, Referer, eventos do Sentry):
+  // guarda em estado na primeira renderização e tira a query logo em seguida (auditoria A04).
+  const [token] = useState(() => searchParams.get("token"));
+
+  useEffect(() => {
+    window.history.replaceState(window.history.state, "", window.location.pathname);
+  }, []);
 
   const [tokenState, setTokenState] = useState<TokenState>(token ? "form" : "invalid");
   const [name, setName] = useState("");

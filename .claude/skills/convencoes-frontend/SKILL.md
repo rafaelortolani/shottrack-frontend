@@ -263,6 +263,16 @@ banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própri
 - Teste: `tests/seguranca-bff.spec.ts` (travessia, origem, corpo inválido, sem rede). Rota nova com parâmetro
   ou corpo entra nas listas desse spec.
 
+## Token de uso único na URL e Sentry (auditoria A04, A09)
+- Página que recebe token por `?token=` (hoje `/cadastro/completar` e `/redefinir-senha`) o guarda em estado
+  na 1ª renderização (`useState(() => searchParams.get("token"))`) e tira a query num `useEffect` com
+  `history.replaceState`. **Não** releia `useSearchParams` depois (o Next o atualiza e o token some). Recarregar
+  a página limpa mostra "link inválido" — é o preço de o token não ficar no histórico. A rota ganha
+  `Referrer-Policy: no-referrer` em `next.config.ts`. Rota nova com token na URL repete os dois.
+- Os três `Sentry.init` espalham `sentryPrivacyOptions` (`src/lib/sentryScrub.ts`): `sendDefaultPii: false` e
+  `beforeSend`/`beforeBreadcrumb` que tiram a query de URLs. `Sentry.init` novo sem isso não entra.
+  Teste unitário: `tests/sentry-scrub.spec.ts`; E2E de token e cookies: `tests/seguranca-sessao.spec.ts`.
+
 ## Cabeçalhos de segurança e cache (auditoria A03, A06)
 - **`next.config.ts` → `headers()`** concentra os cabeçalhos fixos: `X-Frame-Options: DENY`, `nosniff`,
   `Referrer-Policy`, `Permissions-Policy` (`camera=(self)`, microfone/geolocalização bloqueados) em `/:path*`;
@@ -282,6 +292,12 @@ banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própri
 - `Vary` das páginas renderizadas é reescrito pelo Next (não dá para forçar `Cookie`); o `private, no-store` é
   o que garante que nada é guardado.
 
+- Cookies: `shottrack_access` (1h, `Path=/`) e `shottrack_refresh` (7d, **`Path=/api/auth`**: só viaja para
+  login/logout/renovação), sempre `httpOnly`, `sameSite: lax`, `secure` em produção. Quem grava ou limpa a
+  sessão usa `setSessionCookies`/`clearSessionCookies` (`src/lib/sessionCookies.ts`) — nunca `cookies.set`/
+  `cookies.delete` direto: apagar cookie exige o mesmo `path` com que foi criado, e `response.cookies` guarda um
+  por nome (a variante legada `Path=/` do refresh vai como `Set-Cookie` à parte). Rota nova que precise do
+  refresh tem que ficar sob `/api/auth/**`.
 - `src/proxy.ts` (antigo middleware) protege rotas autenticadas checando a
   presença do cookie — validação de verdade do token acontece no backend a
   cada chamada.
