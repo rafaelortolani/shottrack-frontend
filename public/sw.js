@@ -2,13 +2,15 @@
  * Service worker mínimo do ShotTrack (FUC22 / ADR-0020), escrito à mão.
  *
  * Regras (não relaxar sem decisão explícita — dados pessoais, ADR-0019):
- * - só cacheia ARQUIVOS ESTÁTICOS (/_next/static, /icons, fontes, imagens);
+ * - só cacheia /_next/static e /icons (e a página /offline). Nada por tipo de requisição (imagem,
+ *   fonte): imagem de alvo ou foto do atleta servida pela própria origem não pode ficar no aparelho;
  * - NUNCA intercepta /api/* nem qualquer requisição que não seja GET;
  * - navegação vai à rede; se falhar, devolve a página /offline (pré-cacheada).
- *   Páginas autenticadas nunca são guardadas nem servidas do cache.
+ *   Páginas autenticadas nunca são guardadas nem servidas do cache;
+ * - no logout o app manda CLEAR_CACHES: apaga todo cache shottrack-* e refaz só o pré-cache público.
  * Mudou a estratégia ou a lista de pré-cache? Suba CACHE_VERSION.
  */
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const CACHE_NAME = `shottrack-static-v${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
 
@@ -62,10 +64,22 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-function isCacheableStatic(request, url) {
+function isCacheableStatic(url) {
   if (url.pathname.startsWith("/api/")) return false;
-  return STATIC_PATH.test(url.pathname) || request.destination === "font" || request.destination === "image";
+  return STATIC_PATH.test(url.pathname);
 }
+
+/** Logout: apaga todos os caches do app e refaz o pré-cache público (/offline e seus estáticos). */
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "CLEAR_CACHES") return;
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((key) => key.startsWith("shottrack-")).map((key) => caches.delete(key))))
+      .then(precacheOfflinePage)
+      .catch(() => undefined)
+  );
+});
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
@@ -83,7 +97,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (isCacheableStatic(request, url)) {
+  if (isCacheableStatic(url)) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cached = await cache.match(request);

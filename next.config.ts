@@ -50,6 +50,8 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "Cache-Control", value: "private, no-store" },
           { key: "Vary", value: "Cookie" },
+          // fora dos buscadores (A13); o robots.txt está em src/app/robots.ts
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
       },
       {

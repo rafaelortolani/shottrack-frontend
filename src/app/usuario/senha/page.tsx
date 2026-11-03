@@ -81,6 +81,7 @@ export default function AlterarSenhaPage() {
           </label>
           <input
             id="currentPassword"
+            autoComplete="current-password"
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
@@ -99,6 +100,7 @@ export default function AlterarSenhaPage() {
           </label>
           <input
             id="newPassword"
+            autoComplete="new-password"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}

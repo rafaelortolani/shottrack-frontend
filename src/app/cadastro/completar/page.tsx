@@ -157,6 +157,7 @@ function CompletarCadastroForm() {
             </label>
             <input
               id="password"
+              autoComplete="new-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

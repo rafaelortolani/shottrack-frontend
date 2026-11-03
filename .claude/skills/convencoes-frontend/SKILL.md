@@ -150,8 +150,10 @@ O app é instalável (PWA) e usado no estande, pelo celular, com uma mão. Um
 desktop"). Detalhes em `docs/use-cases/FUC22-pwa-mobile.md`.
 
 - **Service worker mínimo, à mão** (`public/sw.js`, sem next-pwa/serwist). Só
-  cacheia arquivos estáticos (`/_next/static`, `/icons`, fontes, imagens);
-  navegação vai à rede e, se falhar, devolve `/offline`. **Nunca** intercepta
+  cacheia só `/_next/static` e `/icons` (mais a `/offline` pré-cacheada) — **nunca por tipo de requisição**
+  (imagem/fonte): foto ou imagem de alvo servida pela própria origem não pode ficar no aparelho. No logout o
+  `AppNav` chama `clearServiceWorkerCaches` (`src/lib/serviceWorkerCache.ts`): o worker apaga todo `shottrack-*`
+  e refaz só o pré-cache público. Navegação vai à rede e, se falhar, devolve `/offline`. **Nunca** intercepta
   `/api/*` nem requisição que não seja GET, e **nunca** guarda ou serve página
   autenticada do cache — dados pessoais não ficam no aparelho (ADR-0019).
   Mudou a estratégia ou o pré-cache? Suba `CACHE_VERSION`.
@@ -262,6 +264,19 @@ banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própri
   fixa em `!response.ok` (ex.: login) trata `status === 503` antes, pra não culpar a senha pela falta de rede.
 - Teste: `tests/seguranca-bff.spec.ts` (travessia, origem, corpo inválido, sem rede). Rota nova com parâmetro
   ou corpo entra nas listas desse spec.
+
+## Acabamento (auditoria A11, A13)
+- **`autoComplete` em todo campo de e-mail/senha**: e-mail do login `username`; senha do login e senha atual
+  `current-password`; nova senha (cadastro, redefinição, troca) e a confirmação dela `new-password`.
+- **`BACKEND_URL` é obrigatória em produção** (`resolveBackendUrl` em `src/lib/backend.ts`): sem ela o BFF lança
+  erro na primeira chamada, em vez de cair em `localhost`. Fora de produção o padrão segue `http://localhost:8080`.
+  A checagem é preguiçosa de propósito (o `next build` também roda com `NODE_ENV=production`).
+- **Fora dos buscadores**: `src/app/robots.ts` bloqueia `/api/` e as áreas autenticadas; as áreas protegidas levam
+  `X-Robots-Tag: noindex, nofollow` (`next.config.ts`, na mesma regra de cache). Área nova entra nas três listas
+  (`PROTECTED_PATHS`, regra de `headers()`, `robots.ts`).
+- **Classe dos campos**: `INPUT_CLASS` vem de `src/lib/formStyles.ts`; não redeclare por tela. Campos com estilo
+  diferente (tamanho de fonte, fundo) têm constante própria com outro nome/valor, não uma cópia.
+- Testes: `tests/seguranca-acabamento.spec.ts` (e `pwa.spec.ts` para o cache do worker).
 
 ## Token de uso único na URL e Sentry (auditoria A04, A09)
 - Página que recebe token por `?token=` (hoje `/cadastro/completar` e `/redefinir-senha`) o guarda em estado

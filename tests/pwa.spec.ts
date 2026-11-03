@@ -123,7 +123,7 @@ test.describe("PWA em produção (FUC22)", () => {
 
     const entries = await cachedEntries(page);
     expect(entries.length).toBeGreaterThan(0);
-    expect(new Set(entries.map((e) => e.cache))).toEqual(new Set(["shottrack-static-v1"]));
+    expect(new Set(entries.map((e) => e.cache))).toEqual(new Set(["shottrack-static-v2"]));
     expect(entries.some((e) => e.url === "/offline")).toBe(true);
     expect(entries.some((e) => e.url.startsWith("/_next/static/"))).toBe(true);
     // A única página (HTML) guardada é a /offline
@@ -158,6 +158,61 @@ test.describe("PWA em produção (FUC22)", () => {
       expect(entries.filter((e) => e.url.startsWith(authenticated)), `página ${authenticated} em cache`).toEqual([]);
     }
     expect(entries.filter((e) => e.contentType?.includes("text/html")).map((e) => e.url)).toEqual(["/offline"]);
+  });
+
+  test("imagem e fonte fora de /_next/static e /icons não vão pro cache (A12); os ícones continuam indo", async ({ page }) => {
+    await page.goto("/login");
+    await serviceWorkerReady(page);
+
+    await page.evaluate(async () => {
+      const load = (src: string) =>
+        new Promise<void>((resolve) => {
+          const image = new Image();
+          image.onload = image.onerror = () => resolve();
+          image.src = src;
+        });
+      // antes da correção qualquer GET de destination "image" da mesma origem era guardado
+      await load("/icon.svg");
+      await load("/favicon.ico");
+      await load("/icons/icon-192.png");
+    });
+
+    await expect
+      .poll(async () => (await cachedEntries(page)).some((e) => e.url === "/icons/icon-192.png"))
+      .toBe(true);
+    const urls = (await cachedEntries(page)).map((e) => e.url);
+    expect(urls).not.toContain("/icon.svg");
+    expect(urls).not.toContain("/favicon.ico");
+    for (const url of urls) {
+      expect(url === "/offline" || /^\/(_next\/static|icons)\//.test(url), `entrada fora do permitido: ${url}`).toBe(true);
+    }
+  });
+
+  test("logout apaga todos os caches shottrack-* e refaz só o pré-cache público (A12)", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    await page.goto("/login");
+    await serviceWorkerReady(page);
+    await login(page, email);
+
+    // algo que não deveria sobreviver ao logout: uma "foto" num cache à parte e um arquivo no cache principal
+    await page.evaluate(async () => {
+      await (await caches.open("shottrack-fotos")).put("/foto-do-alvo.png", new Response("dados do atleta"));
+      await (await caches.open("shottrack-static-v2")).put("/icons/plantado.png", new Response("x"));
+    });
+    expect((await cachedEntries(page)).map((e) => e.url)).toEqual(expect.arrayContaining(["/foto-do-alvo.png", "/icons/plantado.png"]));
+
+    await page.goto("/usuario");
+    await page.getByRole("button", { name: "Sair" }).click();
+    await expect(page).toHaveURL(/\/login/);
+
+    await expect.poll(async () => (await cachedEntries(page)).map((e) => e.url)).not.toContain("/foto-do-alvo.png");
+    const entries = await cachedEntries(page);
+    expect(entries.map((e) => e.url)).not.toContain("/icons/plantado.png");
+    expect(entries.map((e) => e.cache)).not.toContain("shottrack-fotos");
+    // o pré-cache público volta, então o fallback sem conexão segue funcionando
+    await expect.poll(async () => (await cachedEntries(page)).some((e) => e.url === "/offline")).toBe(true);
   });
 
   test("sem conexão a navegação cai na página /offline; ao voltar a conexão, o app abre normal", async ({ page, context }) => {

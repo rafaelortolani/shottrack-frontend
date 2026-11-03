@@ -7,6 +7,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
 import { safeFetch } from "@/lib/safeFetch";
+import { INPUT_CLASS } from "@/lib/formStyles";
 
 type Catalog = { id: string; name: string };
 type Weapon = {
@@ -24,9 +25,6 @@ type Accessory = {
   notes: string | null;
   weapons: Weapon[];
 };
-
-const INPUT_CLASS =
-  "w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
 
 function weaponLabel(weapon: Weapon) {
   return weapon.nickname || `${weapon.brand.name} ${weapon.model.name}`;

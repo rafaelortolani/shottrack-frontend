@@ -74,6 +74,6 @@ export const config = {
   // devem passar por aqui.
   matcher: [
     "/api/:path*",
-    "/((?!api|monitoring|_next/static|_next/image|icons/|sw\\.js|favicon\\.ico|icon\\.svg|manifest\\.webmanifest).*)",
+    "/((?!api|monitoring|_next/static|_next/image|icons/|sw\\.js|favicon\\.ico|icon\\.svg|manifest\\.webmanifest|robots\\.txt).*)",
   ],
 };
