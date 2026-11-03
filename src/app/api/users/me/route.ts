@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF do perfil: repassa o cookie de sessão como Authorization Bearer pro
@@ -38,7 +39,9 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const { name, experienceLevel } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { name, experienceLevel } = input;
 
   const { status, body } = await backendFetch("/api/users/me", {
     method: "PATCH",

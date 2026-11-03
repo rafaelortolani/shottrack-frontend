@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { PageContainer } from "@/components/PageContainer";
+import { safeFetch } from "@/lib/safeFetch";
 
 type FieldErrors = Partial<Record<"currentPassword" | "newPassword", string>>;
 
@@ -28,7 +29,7 @@ export default function AlterarSenhaPage() {
     setFormError(null);
     setSaving(true);
 
-    const response = await fetch("/api/users/me/password", {
+    const response = await safeFetch("/api/users/me/password", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currentPassword, newPassword }),

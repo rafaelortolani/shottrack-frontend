@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF do perfil de modalidade (UC30): repassa o cookie de sessão como
@@ -20,7 +22,9 @@ export async function GET(
     );
   }
 
-  const { modalityId } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { modalityId } = ids;
 
   const { status, body } = await backendFetch(`/api/practiced-modalities/${modalityId}/result-types`, {
     accessToken,
@@ -49,8 +53,12 @@ export async function POST(
     );
   }
 
-  const { modalityId } = await params;
-  const { resultTypeId } = await request.json();
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { modalityId } = ids;
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { resultTypeId } = input;
 
   const { status, body } = await backendFetch(`/api/practiced-modalities/${modalityId}/result-types`, {
     method: "POST",

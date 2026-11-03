@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF de conclusão de cadastro (FUC10): troca o token do link (nome + senha)
@@ -7,7 +8,9 @@ import { backendFetch } from "@/lib/backend";
  * não há token de sessão pra guardar.
  */
 export async function POST(request: NextRequest) {
-  const { token, name, password, acceptedTerms } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { token, name, password, acceptedTerms } = input;
 
   const { status, body } = await backendFetch("/api/users/registration/completion", {
     method: "POST",

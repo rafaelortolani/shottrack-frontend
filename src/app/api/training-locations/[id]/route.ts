@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
+import { readJsonObject } from "@/lib/requestBody";
 
 export async function PATCH(
   request: NextRequest,
@@ -14,8 +16,12 @@ export async function PATCH(
     );
   }
 
-  const { id } = await params;
-  const { name, city, state, club } = await request.json();
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id } = ids;
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { name, city, state, club } = input;
 
   const { status, body } = await backendFetch(`/api/training-locations/${id}`, {
     method: "PATCH",
@@ -46,7 +52,9 @@ export async function DELETE(
     );
   }
 
-  const { id } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id } = ids;
 
   const { status, body } = await backendFetch(`/api/training-locations/${id}`, {
     method: "DELETE",

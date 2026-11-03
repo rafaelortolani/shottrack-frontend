@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
+import { readJsonObject } from "@/lib/requestBody";
 
 export async function POST(
   request: NextRequest,
@@ -14,8 +16,12 @@ export async function POST(
     );
   }
 
-  const { id: accessoryId } = await params;
-  const { weaponId } = await request.json();
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id: accessoryId } = ids;
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { weaponId } = input;
 
   const { status, body } = await backendFetch(`/api/accessories/${accessoryId}/weapons`, {
     method: "POST",

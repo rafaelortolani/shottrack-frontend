@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Catalog = { id: string; name: string };
 type Model = Catalog & { type: Catalog };
@@ -52,8 +53,8 @@ export default function EditarArmaPage() {
 
     async function loadData() {
       const [weaponsRes, brandsRes] = await Promise.all([
-        fetch("/api/weapons"),
-        fetch("/api/weapon-catalog/brands"),
+        safeFetch("/api/weapons"),
+        safeFetch("/api/weapon-catalog/brands"),
       ]);
 
       if ([weaponsRes, brandsRes].some((r) => r.status === 401)) {
@@ -109,7 +110,7 @@ export default function EditarArmaPage() {
 
     let cancelled = false;
 
-    fetch(`/api/weapon-catalog/brands/${brandId}/models`)
+    safeFetch(`/api/weapon-catalog/brands/${brandId}/models`)
       .then(async (response) => {
         if (response.status === 401) {
           router.push("/login");
@@ -138,7 +139,7 @@ export default function EditarArmaPage() {
 
     let cancelled = false;
 
-    fetch(`/api/weapon-catalog/models/${modelId}/calibers`)
+    safeFetch(`/api/weapon-catalog/models/${modelId}/calibers`)
       .then(async (response) => {
         if (response.status === 401) {
           router.push("/login");
@@ -186,7 +187,7 @@ export default function EditarArmaPage() {
     setCaliberError(null);
     setSaving(true);
 
-    const response = await fetch(`/api/weapons/${weaponId}`, {
+    const response = await safeFetch(`/api/weapons/${weaponId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -221,7 +222,7 @@ export default function EditarArmaPage() {
     setDeleteBlocked(false);
     setDeleting(true);
 
-    const response = await fetch(`/api/weapons/${weaponId}`, { method: "DELETE" });
+    const response = await safeFetch(`/api/weapons/${weaponId}`, { method: "DELETE" });
 
     setDeleting(false);
 

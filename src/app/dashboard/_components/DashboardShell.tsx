@@ -21,6 +21,7 @@ import { ModalitiesTab } from "./ModalitiesTab";
 import { RecordsTab } from "./RecordsTab";
 import { SummaryTab } from "./SummaryTab";
 import { FIELD_LABEL_CLASS, SELECT_CLASS } from "./shared";
+import { safeFetch } from "@/lib/safeFetch";
 
 /**
  * Abas do dashboard. Pra incluir uma nova: acrescente em DASHBOARD_TABS
@@ -44,13 +45,13 @@ function fetchProgress() {
 
 /** Modalidades praticadas com só os tipos numéricos (os únicos com evolução) — as que não têm nenhum ficam de fora. */
 async function loadEvolutionOptions(): Promise<ModalityOption[]> {
-  const modalitiesRes = await fetch("/api/practiced-modalities");
+  const modalitiesRes = await safeFetch("/api/practiced-modalities");
   if (!modalitiesRes.ok) return [];
   const { data: modalities }: { data: Option[] } = await modalitiesRes.json();
 
   const withTypes = await Promise.all(
     modalities.map(async (modality) => {
-      const res = await fetch(`/api/practiced-modalities/${modality.id}/result-types`);
+      const res = await safeFetch(`/api/practiced-modalities/${modality.id}/result-types`);
       const types: Option[] = res.ok ? (await res.json()).data : [];
       return { ...modality, resultTypes: types.filter((t) => resultTypeKind(t.name) === "number") };
     })
@@ -91,7 +92,7 @@ export function DashboardShell() {
     async function loadModalities() {
       setError(null);
       const [modalitiesRes, evolutionOptions] = await Promise.all([
-        fetch("/api/dashboard/modalities"),
+        safeFetch("/api/dashboard/modalities"),
         loadEvolutionOptions(),
       ]);
 
@@ -147,7 +148,7 @@ export function DashboardShell() {
     async function loadDashboard() {
       setError(null);
       const query = filterId ? `?${new URLSearchParams({ modalityId: filterId })}` : "";
-      const response = await fetch(`/api/dashboard${query}`);
+      const response = await safeFetch(`/api/dashboard${query}`);
 
       if (response.status === 401) {
         router.push("/login");

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { DeleteAccountDialog } from "@/components/DeleteAccountDialog";
 import { tooManyRequestsMessage } from "@/lib/rateLimit";
+import { safeFetch } from "@/lib/safeFetch";
 
 function todayStamp() {
   const now = new Date();
@@ -31,7 +32,7 @@ export default function PrivacidadeTabPage() {
     setDownloadError(null);
     setDownloading(true);
 
-    const response = await fetch("/api/users/me/export");
+    const response = await safeFetch("/api/users/me/export");
 
     if (response.status === 401) {
       router.push("/login");
@@ -65,7 +66,7 @@ export default function PrivacidadeTabPage() {
     setDeleteError(null);
     setDeleting(true);
 
-    const response = await fetch("/api/users/me/deletion", {
+    const response = await safeFetch("/api/users/me/deletion", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),

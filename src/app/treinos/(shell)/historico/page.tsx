@@ -18,6 +18,7 @@ import {
 } from "@/components/SeriesAccordion";
 import { formatLocalDate } from "@/lib/datetime";
 import { resultTypeUnit } from "@/lib/resultTypeFormat";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Modality = { id: string; name: string };
 type TrainingLocation = { id: string; name: string };
@@ -108,9 +109,9 @@ export default function HistoricoPage() {
 
     async function loadOptions() {
       const [modalitiesRes, weaponsRes, ammunitionsRes] = await Promise.all([
-        fetch("/api/practiced-modalities"),
-        fetch("/api/weapons"),
-        fetch("/api/ammunitions"),
+        safeFetch("/api/practiced-modalities"),
+        safeFetch("/api/weapons"),
+        safeFetch("/api/ammunitions"),
       ]);
 
       if ([modalitiesRes, weaponsRes, ammunitionsRes].some((r) => r.status === 401)) {
@@ -144,7 +145,7 @@ export default function HistoricoPage() {
       for (const [name, value] of Object.entries(filters)) {
         if (value !== "") query.set(name, value);
       }
-      const response = await fetch(`/api/series/history?${query}`);
+      const response = await safeFetch(`/api/series/history?${query}`);
 
       if (response.status === 401) {
         router.push("/login");
@@ -396,7 +397,7 @@ function SeriesDetail({
     let cancelled = false;
 
     async function loadResultTypes() {
-      const response = await fetch(`/api/practiced-modalities/${item.modality.id}/result-types`);
+      const response = await safeFetch(`/api/practiced-modalities/${item.modality.id}/result-types`);
       if (response.status === 401) {
         router.push("/login");
         return;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
 
 /**
  * UC43: exclui o treino e, em cascata, as séries dele — sem bloqueio por
@@ -18,7 +19,9 @@ export async function DELETE(
     );
   }
 
-  const { id } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id } = ids;
 
   const { status, body } = await backendFetch(`/api/trainings/${id}`, {
     method: "DELETE",

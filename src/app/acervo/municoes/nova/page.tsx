@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Catalog = { id: string; name: string };
 
@@ -34,8 +35,8 @@ export default function NovaMunicaoPage() {
 
     async function loadCatalog() {
       const [manufacturersRes, calibersRes] = await Promise.all([
-        fetch("/api/ammunition-catalog/manufacturers"),
-        fetch("/api/weapon-catalog/calibers"),
+        safeFetch("/api/ammunition-catalog/manufacturers"),
+        safeFetch("/api/weapon-catalog/calibers"),
       ]);
 
       if ([manufacturersRes, calibersRes].some((r) => r.status === 401)) {
@@ -88,7 +89,7 @@ export default function NovaMunicaoPage() {
     if (lot.trim()) payload.lot = lot.trim();
     if (notes.trim()) payload.notes = notes.trim();
 
-    const response = await fetch("/api/ammunitions", {
+    const response = await safeFetch("/api/ammunitions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

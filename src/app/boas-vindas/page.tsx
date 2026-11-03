@@ -8,6 +8,7 @@ import { AppNav } from "@/components/AppNav";
 import { InstallApp } from "@/components/InstallApp";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { TargetRings } from "@/components/TargetRings";
+import { safeFetch } from "@/lib/safeFetch";
 
 type OnboardingStep = "CREATE_PROFILE" | "CONFIGURE_MODALITIES" | "REGISTER_WEAPON";
 
@@ -72,8 +73,8 @@ export default function BoasVindasPage() {
     async function loadData() {
       // O nome não vem no dashboard — sai do perfil (GET /api/users/me, FUC03)
       const [dashboardResponse, profileResponse] = await Promise.all([
-        fetch("/api/dashboard"),
-        fetch("/api/users/me"),
+        safeFetch("/api/dashboard"),
+        safeFetch("/api/users/me"),
       ]);
 
       if (dashboardResponse.status === 401 || profileResponse.status === 401) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch, retryAfterHeaders } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF de solicitação de cadastro (FUC01): repassa só o email pro backend,
@@ -7,7 +8,9 @@ import { backendFetch, retryAfterHeaders } from "@/lib/backend";
  * guardar aqui ainda (só existe depois de completar o cadastro, FUC10).
  */
 export async function POST(request: NextRequest) {
-  const { email } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { email } = input;
 
   const { status, body, retryAfter } = await backendFetch("/api/users/registration", {
     method: "POST",

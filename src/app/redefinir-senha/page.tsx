@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { TargetRings } from "@/components/TargetRings";
+import { safeFetch } from "@/lib/safeFetch";
 
 type FieldErrors = Partial<Record<"password" | "confirmation", string>>;
 type TokenState = "form" | "invalid" | "expired" | "used";
@@ -67,7 +68,7 @@ function RedefinirSenhaForm() {
 
     setLoading(true);
 
-    const response = await fetch("/api/auth/password-reset/confirm", {
+    const response = await safeFetch("/api/auth/password-reset/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, newPassword: password }),

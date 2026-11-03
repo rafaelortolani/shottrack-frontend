@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Catalog = { id: string; name: string };
 type Ammunition = {
@@ -44,7 +45,7 @@ export default function MunicoesTabPage() {
     let cancelled = false;
 
     async function loadAmmunitions() {
-      const response = await fetch("/api/ammunitions");
+      const response = await safeFetch("/api/ammunitions");
 
       if (response.status === 401) {
         router.push("/login");

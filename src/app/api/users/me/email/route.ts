@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF de solicitação de troca de email: repassa o cookie de sessão como
@@ -16,7 +17,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { email } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { email } = input;
 
   const { status, body } = await backendFetch("/api/users/me/email", {
     method: "POST",

@@ -236,7 +236,7 @@ test.describe("Administração de habitualidade (FUC24)", () => {
     await page.goto("/admin/habitualidade/qualquer-id");
     await expect(page).toHaveURL(/\/dashboard$/);
 
-    for (const path of ["/api/admin/habituality/rules", "/api/admin/habituality/rules/x/versions"]) {
+    for (const path of ["/api/admin/habituality/rules", "/api/admin/habituality/rules/00000000-0000-4000-8000-000000000000/versions"]) {
       const response = await page.request.get(path);
       expect(response.status()).toBe(403);
     }

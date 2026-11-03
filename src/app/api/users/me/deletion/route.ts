@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch, retryAfterHeaders } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF da exclusão de conta (FUC21/UC52): confirma com a senha atual. Em
@@ -16,7 +17,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { password } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { password } = input;
 
   const { status, body, retryAfter } = await backendFetch("/api/users/me/deletion", {
     method: "POST",

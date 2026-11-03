@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 export async function GET(request: NextRequest) {
   const accessToken = request.cookies.get("shottrack_access")?.value;
@@ -33,7 +34,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { modelId, caliberId } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { modelId, caliberId } = input;
 
   const { status, body } = await backendFetch("/api/weapons", {
     method: "POST",

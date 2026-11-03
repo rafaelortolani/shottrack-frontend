@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch, retryAfterHeaders } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF do pedido de redefinição de senha (FUC20): pública, não exige sessão.
@@ -7,7 +8,9 @@ import { backendFetch, retryAfterHeaders } from "@/lib/backend";
  * ADR-0018) é repassado com o Retry-After.
  */
 export async function POST(request: NextRequest) {
-  const { email } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { email } = input;
 
   const { status, body, retryAfter } = await backendFetch("/api/auth/password-reset/request", {
     method: "POST",

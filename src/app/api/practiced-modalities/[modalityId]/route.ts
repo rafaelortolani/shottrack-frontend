@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
 
 export async function DELETE(
   request: NextRequest,
@@ -14,7 +15,9 @@ export async function DELETE(
     );
   }
 
-  const { modalityId } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { modalityId } = ids;
 
   const { status, body } = await backendFetch(`/api/practiced-modalities/${modalityId}`, {
     method: "DELETE",

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF das modalidades praticadas: repassa o cookie de sessão como Bearer
@@ -37,7 +38,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { modalityId } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { modalityId } = input;
 
   const { status, body } = await backendFetch("/api/practiced-modalities", {
     method: "POST",

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { PageContainer } from "@/components/PageContainer";
+import { safeFetch } from "@/lib/safeFetch";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_LENGTH = 6;
@@ -25,7 +26,7 @@ export default function TrocarEmailPage() {
   const codeInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   async function requestEmailChange(email: string) {
-    const response = await fetch("/api/users/me/email", {
+    const response = await safeFetch("/api/users/me/email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -96,7 +97,7 @@ export default function TrocarEmailPage() {
     setCodeError(null);
     setConfirming(true);
 
-    const response = await fetch("/api/users/me/email/confirmation", {
+    const response = await safeFetch("/api/users/me/email/confirmation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: code.join("") }),

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF de séries (UC36/UC37): repassa o cookie de sessão como Bearer pro
@@ -18,7 +20,9 @@ export async function GET(
     );
   }
 
-  const { id: trainingId } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id: trainingId } = ids;
 
   const { status, body } = await backendFetch(`/api/trainings/${trainingId}/series`, { accessToken });
 
@@ -45,8 +49,12 @@ export async function POST(
     );
   }
 
-  const { id: trainingId } = await params;
-  const { weaponId, ammunitionId, distanceMeters, target, shotCount, notes } = await request.json();
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id: trainingId } = ids;
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { weaponId, ammunitionId, distanceMeters, target, shotCount, notes } = input;
 
   // O backend expõe isso como POST /api/series, com trainingId no corpo
   // (UC36) — essa Route Handler aninha em /trainings/{trainingId}/series

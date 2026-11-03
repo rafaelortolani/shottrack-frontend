@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TargetRings } from "@/components/TargetRings";
+import { safeFetch } from "@/lib/safeFetch";
 
 type FieldErrors = Partial<Record<"name" | "password" | "terms", string>>;
 type TokenState = "form" | "invalid" | "expired" | "used";
@@ -55,7 +56,7 @@ function CompletarCadastroForm() {
 
     setLoading(true);
 
-    const response = await fetch("/api/users/registration/completion", {
+    const response = await safeFetch("/api/users/registration/completion", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, name, password, acceptedTerms }),

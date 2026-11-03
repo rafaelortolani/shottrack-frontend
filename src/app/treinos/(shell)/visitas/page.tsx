@@ -13,6 +13,7 @@ import { deleteTrainingMessage, deleteVisitMessage } from "@/lib/deleteConfirmat
 import { SeriesAccordion } from "@/components/SeriesAccordion";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { formatDate, formatDateTime } from "@/lib/datetime";
+import { safeFetch } from "@/lib/safeFetch";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string };
 type Modality = { id: string; name: string };
@@ -68,9 +69,9 @@ export default function VisitasTabPage() {
 
     async function loadData() {
       const [visitsRes, locationsRes, modalitiesRes] = await Promise.all([
-        fetch("/api/visits"),
-        fetch("/api/training-locations"),
-        fetch("/api/practiced-modalities"),
+        safeFetch("/api/visits"),
+        safeFetch("/api/training-locations"),
+        safeFetch("/api/practiced-modalities"),
       ]);
 
       if (visitsRes.status === 401 || locationsRes.status === 401 || modalitiesRes.status === 401) {
@@ -145,7 +146,7 @@ export default function VisitasTabPage() {
     setError(null);
     setOpeningSaving(true);
 
-    const response = await fetch(`/api/visits/${activeVisit.id}/trainings`, {
+    const response = await safeFetch(`/api/visits/${activeVisit.id}/trainings`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ modalityId: selectedModalityId }),
@@ -174,7 +175,7 @@ export default function VisitasTabPage() {
     setError(null);
     setClosingTrainingId(trainingId);
 
-    const response = await fetch(`/api/trainings/${trainingId}/close`, { method: "PATCH" });
+    const response = await safeFetch(`/api/trainings/${trainingId}/close`, { method: "PATCH" });
 
     setClosingTrainingId(null);
 
@@ -202,7 +203,7 @@ export default function VisitasTabPage() {
     setError(null);
     setDeletingTraining(true);
 
-    const response = await fetch(`/api/trainings/${trainingId}`, { method: "DELETE" });
+    const response = await safeFetch(`/api/trainings/${trainingId}`, { method: "DELETE" });
 
     setDeletingTraining(false);
     setConfirmingDeleteTraining(null);
@@ -227,7 +228,7 @@ export default function VisitasTabPage() {
     setError(null);
     setDeletingVisit(true);
 
-    const response = await fetch(`/api/visits/${visitId}`, { method: "DELETE" });
+    const response = await safeFetch(`/api/visits/${visitId}`, { method: "DELETE" });
 
     setDeletingVisit(false);
     setConfirmingDeleteVisit(false);
@@ -261,7 +262,7 @@ export default function VisitasTabPage() {
     setError(null);
     setClosingVisit(true);
 
-    const response = await fetch(`/api/visits/${activeVisit.id}/close`, { method: "PATCH" });
+    const response = await safeFetch(`/api/visits/${activeVisit.id}/close`, { method: "PATCH" });
 
     setClosingVisit(false);
     setConfirmingCloseVisit(false);

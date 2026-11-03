@@ -26,6 +26,7 @@ import {
 } from "@tabler/icons-react";
 import { LogoIcon } from "@/components/LogoIcon";
 import { LogoWordmark } from "@/components/LogoWordmark";
+import { safeFetch } from "@/lib/safeFetch";
 
 const NAV_COLLAPSED_KEY = "shottrack:nav-collapsed";
 
@@ -169,7 +170,12 @@ export function AppNav() {
 
   async function handleLogout() {
     setLoggingOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
+    const response = await safeFetch("/api/auth/logout", { method: "POST" });
+    if (response.status === 503) {
+      // sem rede: a sessão continua ativa, então não vai pro login
+      setLoggingOut(false);
+      return;
+    }
     router.push("/login");
   }
 

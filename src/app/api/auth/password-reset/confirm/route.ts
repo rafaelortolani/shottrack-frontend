@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF da redefinição de senha (FUC20): pública, não exige sessão — a
@@ -7,7 +8,9 @@ import { backendFetch } from "@/lib/backend";
  * backend (PASSWORD_RESET_TOKEN_INVALID / _EXPIRED / _ALREADY_USED).
  */
 export async function POST(request: NextRequest) {
-  const { token, newPassword } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { token, newPassword } = input;
 
   const { status, body } = await backendFetch("/api/auth/password-reset/confirm", {
     method: "POST",

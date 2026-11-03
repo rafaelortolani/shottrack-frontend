@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Catalog = { id: string; name: string };
 type Weapon = {
@@ -68,9 +69,9 @@ export default function EditarAcessorioPage() {
 
     async function loadData() {
       const [accessoriesRes, weaponsRes, typesRes] = await Promise.all([
-        fetch("/api/accessories"),
-        fetch("/api/weapons"),
-        fetch("/api/accessory-catalog/types"),
+        safeFetch("/api/accessories"),
+        safeFetch("/api/weapons"),
+        safeFetch("/api/accessory-catalog/types"),
       ]);
 
       if ([accessoriesRes, weaponsRes, typesRes].some((r) => r.status === 401)) {
@@ -137,7 +138,7 @@ export default function EditarAcessorioPage() {
     setError(null);
     setSaving(true);
 
-    const response = await fetch(`/api/accessories/${accessoryId}`, {
+    const response = await safeFetch(`/api/accessories/${accessoryId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -169,7 +170,7 @@ export default function EditarAcessorioPage() {
     setError(null);
     setAssociating(true);
 
-    const response = await fetch(`/api/accessories/${accessoryId}/weapons`, {
+    const response = await safeFetch(`/api/accessories/${accessoryId}/weapons`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ weaponId: weaponToAssociate }),
@@ -197,7 +198,7 @@ export default function EditarAcessorioPage() {
     setError(null);
     setDisassociatingId(weaponId);
 
-    const response = await fetch(`/api/accessories/${accessoryId}/weapons/${weaponId}`, {
+    const response = await safeFetch(`/api/accessories/${accessoryId}/weapons/${weaponId}`, {
       method: "DELETE",
     });
 
@@ -223,7 +224,7 @@ export default function EditarAcessorioPage() {
     setDeleteBlocked(false);
     setDeleting(true);
 
-    const response = await fetch(`/api/accessories/${accessoryId}`, { method: "DELETE" });
+    const response = await safeFetch(`/api/accessories/${accessoryId}`, { method: "DELETE" });
 
     setDeleting(false);
 
