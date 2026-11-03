@@ -8,6 +8,7 @@ import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
 import { fromDateTimeLocal, oldestVisitStart, toDateTimeLocal, validateVisitDate } from "@/lib/visitDates";
 import { COMPETITION_SCOPES, VISIT_TYPES, type CompetitionScope, type VisitType } from "@/lib/visitType";
+import { safeFetch } from "@/lib/safeFetch";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string; club?: boolean };
 
@@ -33,7 +34,7 @@ export default function IniciarVisitaPage() {
     let cancelled = false;
 
     async function loadLocations() {
-      const response = await fetch("/api/training-locations");
+      const response = await safeFetch("/api/training-locations");
 
       if (response.status === 401) {
         router.push("/login");
@@ -80,7 +81,7 @@ export default function IniciarVisitaPage() {
     setError(null);
     setSaving(true);
 
-    const response = await fetch("/api/visits", {
+    const response = await safeFetch("/api/visits", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

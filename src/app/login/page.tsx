@@ -8,6 +8,7 @@ import { LegalLinks } from "@/components/LegalLinks";
 import { PasswordInput } from "@/components/PasswordInput";
 import { TargetRings } from "@/components/TargetRings";
 import { tooManyRequestsMessage } from "@/lib/rateLimit";
+import { NETWORK_ERROR_MESSAGE, safeFetch } from "@/lib/safeFetch";
 
 export default function LoginPage() {
   return (
@@ -37,7 +38,7 @@ function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const response = await fetch("/api/auth/login", {
+    const response = await safeFetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -47,6 +48,11 @@ function LoginForm() {
 
     if (response.status === 429) {
       setError(tooManyRequestsMessage(response.headers.get("Retry-After")));
+      return;
+    }
+
+    if (response.status === 503) {
+      setError(NETWORK_ERROR_MESSAGE);
       return;
     }
 

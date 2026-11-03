@@ -1,8 +1,11 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { proxyToBackend } from "@/lib/bffProxy";
+import { requireUuidParams } from "@/lib/routeParams";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id } = ids;
   return proxyToBackend(request, {
     method: "GET",
     path: `/api/admin/habituality/rules/${encodeURIComponent(id)}/versions`,
@@ -12,7 +15,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id } = ids;
   return proxyToBackend(request, {
     method: "POST",
     path: `/api/admin/habituality/rules/${encodeURIComponent(id)}/versions`,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch, retryAfterHeaders } from "@/lib/backend";
 import { requireAdmin } from "@/lib/admin";
+import { readJsonObject } from "@/lib/requestBody";
 
 type ProxyOptions = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -38,7 +39,12 @@ export async function proxyToBackend(request: NextRequest, options: ProxyOptions
   }
 
   const hasBody = options.forwardBody && options.method !== "GET" && options.method !== "DELETE";
-  const payload = hasBody ? await request.json().catch(() => ({})) : undefined;
+  let payload: Record<string, unknown> | undefined;
+  if (hasBody) {
+    const input = await readJsonObject(request);
+    if (input instanceof NextResponse) return input;
+    payload = input;
+  }
 
   const { status, body, retryAfter } = await backendFetch(options.path, {
     method: options.method,

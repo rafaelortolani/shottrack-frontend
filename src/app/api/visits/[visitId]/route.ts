@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
 
 /**
  * UC44: exclui a visita e, em cascata, os treinos dela e as séries de
@@ -18,7 +19,9 @@ export async function DELETE(
     );
   }
 
-  const { visitId } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { visitId } = ids;
 
   const { status, body } = await backendFetch(`/api/visits/${visitId}`, {
     method: "DELETE",

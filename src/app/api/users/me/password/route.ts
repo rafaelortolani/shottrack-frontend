@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF de troca de senha: repassa o cookie de sessão como Authorization
@@ -15,7 +16,9 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const { currentPassword, newPassword } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { currentPassword, newPassword } = input;
 
   const { status, body } = await backendFetch("/api/users/me/password", {
     method: "PATCH",

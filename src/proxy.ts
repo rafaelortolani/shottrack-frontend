@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { rejectUnsafeCrossOrigin } from "@/lib/sameOrigin";
 
 /**
  * Protege as rotas autenticadas: sem cookie de sessão, redireciona pro login.
@@ -9,6 +10,9 @@ import { backendFetch } from "@/lib/backend";
  * `/admin/**` vai além (ADR-0021): quem está logado mas não é ADMIN volta pro
  * dashboard, sem ver a página. O papel só é conferido nessas rotas — consulta
  * o backend a cada navegação ao módulo, o que não pesa nas demais telas.
+ *
+ * `/api/**` passa só pela checagem de origem dos métodos de escrita (A05, ver
+ * `sameOrigin.ts`); a sessão continua sendo conferida em cada Route Handler.
  */
 const PROTECTED_PATHS = ["/dashboard", "/boas-vindas", "/usuario", "/acervo", "/treinos", "/admin"];
 
@@ -29,6 +33,9 @@ async function checkAdmin(accessToken: string): Promise<"admin" | "anonymous" | 
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith("/api/")) return rejectUnsafeCrossOrigin(request) ?? NextResponse.next();
+
   const accessToken = request.cookies.get("shottrack_access")?.value;
   const isProtected = PROTECTED_PATHS.some((path) => pathname.startsWith(path));
 
@@ -46,8 +53,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Deve listar os mesmos prefixos de PROTECTED_PATHS (o matcher precisa ser literal).
+  // Deve listar os mesmos prefixos de PROTECTED_PATHS (o matcher precisa ser literal), mais /api.
   matcher: [
+    "/api/:path*",
     "/dashboard/:path*",
     "/boas-vindas/:path*",
     "/usuario/:path*",

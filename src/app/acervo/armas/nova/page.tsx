@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Catalog = { id: string; name: string };
 type Model = Catalog & { type: Catalog };
@@ -34,7 +35,7 @@ export default function NovaArmaPage() {
     let cancelled = false;
 
     async function loadCatalog() {
-      const brandsRes = await fetch("/api/weapon-catalog/brands");
+      const brandsRes = await safeFetch("/api/weapon-catalog/brands");
 
       if (brandsRes.status === 401) {
         router.push("/login");
@@ -70,7 +71,7 @@ export default function NovaArmaPage() {
 
     let cancelled = false;
 
-    fetch(`/api/weapon-catalog/brands/${brandId}/models`)
+    safeFetch(`/api/weapon-catalog/brands/${brandId}/models`)
       .then(async (response) => {
         if (response.status === 401) {
           router.push("/login");
@@ -99,7 +100,7 @@ export default function NovaArmaPage() {
 
     let cancelled = false;
 
-    fetch(`/api/weapon-catalog/models/${modelId}/calibers`)
+    safeFetch(`/api/weapon-catalog/models/${modelId}/calibers`)
       .then(async (response) => {
         if (response.status === 401) {
           router.push("/login");
@@ -147,7 +148,7 @@ export default function NovaArmaPage() {
     setCaliberError(null);
     setSaving(true);
 
-    const response = await fetch("/api/weapons", {
+    const response = await safeFetch("/api/weapons", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ modelId, caliberId }),

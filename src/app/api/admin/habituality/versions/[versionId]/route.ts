@@ -1,10 +1,13 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { proxyToBackend } from "@/lib/bffProxy";
+import { requireUuidParams } from "@/lib/routeParams";
 
 type Context = { params: Promise<{ versionId: string }> };
 
 export async function PUT(request: NextRequest, { params }: Context) {
-  const { versionId } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { versionId } = ids;
   return proxyToBackend(request, {
     method: "PUT",
     path: `/api/admin/habituality/versions/${encodeURIComponent(versionId)}`,
@@ -16,7 +19,9 @@ export async function PUT(request: NextRequest, { params }: Context) {
 
 /** Só versão futura pode ser removida (o backend confere). */
 export async function DELETE(request: NextRequest, { params }: Context) {
-  const { versionId } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { versionId } = ids;
   return proxyToBackend(request, {
     method: "DELETE",
     path: `/api/admin/habituality/versions/${encodeURIComponent(versionId)}`,

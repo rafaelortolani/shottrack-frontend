@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
 
 export async function PATCH(
   request: NextRequest,
@@ -14,7 +15,9 @@ export async function PATCH(
     );
   }
 
-  const { visitId } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { visitId } = ids;
 
   // O backend expõe isso como POST /api/visits/{id}/closure (UC34) — essa
   // Route Handler usa PATCH .../close pro cliente, mas repassa pro endpoint

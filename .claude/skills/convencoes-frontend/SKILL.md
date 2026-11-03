@@ -241,8 +241,28 @@ banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própri
   devolve `{ ok, data }` ou `{ ok: false, status, code, message }`; a mensagem do backend
   é exibida inline (`role="alert"`), não engolida.
 
-- Cookies: `shottrack_access` (1h) e `shottrack_refresh` (7d), sempre
-  `httpOnly`, `sameSite: lax`, `secure` em produção.
+## Route Handlers — entrada validada (auditoria A02, A05, A10)
+- **Parâmetro de rota nunca vai cru pro caminho do backend.** O Next decodifica `..%2F` e `%3F`, e colado
+  na string o parâmetro alcança qualquer rota do backend. Todo `[id]`/`[visitId]`/... passa por
+  `requireUuidParams` (`src/lib/routeParams.ts`) — todos os IDs do backend são UUID:
+  `const ids = requireUuidParams(await params); if (ids instanceof NextResponse) return ids; const { id } = ids;`
+  (400 `INVALID_PARAMETER`; o valor devolvido já vem com `encodeURIComponent`). Rota nova com parâmetro
+  que não seja UUID precisa de validação própria equivalente. Query string sempre por `URLSearchParams`.
+- **Corpo JSON só por `readJsonObject`** (`src/lib/requestBody.ts`), nunca `request.json()` direto:
+  `const input = await readJsonObject(request); if (input instanceof NextResponse) return input;`
+  (400 `INVALID_BODY` para corpo ausente, malformado, `null` ou array — nunca 500). `proxyToBackend` já usa.
+- **Escrita cross-origin é barrada num ponto só: `src/proxy.ts`** (matcher inclui `/api/:path*`, lógica em
+  `src/lib/sameOrigin.ts`). `POST/PUT/PATCH/DELETE` com `Sec-Fetch-Site` ≠ `same-origin`/`none` ou `Origin` de
+  outro host → 403 `FORBIDDEN_ORIGIN`; corpo que não seja `application/json` → 415. Handler novo não repete
+  isso. Atrás de proxy reverso o host de `Origin` é comparado com `Host` e `X-Forwarded-Host`. Todo `fetch`
+  do cliente com corpo envia `Content-Type: application/json` (já é o caso de `callApi`).
+- **Cliente:** telas novas usam `callApi`. Telas antigas usam `safeFetch` (`src/lib/safeFetch.ts`), que tem a
+  assinatura do `fetch` mas nunca lança: falha de rede vira 503 com `error.code = "NETWORK_ERROR"` e cai nos
+  ramos de erro que a tela já tem. `fetch` cru em componente client não entra mais. Tela que mostra mensagem
+  fixa em `!response.ok` (ex.: login) trata `status === 503` antes, pra não culpar a senha pela falta de rede.
+- Teste: `tests/seguranca-bff.spec.ts` (travessia, origem, corpo inválido, sem rede). Rota nova com parâmetro
+  ou corpo entra nas listas desse spec.
+
 - `src/proxy.ts` (antigo middleware) protege rotas autenticadas checando a
   presença do cookie — validação de verdade do token acontece no backend a
   cada chamada.

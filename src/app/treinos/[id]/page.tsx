@@ -11,6 +11,7 @@ import { VisitDatesEditor } from "@/components/VisitDatesEditor";
 import { PageContainer } from "@/components/PageContainer";
 import { formatDateTime } from "@/lib/datetime";
 import { deleteTrainingMessage, deleteVisitMessage } from "@/lib/deleteConfirmation";
+import { safeFetch } from "@/lib/safeFetch";
 
 type TrainingLocation = { id: string; name: string; city: string; state: string };
 type TrainingStatus = "IN_PROGRESS" | "CLOSED";
@@ -53,8 +54,8 @@ export default function DetalheVisitaPage() {
 
     async function loadData() {
       const [visitsRes, locationsRes] = await Promise.all([
-        fetch("/api/visits"),
-        fetch("/api/training-locations"),
+        safeFetch("/api/visits"),
+        safeFetch("/api/training-locations"),
       ]);
 
       if (visitsRes.status === 401 || locationsRes.status === 401) {
@@ -101,7 +102,7 @@ export default function DetalheVisitaPage() {
     setError(null);
     setDeletingTraining(true);
 
-    const response = await fetch(`/api/trainings/${trainingId}`, { method: "DELETE" });
+    const response = await safeFetch(`/api/trainings/${trainingId}`, { method: "DELETE" });
 
     setDeletingTraining(false);
     setConfirmingDeleteTraining(null);
@@ -124,7 +125,7 @@ export default function DetalheVisitaPage() {
     setError(null);
     setDeletingVisit(true);
 
-    const response = await fetch(`/api/visits/${visitId}`, { method: "DELETE" });
+    const response = await safeFetch(`/api/visits/${visitId}`, { method: "DELETE" });
 
     if (response.status === 401) {
       router.push("/login");

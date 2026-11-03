@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { safeFetch } from "@/lib/safeFetch";
 
 type TrainingLocation = {
   id: string;
@@ -29,7 +30,7 @@ export default function LocaisTabPage() {
     let cancelled = false;
 
     async function loadLocations() {
-      const response = await fetch("/api/training-locations");
+      const response = await safeFetch("/api/training-locations");
 
       if (response.status === 401) {
         router.push("/login");

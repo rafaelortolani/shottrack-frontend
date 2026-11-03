@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Catalog = { id: string; name: string };
 type Weapon = { id: string };
@@ -35,7 +36,7 @@ export default function AcessoriosTabPage() {
     let cancelled = false;
 
     async function loadAccessories() {
-      const response = await fetch("/api/accessories");
+      const response = await safeFetch("/api/accessories");
 
       if (response.status === 401) {
         router.push("/login");

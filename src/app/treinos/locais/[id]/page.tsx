@@ -8,6 +8,7 @@ import { CancelButton } from "@/components/CancelButton";
 import { ClubField } from "@/components/ClubField";
 import { PageContainer } from "@/components/PageContainer";
 import { BRAZILIAN_STATES } from "@/lib/brazilianStates";
+import { safeFetch } from "@/lib/safeFetch";
 
 const INPUT_CLASS =
   "w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors";
@@ -87,7 +88,7 @@ export default function EditarLocalTreinoPage() {
     let cancelled = false;
 
     async function loadData() {
-      const response = await fetch("/api/training-locations");
+      const response = await safeFetch("/api/training-locations");
 
       if (response.status === 401) {
         router.push("/login");
@@ -152,7 +153,7 @@ export default function EditarLocalTreinoPage() {
 
     setSaving(true);
 
-    const response = await fetch(`/api/training-locations/${locationId}`, {
+    const response = await safeFetch(`/api/training-locations/${locationId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(diff),
@@ -179,7 +180,7 @@ export default function EditarLocalTreinoPage() {
     setDeleteBlocked(false);
     setDeleting(true);
 
-    const response = await fetch(`/api/training-locations/${locationId}`, { method: "DELETE" });
+    const response = await safeFetch(`/api/training-locations/${locationId}`, { method: "DELETE" });
 
     setDeleting(false);
 

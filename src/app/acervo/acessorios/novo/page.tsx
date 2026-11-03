@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Catalog = { id: string; name: string };
 
@@ -26,7 +27,7 @@ export default function NovoAcessorioPage() {
     let cancelled = false;
 
     async function loadCatalog() {
-      const response = await fetch("/api/accessory-catalog/types");
+      const response = await safeFetch("/api/accessory-catalog/types");
 
       if (response.status === 401) {
         router.push("/login");
@@ -73,7 +74,7 @@ export default function NovoAcessorioPage() {
     setError(null);
     setSaving(true);
 
-    const response = await fetch("/api/accessories", {
+    const response = await safeFetch("/api/accessories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

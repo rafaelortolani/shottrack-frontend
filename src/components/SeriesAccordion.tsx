@@ -7,6 +7,7 @@ import { AddButton } from "@/components/AddButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { resultTypeKind, resultTypeUnit } from "@/lib/resultTypeFormat";
+import { safeFetch } from "@/lib/safeFetch";
 
 export type Catalog = { id: string; name: string };
 export type Weapon = { id: string; nickname: string | null; type: Catalog; brand: Catalog; model: Catalog; caliber: Catalog };
@@ -144,7 +145,7 @@ export async function saveSeries(
     const diff = buildSeriesDiff(editingSeries, values);
 
     if (Object.keys(diff).length > 0) {
-      const response = await fetch(`/api/series/${editingSeries.id}`, {
+      const response = await safeFetch(`/api/series/${editingSeries.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(diff),
@@ -162,7 +163,7 @@ export async function saveSeries(
       seriesData = editingSeries;
     }
   } else {
-    const response = await fetch(`/api/trainings/${trainingId}/series`, {
+    const response = await safeFetch(`/api/trainings/${trainingId}/series`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(buildRegisterPayload(values)),
@@ -191,7 +192,7 @@ export async function saveSeries(
     if (unchanged) continue;
 
     if (current.notApplicable) {
-      const response = await fetch(`/api/series/${seriesData.id}/results`, {
+      const response = await safeFetch(`/api/series/${seriesData.id}/results`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resultTypeId: resultType.id, notApplicable: true }),
@@ -211,7 +212,7 @@ export async function saveSeries(
       const { data } = await response.json();
       finalResults = upsertResult(finalResults, data);
     } else if (current.value !== "") {
-      const response = await fetch(`/api/series/${seriesData.id}/results`, {
+      const response = await safeFetch(`/api/series/${seriesData.id}/results`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resultTypeId: resultType.id, value: current.value }),
@@ -231,7 +232,7 @@ export async function saveSeries(
       const { data } = await response.json();
       finalResults = upsertResult(finalResults, data);
     } else if (original) {
-      const response = await fetch(`/api/series/${seriesData.id}/results/${resultType.id}`, { method: "DELETE" });
+      const response = await safeFetch(`/api/series/${seriesData.id}/results/${resultType.id}`, { method: "DELETE" });
 
       if (response.status === 401) return { status: "unauthorized" };
 
@@ -296,10 +297,10 @@ export function SeriesAccordion({
     setLoading(true);
 
     const [seriesRes, resultTypesRes, weaponsRes, ammunitionsRes] = await Promise.all([
-      fetch(`/api/trainings/${trainingId}/series`),
-      fetch(`/api/practiced-modalities/${modalityId}/result-types`),
-      fetch("/api/weapons"),
-      fetch("/api/ammunitions"),
+      safeFetch(`/api/trainings/${trainingId}/series`),
+      safeFetch(`/api/practiced-modalities/${modalityId}/result-types`),
+      safeFetch("/api/weapons"),
+      safeFetch("/api/ammunitions"),
     ]);
 
     if ([seriesRes, resultTypesRes, weaponsRes, ammunitionsRes].some((r) => r.status === 401)) {
@@ -363,7 +364,7 @@ export function SeriesAccordion({
     setSaveError(null);
     setDeletingId(seriesId);
 
-    const response = await fetch(`/api/series/${seriesId}`, { method: "DELETE" });
+    const response = await safeFetch(`/api/series/${seriesId}`, { method: "DELETE" });
 
     setDeletingId(null);
 

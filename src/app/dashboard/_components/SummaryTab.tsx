@@ -19,6 +19,7 @@ import {
 } from "@/lib/dashboard";
 import { resultTypeUnit } from "@/lib/resultTypeFormat";
 import { EmptyNote, PRIMARY_LINK_CLASS, SectionHeader } from "./shared";
+import { safeFetch } from "@/lib/safeFetch";
 
 /** Aba Resumo (FUC15 v6): ação principal, indicadores com delta, mini evolução, últimos treinos e recordes. */
 export function SummaryTab({ dashboard, options, filterId, hrefFor }: TabContext) {
@@ -132,7 +133,7 @@ function MiniEvolution({
         period: "30d",
         mode: "MEDIA",
       });
-      const response = await fetch(`/api/dashboard/evolution?${query}`);
+      const response = await safeFetch(`/api/dashboard/evolution?${query}`);
       if (response.status === 401) {
         router.push("/login");
         return;

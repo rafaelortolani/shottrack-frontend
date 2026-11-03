@@ -19,6 +19,7 @@ import {
 } from "@/lib/dashboard";
 import { resultTypeUnit } from "@/lib/resultTypeFormat";
 import { EmptyNote, SECTION_LINK_CLASS, SELECT_CLASS, segmentClass } from "./shared";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Loaded = { key: string; points: EvolutionPoint[]; previousPoints: EvolutionPoint[] };
 
@@ -56,7 +57,7 @@ export function EvolutionTab({ dashboard, modalities, options, filterId, params,
       setError(null);
       const query = new URLSearchParams({ modalityId, resultTypeId, period, mode });
       if (compare) query.set("comparePrevious", "true");
-      const response = await fetch(`/api/dashboard/evolution?${query}`);
+      const response = await safeFetch(`/api/dashboard/evolution?${query}`);
 
       if (response.status === 401) {
         router.push("/login");

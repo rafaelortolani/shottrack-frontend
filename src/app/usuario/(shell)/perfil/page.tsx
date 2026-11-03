@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { InstallApp } from "@/components/InstallApp";
+import { safeFetch } from "@/lib/safeFetch";
 
 type ExperienceLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 type Modality = { id: string; name: string };
@@ -56,8 +57,8 @@ function PerfilTabForm() {
 
     async function loadProfile() {
       const [profileRes, modalitiesRes] = await Promise.all([
-        fetch("/api/users/me"),
-        fetch("/api/practiced-modalities"),
+        safeFetch("/api/users/me"),
+        safeFetch("/api/practiced-modalities"),
       ]);
 
       if (profileRes.status === 401 || modalitiesRes.status === 401) {
@@ -104,7 +105,7 @@ function PerfilTabForm() {
     setSuccessMessage(null);
     setSaving(true);
 
-    const response = await fetch("/api/users/me", {
+    const response = await safeFetch("/api/users/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, experienceLevel }),

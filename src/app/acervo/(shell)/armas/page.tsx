@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Catalog = { id: string; name: string };
 type Weapon = {
@@ -33,7 +34,7 @@ export default function ArmasTabPage() {
     let cancelled = false;
 
     async function loadWeapons() {
-      const response = await fetch("/api/weapons");
+      const response = await safeFetch("/api/weapons");
 
       if (response.status === 401) {
         router.push("/login");

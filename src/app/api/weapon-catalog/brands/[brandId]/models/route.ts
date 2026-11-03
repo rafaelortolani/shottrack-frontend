@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
 
 export async function GET(
   request: NextRequest,
@@ -14,7 +15,9 @@ export async function GET(
     );
   }
 
-  const { brandId } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { brandId } = ids;
 
   const { status, body } = await backendFetch(`/api/weapon-catalog/brands/${brandId}/models`, { accessToken });
 

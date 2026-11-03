@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconX } from "@tabler/icons-react";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Modality = { id: string; name: string };
 type ResultType = { id: string; name: string };
@@ -28,7 +29,7 @@ function formatResultTypesSummary(types: ResultType[] | undefined): string {
 async function fetchResultTypesByModality(modalities: Modality[]): Promise<Record<string, ResultType[]>> {
   const entries = await Promise.all(
     modalities.map(async (modality) => {
-      const response = await fetch(`/api/practiced-modalities/${modality.id}/result-types`);
+      const response = await safeFetch(`/api/practiced-modalities/${modality.id}/result-types`);
       const resultTypes: ResultType[] = response.ok ? (await response.json()).data : [];
       return [modality.id, resultTypes] as const;
     })
@@ -52,8 +53,8 @@ export default function ModalidadesTabPage() {
 
     async function loadData() {
       const [practicedRes, catalogRes] = await Promise.all([
-        fetch("/api/practiced-modalities"),
-        fetch("/api/modality-catalog"),
+        safeFetch("/api/practiced-modalities"),
+        safeFetch("/api/modality-catalog"),
       ]);
 
       if (practicedRes.status === 401 || catalogRes.status === 401) {
@@ -97,7 +98,7 @@ export default function ModalidadesTabPage() {
    * Retorna false se a sessão expirou (já redirecionou pro login).
    */
   async function refreshPracticed(): Promise<boolean> {
-    const response = await fetch("/api/practiced-modalities");
+    const response = await safeFetch("/api/practiced-modalities");
 
     if (response.status === 401) {
       router.push("/login");
@@ -121,8 +122,8 @@ export default function ModalidadesTabPage() {
     setPendingId(modality.id);
 
     const response = isPracticed
-      ? await fetch(`/api/practiced-modalities/${modality.id}`, { method: "DELETE" })
-      : await fetch("/api/practiced-modalities", {
+      ? await safeFetch(`/api/practiced-modalities/${modality.id}`, { method: "DELETE" })
+      : await safeFetch("/api/practiced-modalities", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ modalityId: modality.id }),
@@ -265,8 +266,8 @@ function ResultTypePanel({
 
     async function loadData() {
       const [catalogRes, configuredRes] = await Promise.all([
-        fetch("/api/result-type-catalog"),
-        fetch(`/api/practiced-modalities/${modality.id}/result-types`),
+        safeFetch("/api/result-type-catalog"),
+        safeFetch(`/api/practiced-modalities/${modality.id}/result-types`),
       ]);
 
       if (catalogRes.status === 401 || configuredRes.status === 401) {
@@ -305,7 +306,7 @@ function ResultTypePanel({
     setPendingId(resultType.id);
 
     if (isConfigured) {
-      const response = await fetch(
+      const response = await safeFetch(
         `/api/practiced-modalities/${modality.id}/result-types/${resultType.id}`,
         { method: "DELETE" }
       );
@@ -328,7 +329,7 @@ function ResultTypePanel({
       return;
     }
 
-    const response = await fetch(`/api/practiced-modalities/${modality.id}/result-types`, {
+    const response = await safeFetch(`/api/practiced-modalities/${modality.id}/result-types`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resultTypeId: resultType.id }),

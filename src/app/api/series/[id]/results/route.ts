@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * O backend tem dois endpoints pra registrar resultado (UC39): POST
@@ -20,8 +22,12 @@ export async function POST(
     );
   }
 
-  const { id } = await params;
-  const { resultTypeId, value, notApplicable } = await request.json();
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id } = ids;
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { resultTypeId, value, notApplicable } = input;
 
   const { status, body } = notApplicable
     ? await backendFetch(`/api/series/${id}/results/not-applicable`, {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogoWordmark } from "@/components/LogoWordmark";
 import { TargetRings } from "@/components/TargetRings";
 import { tooManyRequestsMessage } from "@/lib/rateLimit";
+import { safeFetch } from "@/lib/safeFetch";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,7 +26,7 @@ export default function EsqueciSenhaPage() {
     setEmailError(null);
     setLoading(true);
 
-    const response = await fetch("/api/auth/password-reset/request", {
+    const response = await safeFetch("/api/auth/password-reset/request", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),

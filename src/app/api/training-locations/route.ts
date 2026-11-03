@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 export async function GET(request: NextRequest) {
   const accessToken = request.cookies.get("shottrack_access")?.value;
@@ -33,7 +34,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { name, city, state, club } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { name, city, state, club } = input;
 
   const { status, body } = await backendFetch("/api/training-locations", {
     method: "POST",

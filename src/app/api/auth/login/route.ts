@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch, retryAfterHeaders } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF de login: recebe email/senha do formulário, chama o backend, e
@@ -8,7 +9,9 @@ import { backendFetch, retryAfterHeaders } from "@/lib/backend";
  * aqui).
  */
 export async function POST(request: NextRequest) {
-  const { email, password } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { email, password } = input;
 
   const { status, body, retryAfter } = await backendFetch("/api/auth/login", {
     method: "POST",

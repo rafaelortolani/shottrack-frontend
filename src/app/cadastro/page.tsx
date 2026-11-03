@@ -6,13 +6,14 @@ import { LogoWordmark } from "@/components/LogoWordmark";
 import { LegalLinks } from "@/components/LegalLinks";
 import { TargetRings } from "@/components/TargetRings";
 import { tooManyRequestsMessage } from "@/lib/rateLimit";
+import { safeFetch } from "@/lib/safeFetch";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Step = "request" | "sent";
 
 async function requestRegistration(email: string) {
-  return fetch("/api/users/registration", {
+  return safeFetch("/api/users/registration", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),

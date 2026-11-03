@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
+import { readJsonObject } from "@/lib/requestBody";
 
 export async function POST(
   request: NextRequest,
@@ -14,8 +16,12 @@ export async function POST(
     );
   }
 
-  const { visitId } = await params;
-  const { modalityId } = await request.json();
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { visitId } = ids;
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { modalityId } = input;
 
   // O backend expõe isso como POST /api/trainings (visitId vai no corpo,
   // UC32) — essa Route Handler aninha em /visits/{visitId}/trainings pro

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { requireUuidParams } from "@/lib/routeParams";
+import { readJsonObject } from "@/lib/requestBody";
 
 export async function PATCH(
   request: NextRequest,
@@ -14,10 +16,14 @@ export async function PATCH(
     );
   }
 
-  const { id } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id } = ids;
   // edição parcial: repassa só os campos que o cliente enviou, sem
   // reconstruir o objeto inteiro (diferente do padrão de Armas)
-  const payload = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const payload = input;
 
   const { status, body } = await backendFetch(`/api/ammunitions/${id}`, {
     method: "PATCH",
@@ -48,7 +54,9 @@ export async function DELETE(
     );
   }
 
-  const { id } = await params;
+  const ids = requireUuidParams(await params);
+  if (ids instanceof NextResponse) return ids;
+  const { id } = ids;
 
   const { status, body } = await backendFetch(`/api/ammunitions/${id}`, {
     method: "DELETE",

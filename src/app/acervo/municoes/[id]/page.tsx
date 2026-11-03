@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
 import { PageContainer } from "@/components/PageContainer";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Catalog = { id: string; name: string };
 type Ammunition = {
@@ -109,9 +110,9 @@ export default function EditarMunicaoPage() {
 
     async function loadData() {
       const [ammunitionsRes, manufacturersRes, calibersRes] = await Promise.all([
-        fetch("/api/ammunitions"),
-        fetch("/api/ammunition-catalog/manufacturers"),
-        fetch("/api/weapon-catalog/calibers"),
+        safeFetch("/api/ammunitions"),
+        safeFetch("/api/ammunition-catalog/manufacturers"),
+        safeFetch("/api/weapon-catalog/calibers"),
       ]);
 
       if ([ammunitionsRes, manufacturersRes, calibersRes].some((r) => r.status === 401)) {
@@ -183,7 +184,7 @@ export default function EditarMunicaoPage() {
 
     setSaving(true);
 
-    const response = await fetch(`/api/ammunitions/${ammoId}`, {
+    const response = await safeFetch(`/api/ammunitions/${ammoId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(diff),
@@ -214,7 +215,7 @@ export default function EditarMunicaoPage() {
     setDeleteBlocked(false);
     setDeleting(true);
 
-    const response = await fetch(`/api/ammunitions/${ammoId}`, { method: "DELETE" });
+    const response = await safeFetch(`/api/ammunitions/${ammoId}`, { method: "DELETE" });
 
     setDeleting(false);
 

@@ -7,6 +7,7 @@ import { Breadcrumb } from "@/components/Breadcrumb";
 import { DateRangeFilter, dateRangeError } from "@/components/DateRangeFilter";
 import { weaponLabel, type Weapon } from "@/components/SeriesAccordion";
 import { resultTypeKind, resultTypeUnit } from "@/lib/resultTypeFormat";
+import { safeFetch } from "@/lib/safeFetch";
 
 type Option = { id: string; name: string };
 type ModalityOption = Option & { resultTypes: Option[] };
@@ -52,7 +53,7 @@ export default function CompararArmasPage() {
     let cancelled = false;
 
     async function loadOptions() {
-      const [modalitiesRes, weaponsRes] = await Promise.all([fetch("/api/practiced-modalities"), fetch("/api/weapons")]);
+      const [modalitiesRes, weaponsRes] = await Promise.all([safeFetch("/api/practiced-modalities"), safeFetch("/api/weapons")]);
       if (modalitiesRes.status === 401 || weaponsRes.status === 401) {
         router.push("/login");
         return;
@@ -66,7 +67,7 @@ export default function CompararArmasPage() {
 
       const withTypes = await Promise.all(
         modalities.map(async (modality) => {
-          const res = await fetch(`/api/practiced-modalities/${modality.id}/result-types`);
+          const res = await safeFetch(`/api/practiced-modalities/${modality.id}/result-types`);
           const types: Option[] = res.ok ? (await res.json()).data : [];
           return { ...modality, resultTypes: types.filter((t) => resultTypeKind(t.name) === "number") };
         })
@@ -102,7 +103,7 @@ export default function CompararArmasPage() {
       if (startDate) query.set("startDate", startDate);
       if (endDate) query.set("endDate", endDate);
 
-      const response = await fetch(`/api/weapons/comparison?${query}`);
+      const response = await safeFetch(`/api/weapons/comparison?${query}`);
       if (response.status === 401) {
         router.push("/login");
         return;

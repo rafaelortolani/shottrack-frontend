@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
  * BFF de visitas (UC31/UC35): repassa o cookie de sessão como Bearer pro
@@ -37,7 +38,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { trainingLocationId, observations, visitType, competitionScope, startedAt } = await request.json();
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { trainingLocationId, observations, visitType, competitionScope, startedAt } = input;
 
   const { status, body } = await backendFetch("/api/visits", {
     method: "POST",
