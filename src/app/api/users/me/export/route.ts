@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendRawFetch, retryAfterHeaders } from "@/lib/backend";
+import { readJsonObject } from "@/lib/requestBody";
 
 /**
- * BFF da exportação de dados (FUC21/UC53): repassa o arquivo JSON do
- * backend com o Content-Disposition, pro navegador baixar. Em erro, devolve
- * o envelope de erro (incluindo 429 com Retry-After).
+ * BFF da exportação de dados (FUC21/UC53): a exportação exige a senha atual
+ * (POST, `currentPassword` repassada e nunca logada). Repassa o arquivo JSON do
+ * backend com o Content-Disposition, pro navegador baixar, sempre `no-store`.
+ * Em erro, devolve o envelope de erro (INVALID_CURRENT_PASSWORD, 429 com Retry-After).
  */
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const accessToken = request.cookies.get("shottrack_access")?.value;
 
   if (!accessToken) {
@@ -16,7 +18,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const backendResponse = await backendRawFetch("/api/users/me/export", { accessToken });
+  const input = await readJsonObject(request);
+  if (input instanceof NextResponse) return input;
+  const { currentPassword } = input;
+
+  const backendResponse = await backendRawFetch("/api/users/me/export", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({ currentPassword }),
+  });
 
   if (!backendResponse.ok) {
     const body = await backendResponse.json().catch(() => null);

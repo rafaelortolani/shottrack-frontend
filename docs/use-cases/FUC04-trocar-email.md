@@ -5,13 +5,19 @@ Permitir que o atleta troque o email de login, com verificação por código
 (reflete a decisão do backend, ADR-0002/ADR-0007 equivalente de verificação).
 
 ## Referência backend
-- UC04 (parte de troca de email) — `POST /api/users/me/email` (solicita)
-  e `POST /api/users/me/email/confirmation` (confirma)
+- UC04 (parte de troca de email) — `POST /api/users/me/email` (solicita, com
+  `email` e `currentPassword`; responde 202) e
+  `POST /api/users/me/email/confirmation` (confirma)
+- Senha atual errada: `INVALID_CURRENT_PASSWORD` com HTTP **401** (não é sessão
+  expirada). Pedir um email que é de outra conta tem resposta neutra (202, sem
+  código): o conflito só aparece na confirmação (`EMAIL_ALREADY_REGISTERED`, 409).
+- Ao confirmar, o backend revoga todas as sessões e avisa o email antigo.
 
 ## Fluxo — duas etapas na mesma tela (ou dois passos, ver mockup)
 
 ### Etapa 1 — solicitar novo email
 - Campo: novo email (obrigatório, formato de email)
+- Campo: senha atual (obrigatório; reenviar o código reaproveita a senha já informada)
 - Ao confirmar, backend envia um código de 6 dígitos pro **novo** email
   (em dev, aparece no Mailpit — `http://localhost:8025`)
 - Login continua com o email antigo até a confirmação
@@ -24,10 +30,16 @@ Permitir que o atleta troque o email de login, com verificação por código
 
 ## Estados da tela
 - Etapa 1, enviando: botão desabilitado
-- Etapa 1, erro `EMAIL_ALREADY_REGISTERED`: "Esse email já está em uso por outra conta"
+- Etapa 1, senha vazia: "Informe a senha atual" (não chama o backend)
+- Etapa 1, erro `INVALID_CURRENT_PASSWORD`: "Senha atual incorreta" inline no campo, sem sair da tela
+- Etapa 1, 429: mensagem padrão do projeto (`src/lib/rateLimit.ts`)
+- Etapa 2, erro `EMAIL_ALREADY_REGISTERED`: "Esse email já está em uso por outra conta"
 - Etapa 2, código incorreto: erro `INVALID_VERIFICATION_CODE` → "Código incorreto"
 - Etapa 2, código expirado: erro `VERIFICATION_CODE_EXPIRED` → "Código expirado, peça um novo"
-- Etapa 2, sucesso: confirma troca, volta pro `/perfil` com o novo email já refletido
+- Etapa 2, sucesso: o BFF limpa os cookies (sessões revogadas) e a tela vai pra
+  `/login?email=alterado` com "Email alterado. Entre novamente com o novo email."
+- Sem sessão em qualquer etapa (401 que não seja senha errada): `/login?sessao=expirada`
+  com "Sua sessão expirou. Entre novamente."
 
 ## Navegação
 - Acessível a partir do link "Alterar" na seção de email do `/perfil` (FUC03)
@@ -36,7 +48,8 @@ Permitir que o atleta troque o email de login, com verificação por código
 ## Definição de pronto
 - [ ] Tela reflete o mockup validado (etapa 1 e etapa 2)
 - [ ] Fluxo completo funciona de ponta a ponta (testável via Mailpit)
-- [ ] Erro de email já cadastrado exibido corretamente
+- [ ] Senha atual errada exibida inline; sem senha não envia
+- [ ] Depois de confirmar: login com aviso, cookies limpos, refresh antigo revogado
 - [ ] Erro de código incorreto exibido corretamente
 - [ ] Teste E2E (Playwright) cobrindo o fluxo completo, lendo o código
   direto do backend/Mailpit (não da UI) pra não depender de interação manual

@@ -27,7 +27,9 @@ function LoginForm() {
       redefinida: "Senha redefinida. Entre com a nova senha.",
       alterada: "Senha alterada. Entre novamente.",
     }[searchParams.get("senha") ?? ""] ??
-    (searchParams.get("conta") === "excluida" ? "Sua conta foi excluída." : undefined);
+    (searchParams.get("conta") === "excluida" ? "Sua conta foi excluída." : undefined) ??
+    (searchParams.get("email") === "alterado" ? "Email alterado. Entre novamente com o novo email." : undefined) ??
+    (searchParams.get("sessao") === "expirada" ? "Sua sessão expirou. Entre novamente." : undefined);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

@@ -265,6 +265,17 @@ banco a cada requisição a `/api/admin/**` e responde 401/403 por conta própri
 - Teste: `tests/seguranca-bff.spec.ts` (travessia, origem, corpo inválido, sem rede). Rota nova com parâmetro
   ou corpo entra nas listas desse spec.
 
+## Ação sensível com senha atual (troca de e-mail, exportação, exclusão)
+- O backend pede a senha atual (`currentPassword`) e responde senha errada como **HTTP 401
+  `INVALID_CURRENT_PASSWORD`** — o mesmo status de sessão expirada. Na tela, **confira o `error.code` antes do
+  tratamento genérico de 401** (que leva ao login): senha errada fica inline, sem sair da tela.
+- Exportação e exclusão usam diálogo com campo "Senha atual" (`ExportDataDialog`, `DeleteAccountDialog`): erro e
+  429 aparecem dentro dele, sem fechar. A senha só é repassada pelo BFF — nunca logada, nunca em URL.
+- Ação que o backend conclui revogando as sessões (troca de senha, de e-mail, exclusão): o BFF chama
+  `clearSessionCookies` e a tela vai ao login com aviso por query (`?senha=alterada`, `?email=alterado`,
+  `?conta=excluida`); 401 por sessão ausente vai a `?sessao=expirada`. Os avisos moram em `login/page.tsx`.
+- Sucesso do backend é qualquer 2xx (alguns endpoints respondem 202): o BFF testa `status >= 300`, não `!== 200`.
+
 ## Acabamento (auditoria A11, A13)
 - **`autoComplete` em todo campo de e-mail/senha**: e-mail do login `username`; senha do login e senha atual
   `current-password`; nova senha (cadastro, redefinição, troca) e a confirmação dela `new-password`.

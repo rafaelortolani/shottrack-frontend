@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { PageContainer } from "@/components/PageContainer";
+import { tooManyRequestsMessage } from "@/lib/rateLimit";
 import { safeFetch } from "@/lib/safeFetch";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,36 +19,50 @@ export default function TrocarEmailPage() {
   const [newEmail, setNewEmail] = useState("");
   const [confirmedEmail, setConfirmedEmail] = useState("");
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
+  const [currentPassword, setCurrentPassword] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const codeInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
-  async function requestEmailChange(email: string) {
+  /** `null` = sessão acabou (já foi ao login); senão o resultado, com o campo a que o erro pertence. */
+  async function requestEmailChange(
+    email: string
+  ): Promise<{ ok: true } | { ok: false; field: "password" | "email"; message: string } | null> {
     const response = await safeFetch("/api/users/me/email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, currentPassword }),
     });
 
-    if (response.status === 401) {
-      router.push("/login");
-      return false;
-    }
-
     if (!response.ok) {
-      const { error } = await response.json();
-      setEmailError(
-        error?.code === "EMAIL_ALREADY_REGISTERED"
-          ? "Esse email já está em uso por outra conta"
-          : error?.message ?? "Não foi possível solicitar a troca de email"
-      );
-      return false;
+      const { error } = await response.json().catch(() => ({ error: null }));
+
+      // o backend responde 401 também para senha errada: confere o código antes de tratar como sessão expirada
+      if (error?.code === "INVALID_CURRENT_PASSWORD") {
+        return { ok: false, field: "password", message: "Senha atual incorreta" };
+      }
+      if (response.status === 401) {
+        router.push("/login?sessao=expirada");
+        return null;
+      }
+      if (response.status === 429) {
+        return { ok: false, field: "email", message: tooManyRequestsMessage(response.headers.get("Retry-After")) };
+      }
+      return {
+        ok: false,
+        field: "email",
+        message:
+          error?.code === "EMAIL_ALREADY_REGISTERED"
+            ? "Esse email já está em uso por outra conta"
+            : error?.message ?? "Não foi possível solicitar a troca de email",
+      };
     }
 
-    return true;
+    return { ok: true };
   }
 
   async function handleRequestSubmit(e: React.FormEvent) {
@@ -58,12 +73,23 @@ export default function TrocarEmailPage() {
       return;
     }
 
+    if (currentPassword === "") {
+      setPasswordError("Informe a senha atual");
+      return;
+    }
+
     setEmailError(null);
+    setPasswordError(null);
     setSending(true);
-    const ok = await requestEmailChange(newEmail);
+    const result = await requestEmailChange(newEmail);
     setSending(false);
 
-    if (ok) {
+    if (result && !result.ok) {
+      if (result.field === "password") setPasswordError(result.message);
+      else setEmailError(result.message);
+    }
+
+    if (result?.ok) {
       setConfirmedEmail(newEmail);
       setCode(Array(CODE_LENGTH).fill(""));
       setCodeError(null);
@@ -106,7 +132,7 @@ export default function TrocarEmailPage() {
     setConfirming(false);
 
     if (response.status === 401) {
-      router.push("/login");
+      router.push("/login?sessao=expirada");
       return;
     }
 
@@ -116,23 +142,33 @@ export default function TrocarEmailPage() {
         setCodeError("Código expirado, peça um novo");
       } else if (error?.code === "INVALID_VERIFICATION_CODE") {
         setCodeError("Código incorreto");
+      } else if (error?.code === "EMAIL_ALREADY_REGISTERED") {
+        setCodeError("Esse email já está em uso por outra conta");
+      } else if (response.status === 429) {
+        setCodeError(tooManyRequestsMessage(response.headers.get("Retry-After")));
       } else {
         setCodeError(error?.message ?? "Não foi possível confirmar a troca de email");
       }
       return;
     }
 
-    router.push("/usuario/perfil");
+    // o backend revogou todas as sessões ao efetivar a troca (e o BFF limpou os cookies): entra de novo
+    setCurrentPassword("");
+    router.push("/login?email=alterado");
   }
 
   async function handleResend() {
     setResendMessage(null);
     setCodeError(null);
     setSending(true);
-    const ok = await requestEmailChange(confirmedEmail);
+    const result = await requestEmailChange(confirmedEmail);
     setSending(false);
 
-    if (ok) {
+    if (result && !result.ok) {
+      setCodeError(result.message);
+    }
+
+    if (result?.ok) {
       setCode(Array(CODE_LENGTH).fill(""));
       setResendMessage("Código reenviado");
       codeInputsRef.current[0]?.focus();
@@ -156,7 +192,7 @@ export default function TrocarEmailPage() {
       </h1>
       <p className="text-foreground-muted mb-10">
         {step === "request"
-          ? "Informe o novo email de login."
+          ? "Informe o novo email de login e a sua senha atual."
           : `Enviamos um código pra ${confirmedEmail}.`}
       </p>
 
@@ -177,6 +213,25 @@ export default function TrocarEmailPage() {
             {emailError && (
               <p className="text-sm text-accent-target mt-1.5" role="alert">
                 {emailError}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="currentPassword" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1.5">
+              Senha atual
+            </label>
+            <input
+              id="currentPassword"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
+            />
+            {passwordError && (
+              <p className="text-sm text-accent-target mt-1.5" role="alert">
+                {passwordError}
               </p>
             )}
           </div>

@@ -457,17 +457,21 @@ export async function associateAccessoryWeapon(accessToken: string, accessoryId:
 }
 
 /**
- * Busca a mensagem mais recente no Mailpit (dev) endereçada pro
+ * Busca no Mailpit (de teste) a mensagem mais recente endereçada pro
  * destinatário esperado e extrai o código de verificação de 6 dígitos —
- * substitui a leitura manual do código pra o teste rodar sozinho.
+ * substitui a leitura manual do código pra o teste rodar sozinho. Filtra por
+ * destinatário (`to:`), não pela última mensagem da caixa: a troca de e-mail
+ * também manda um aviso pro e-mail antigo logo depois do código.
  */
 export async function getLatestVerificationCode(recipient: string): Promise<string> {
   for (let attempt = 0; attempt < 10; attempt++) {
-    const response = await fetch(`${MAILPIT_URL}/api/v1/messages?limit=1`);
+    const response = await fetch(
+      `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${recipient}`)}&limit=1`
+    );
     const { messages } = await response.json();
     const latest = messages?.[0];
 
-    if (latest?.To?.[0]?.Address === recipient) {
+    if (latest) {
       const match = latest.Snippet?.match(/\d{6}/);
       if (match) {
         return match[0];
@@ -631,4 +635,14 @@ export async function closedVisit(
 /** Nome único de regra: o atleta enxerga todas as regras ativas, então o teste procura a sua pelo nome. */
 export function uniqueRuleName(prefix = "Regra") {
   return `${prefix} ${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+}
+
+/** Textos (assunto + trecho) das mensagens que o Mailpit de teste recebeu para `recipient`. */
+export async function getMessagesTo(recipient: string): Promise<{ subject: string; snippet: string }[]> {
+  const response = await fetch(`${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:${recipient}`)}&limit=10`);
+  const { messages } = await response.json();
+  return (messages ?? []).map((message: { Subject: string; Snippet: string }) => ({
+    subject: message.Subject,
+    snippet: message.Snippet,
+  }));
 }
