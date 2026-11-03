@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch, retryAfterHeaders } from "@/lib/backend";
+import { setSessionCookies } from "@/lib/sessionCookies";
 import { readJsonObject } from "@/lib/requestBody";
 
 /**
@@ -28,20 +29,7 @@ export async function POST(request: NextRequest) {
   const { accessToken, refreshToken } = body.data;
   const response = NextResponse.json({ ok: true, landing: await resolveLanding(accessToken) });
 
-  response.cookies.set("shottrack_access", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60, // 1h, alinhado ao access token (ADR-0001)
-  });
-  response.cookies.set("shottrack_refresh", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 7 dias
-  });
+  setSessionCookies(response, accessToken, refreshToken);
 
   return response;
 }

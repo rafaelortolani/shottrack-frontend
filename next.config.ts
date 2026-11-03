@@ -30,6 +30,12 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Páginas que recebem token de uso único na URL (A04): nenhum Referer sai delas. Vem depois da regra
+        // geral para sobrescrever o Referrer-Policy.
+        source: "/:page(cadastro/completar|redefinir-senha)",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+      {
         // Resposta autenticada nunca fica em cache do navegador, de proxy ou de CDN
         source: "/api/:path*",
         headers: [

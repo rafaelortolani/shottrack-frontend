@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch } from "@/lib/backend";
+import { clearSessionCookies } from "@/lib/sessionCookies";
 
 /**
  * Logout (UC51/ADR-0018): revoga o refresh token no backend e SÓ DEPOIS
@@ -21,7 +22,6 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.delete("shottrack_access");
-  response.cookies.delete("shottrack_refresh");
+  clearSessionCookies(response);
   return response;
 }

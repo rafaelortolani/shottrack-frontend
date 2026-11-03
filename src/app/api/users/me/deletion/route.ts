@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backendFetch, retryAfterHeaders } from "@/lib/backend";
 import { readJsonObject } from "@/lib/requestBody";
+import { clearSessionCookies } from "@/lib/sessionCookies";
 
 /**
  * BFF da exclusão de conta (FUC21/UC52): confirma com a senha atual. Em
@@ -35,7 +36,6 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.delete("shottrack_access");
-  response.cookies.delete("shottrack_refresh");
+  clearSessionCookies(response);
   return response;
 }
