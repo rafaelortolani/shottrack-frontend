@@ -3,7 +3,7 @@ import type { Breadcrumb, ErrorEvent } from "@sentry/nextjs";
 /**
  * Privacidade dos eventos do Sentry (auditoria A09): a URL da página e a das chamadas de rede
  * acompanham o evento, e a query pode carregar token de uso único (`?token=`) ou e-mail.
- * Também mascara e-mails em `transaction`, `contexts` e na mensagem das exceções.
+ * Também mascara e-mails em `transaction`, `contexts`, `message` e na mensagem das exceções e dos breadcrumbs.
  * Os três `Sentry.init` (navegador, Node e edge) usam estas opções.
  */
 
@@ -12,11 +12,38 @@ export function stripQuery(url: string): string {
   return url.replace(/\?[^#]*/, "");
 }
 
-const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
+const LOCAL_CHAR = /[A-Za-z0-9._%+-]/;
+// sticky: casa só a partir do `lastIndex` (o que vem depois do "@"), sem varrer o texto inteiro
+const DOMAIN = /[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/y;
 
-/** Troca qualquer e-mail dentro de um texto por `[email]` (mensagens de erro do backend repetem o e-mail do atleta). */
+/**
+ * Troca qualquer e-mail dentro de um texto por `[email]` (mensagens de erro do backend repetem o e-mail do atleta).
+ *
+ * A busca parte de cada "@" e expande para os lados. Uma regex única (`[local]+@dominio`) tenta casar a partir de
+ * cada posição de uma sequência longa de caracteres de palavra e custa tempo quadrático (50 000 caracteres sem "@"
+ * levavam ~10 s no `beforeSend`). Aqui o custo é linear: a parte local para no "@" anterior e o domínio, no seguinte.
+ */
 export function maskEmails(text: string): string {
-  return text.replace(EMAIL, "[email]");
+  let at = text.indexOf("@");
+  if (at === -1) return text;
+
+  let masked = "";
+  let copiedUntil = 0;
+  while (at !== -1) {
+    let start = at;
+    while (start > copiedUntil && LOCAL_CHAR.test(text[start - 1])) start--;
+
+    DOMAIN.lastIndex = at + 1;
+    const domain = start < at ? DOMAIN.exec(text) : null;
+    if (domain) {
+      masked += text.slice(copiedUntil, start) + "[email]";
+      copiedUntil = at + 1 + domain[0].length;
+      at = text.indexOf("@", copiedUntil);
+    } else {
+      at = text.indexOf("@", at + 1);
+    }
+  }
+  return masked + text.slice(copiedUntil);
 }
 
 const URL_LIKE = /^(?:https?:\/\/|\/)\S*$/;
@@ -60,6 +87,8 @@ export function scrubEvent<T extends ErrorEvent>(event: T): T {
   if (event.breadcrumbs) {
     event.breadcrumbs = event.breadcrumbs.map(scrubBreadcrumb);
   }
+  if (event.message) event.message = maskEmails(event.message);
+  if (event.logentry?.message) event.logentry.message = maskEmails(event.logentry.message);
   if (event.transaction) event.transaction = maskEmails(stripQuery(event.transaction));
   if (event.contexts) scrubValue(event.contexts, new WeakSet());
   for (const exception of event.exception?.values ?? []) {
@@ -68,8 +97,9 @@ export function scrubEvent<T extends ErrorEvent>(event: T): T {
   return event;
 }
 
-/** Navegação (`from`/`to`) e fetch/xhr (`url`) levam a URL nos dados do breadcrumb. */
+/** Navegação (`from`/`to`) e fetch/xhr (`url`) levam a URL nos dados do breadcrumb; a mensagem pode ter e-mail. */
 export function scrubBreadcrumb<T extends Breadcrumb>(breadcrumb: T): T {
+  if (breadcrumb.message) breadcrumb.message = maskEmails(breadcrumb.message);
   if (breadcrumb.data) {
     for (const key of ["url", "from", "to"]) {
       if (key in breadcrumb.data) breadcrumb.data[key] = stripIfString(breadcrumb.data[key]);
