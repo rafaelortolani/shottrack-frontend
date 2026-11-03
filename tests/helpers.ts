@@ -17,7 +17,9 @@ export function randomEmail() {
 
 /**
  * Busca no Mailpit o token do link de confirmação de cadastro (FUC01/FUC10)
- * mais recente endereçado pro email dado. Usa a busca filtrada por
+ * mais recente endereçado pro email dado — em minúsculas, como o backend grava
+ * e envia. Só existe link para e-mail SEM conta: se a conta já existe, o dono
+ * recebe apenas um aviso (sem `token=`), e o helper não o encontra (S05/A08). Usa a busca filtrada por
  * destinatário (`to:`), não a última mensagem da caixa inteira — os testes
  * de cadastro e de completar cadastro rodam em arquivos diferentes e podem
  * ser escalonados em paralelo por workers distintos, então "a mensagem mais
@@ -41,7 +43,9 @@ export async function getLatestRegistrationToken(recipient: string): Promise<str
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
 
-  throw new Error(`Não encontrei o link de cadastro pra ${recipient} no Mailpit`);
+  throw new Error(
+    `Não encontrei o link de cadastro pra ${recipient} no Mailpit (e-mail que já tem conta só recebe um aviso, sem link; o backend grava e-mails em minúsculas)`
+  );
 }
 
 /**

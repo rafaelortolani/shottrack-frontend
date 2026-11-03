@@ -14,6 +14,20 @@ test.describe("Login", () => {
     await expect(page).toHaveURL(/\/boas-vindas/);
   });
 
+  test("entra com o e-mail digitado em maiúsculas (o backend normaliza para minúsculas)", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+
+    for (const typed of [email.toUpperCase(), email.replace(/^(.)/, (c) => c.toUpperCase())]) {
+      await page.goto("/login");
+      await page.getByLabel("Email").fill(typed);
+      await page.getByLabel("Senha").fill("senha12345");
+      await page.getByRole("button", { name: "Entrar" }).click();
+      await expect(page).toHaveURL(/\/boas-vindas/);
+      await page.request.post("/api/auth/logout");
+    }
+  });
+
   test("mostra erro com senha incorreta", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
