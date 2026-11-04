@@ -22,6 +22,23 @@ function forbidden() {
  * Cliente sem esses cabeçalhos (curl, testes de API) passa: o cookie `SameSite=lax` e o
  * backend continuam sendo as demais barreiras.
  */
+/** Cabeçalho que o cliente de upload de fotos envia (FUC26). Formulário HTML cross-site não consegue enviar cabeçalho próprio. */
+export const UPLOAD_HEADER = "x-shottrack-upload";
+
+/**
+ * Único caminho que aceita corpo multipart: `POST /api/series/{id}/photos` (foto do alvo, FUC26), e só com o
+ * cabeçalho próprio acima, que garante requisição feita por script da nossa origem (um `<form>` cross-site
+ * é a razão de o 415 existir). Origin e Sec-Fetch-Site continuam conferidos antes.
+ */
+function isPhotoUpload(request: NextRequest, contentType: string): boolean {
+  return (
+    request.method === "POST" &&
+    /^\/api\/series\/[^/]+\/photos$/.test(request.nextUrl.pathname) &&
+    /^multipart\/form-data\s*;/i.test(contentType) &&
+    request.headers.get(UPLOAD_HEADER) === "1"
+  );
+}
+
 export function rejectUnsafeCrossOrigin(request: NextRequest): NextResponse | null {
   if (!UNSAFE_METHODS.has(request.method)) return null;
 
@@ -43,7 +60,7 @@ export function rejectUnsafeCrossOrigin(request: NextRequest): NextResponse | nu
   const hasBody =
     request.headers.has("transfer-encoding") || Number(request.headers.get("content-length") ?? 0) > 0;
   const contentType = request.headers.get("content-type") ?? "";
-  if (hasBody && !/^application\/json\s*(;|$)/i.test(contentType)) {
+  if (hasBody && !/^application\/json\s*(;|$)/i.test(contentType) && !isPhotoUpload(request, contentType)) {
     return NextResponse.json(
       { error: { code: "UNSUPPORTED_MEDIA_TYPE", message: "O corpo da requisição deve ser application/json" } },
       { status: 415 }
