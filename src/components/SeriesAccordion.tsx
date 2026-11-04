@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconChevronDown, IconListNumbers } from "@tabler/icons-react";
 import { AddButton } from "@/components/AddButton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { resultTypeKind, resultTypeUnit } from "@/lib/resultTypeFormat";
+import { PhotoPicker, PhotoProgress } from "@/components/PhotoPicker";
+import { SeriesPhotos } from "@/components/SeriesPhotos";
+import { PhotoReduceError, reducePhoto } from "@/lib/photoResize";
+import { uploadSeriesPhoto } from "@/lib/photoUpload";
 import { safeFetch } from "@/lib/safeFetch";
 import { INPUT_CLASS } from "@/lib/formStyles";
 
@@ -26,6 +30,8 @@ export type Series = {
   notes: string | null;
   createdAt: string;
   results: SeriesResult[];
+  /** FUC26: quantas fotos do alvo a série tem (a lista de séries não carrega imagens). */
+  photoCount?: number;
 };
 
 type ResultFormValue = { value: string; notApplicable: boolean };
@@ -282,6 +288,12 @@ export function SeriesAccordion({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  /** FUC26: foto do registro rápido sendo enviada (ou que falhou) depois de a série ser salva. */
+  const [photoJob, setPhotoJob] = useState<
+    { seriesId: string; seriesNumber: number; blob: Blob; status: "uploading"; fraction: number } | { seriesId: string; seriesNumber: number; blob: Blob; status: "failed"; message: string } | null
+  >(null);
+  const [photoRefresh, setPhotoRefresh] = useState<Record<string, number>>({});
+  const photoAbort = useRef<AbortController | null>(null);
 
   const weaponsById = new Map(weapons.map((w) => [w.id, w]));
 
@@ -333,7 +345,31 @@ export function SeriesAccordion({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleSaveSeries(values: SeriesFormValues, editingSeries: Series | null) {
+  /** Envia a foto do registro rápido; a série já está salva, então falha aqui nunca a desfaz. */
+  async function sendQuickPhoto(seriesId: string, seriesNumber: number, blob: Blob) {
+    const controller = new AbortController();
+    photoAbort.current = controller;
+    setPhotoJob({ seriesId, seriesNumber, blob, status: "uploading", fraction: 0 });
+    const result = await uploadSeriesPhoto(seriesId, blob, {
+      signal: controller.signal,
+      onProgress: (fraction) => setPhotoJob({ seriesId, seriesNumber, blob, status: "uploading", fraction }),
+    });
+    photoAbort.current = null;
+
+    if (result.ok) {
+      setPhotoJob(null);
+      setSeries((prev) => prev.map((s) => (s.id === seriesId ? { ...s, photoCount: (s.photoCount ?? 0) + 1 } : s)));
+      setPhotoRefresh((prev) => ({ ...prev, [seriesId]: (prev[seriesId] ?? 0) + 1 }));
+      return;
+    }
+    if (result.aborted) {
+      setPhotoJob(null);
+      return;
+    }
+    setPhotoJob({ seriesId, seriesNumber, blob, status: "failed", message: result.message });
+  }
+
+  async function handleSaveSeries(values: SeriesFormValues, editingSeries: Series | null, photo: Blob | null = null) {
     setSaveError(null);
     setSaving(true);
 
@@ -356,6 +392,12 @@ export function SeriesAccordion({
     }
 
     setFormMode("closed");
+
+    if (photo && outcome.series) {
+      const savedId = outcome.series.id;
+      const number = series.some((s) => s.id === savedId) ? series.findIndex((s) => s.id === savedId) + 1 : series.length + 1;
+      void sendQuickPhoto(savedId, number, photo);
+    }
   }
 
   async function handleDeleteSeries(seriesId: string) {
@@ -405,6 +447,25 @@ export function SeriesAccordion({
             <p className="text-sm text-accent-target" role="alert">{listError}</p>
           ) : (
             <>
+              {photoJob?.status === "uploading" && (
+                <PhotoProgress
+                  label={`Série salva. Enviando a foto... ${Math.round(photoJob.fraction * 100)}%`}
+                  fraction={photoJob.fraction}
+                  onCancel={() => photoAbort.current?.abort()}
+                />
+              )}
+              {photoJob?.status === "failed" && (
+                <p className="flex flex-wrap items-center gap-x-3 text-sm text-accent-target" role="alert">
+                  <span>Série salva. A foto não foi enviada — {photoJob.message}</span>
+                  <button type="button" onClick={() => void sendQuickPhoto(photoJob.seriesId, photoJob.seriesNumber, photoJob.blob)} className="min-h-11 underline">
+                    tentar de novo
+                  </button>
+                  <button type="button" onClick={() => setPhotoJob(null)} className="min-h-11 text-foreground-muted underline">
+                    descartar
+                  </button>
+                </p>
+              )}
+
               {series.length === 0 ? (
                 formMode === "closed" &&
                 (trainingOpen ? (
@@ -421,29 +482,40 @@ export function SeriesAccordion({
               ) : (
                 <ul className="space-y-1">
                   {series.map((s, index) => (
-                    <li key={s.id} className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSaveError(null);
-                          setFormMode(s.id);
-                        }}
-                        className="flex-1 min-w-0 flex items-center justify-between gap-3 py-1.5 text-left text-sm hover:text-foreground transition-colors"
-                      >
-                        <span className="text-foreground shrink-0">Série {index + 1}</span>
-                        <span className="text-foreground-muted truncate">{formatSeriesSummary(s, weaponsById)}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSaveError(null);
-                          setConfirmingDeleteId(s.id);
-                        }}
-                        aria-label={`Excluir série ${index + 1}`}
-                        className="shrink-0 text-sm text-foreground-muted hover:text-accent-target transition-colors"
-                      >
-                        Excluir
-                      </button>
+                    <li key={s.id}>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSaveError(null);
+                            setFormMode(s.id);
+                          }}
+                          className="flex-1 min-w-0 flex items-center justify-between gap-3 py-1.5 text-left text-sm hover:text-foreground transition-colors"
+                        >
+                          <span className="text-foreground shrink-0">Série {index + 1}</span>
+                          <span className="text-foreground-muted truncate">{formatSeriesSummary(s, weaponsById)}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSaveError(null);
+                            setConfirmingDeleteId(s.id);
+                          }}
+                          aria-label={`Excluir série ${index + 1}`}
+                          className="shrink-0 text-sm text-foreground-muted hover:text-accent-target transition-colors"
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                      <SeriesPhotos
+                        seriesId={s.id}
+                        seriesNumber={index + 1}
+                        photoCount={s.photoCount ?? 0}
+                        refreshToken={photoRefresh[s.id] ?? 0}
+                        onCountChange={(count) =>
+                          setSeries((prev) => prev.map((item) => (item.id === s.id && (item.photoCount ?? 0) !== count ? { ...item, photoCount: count } : item)))
+                        }
+                      />
                     </li>
                   ))}
                 </ul>
@@ -461,7 +533,8 @@ export function SeriesAccordion({
                   weapons={weapons}
                   ammunitions={ammunitions}
                   initialSeries={editingSeries}
-                  onSubmit={(values) => handleSaveSeries(values, editingSeries)}
+                  allowPhoto
+                  onSubmit={(values, photo) => handleSaveSeries(values, editingSeries, photo)}
                   onCancel={() => {
                     setFormMode("closed");
                     setSaveError(null);
@@ -503,17 +576,21 @@ export function SeriesForm({
   onDelete,
   saving,
   error,
+  allowPhoto = false,
 }: {
   idPrefix: string;
   resultTypes: ResultType[];
   weapons: Weapon[];
   ammunitions: Ammunition[];
   initialSeries: Series | null;
-  onSubmit: (values: SeriesFormValues) => void;
+  /** `photo`: a foto do alvo escolhida no registro rápido (FUC26), já reduzida; enviada pela tela-mãe depois de salvar a série. */
+  onSubmit: (values: SeriesFormValues, photo: Blob | null) => void;
   onCancel: () => void;
   onDelete?: () => void;
   saving: boolean;
   error: string | null;
+  /** Mostra "Foto do alvo" (só no registro de série nova). */
+  allowPhoto?: boolean;
 }) {
   const [weaponId, setWeaponId] = useState(initialSeries?.weaponId ?? "");
   const [ammunitionId, setAmmunitionId] = useState(initialSeries?.ammunitionId ?? "");
@@ -536,6 +613,30 @@ export function SeriesForm({
   });
 
   const [formError, setFormError] = useState<string | null>(null);
+
+  // FUC26: foto do registro rápido, em memória até a série ser salva
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [photoPreparing, setPhotoPreparing] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<{ blob: Blob; previewUrl: string } | null>(null);
+  const previewUrl = photo?.previewUrl;
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  async function handlePhotoFile(file: File) {
+    setPhotoError(null);
+    setPhotoPreparing(true);
+    try {
+      const { blob } = await reducePhoto(file);
+      setPhoto({ blob, previewUrl: URL.createObjectURL(blob) });
+      setPhotoOpen(false);
+    } catch (error) {
+      setPhotoError(error instanceof PhotoReduceError ? error.message : "Não foi possível preparar a foto.");
+    } finally {
+      setPhotoPreparing(false);
+    }
+  }
 
   function updateResult(id: string, patch: Partial<ResultFormValue>) {
     setResults((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
@@ -580,7 +681,7 @@ export function SeriesForm({
     }
 
     setFormError(null);
-    onSubmit({ weaponId, ammunitionId, distanceMeters, target, shotCount, notes, results });
+    onSubmit({ weaponId, ammunitionId, distanceMeters, target, shotCount, notes, results }, photo?.blob ?? null);
   }
 
   return (
@@ -728,6 +829,34 @@ export function SeriesForm({
         >
           + mais detalhes
         </button>
+      )}
+
+      {allowPhoto && !initialSeries && (
+        <div className="space-y-2">
+          {photo ? (
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- pré-visualização local (blob:), nada vai ao servidor ainda */}
+              <img src={photo.previewUrl} alt="Foto do alvo escolhida" className="h-14 w-14 rounded-md border border-border object-cover" />
+              <span className="text-sm text-foreground-muted">Será enviada ao salvar a série.</span>
+              <button type="button" onClick={() => setPhoto(null)} className="min-h-11 px-2 text-sm text-foreground-muted hover:text-accent-target transition-colors">
+                Remover foto
+              </button>
+            </div>
+          ) : photoPreparing ? (
+            <p className="text-sm text-foreground-muted" role="status">Preparando a foto...</p>
+          ) : photoOpen ? (
+            <PhotoPicker onFile={handlePhotoFile} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPhotoOpen(true)}
+              className="inline-flex min-h-11 items-center text-sm text-accent-brass-soft hover:text-accent-brass transition-colors"
+            >
+              Foto do alvo
+            </button>
+          )}
+          {photoError && <p className="text-sm text-accent-target" role="alert">{photoError}</p>}
+        </div>
       )}
 
       {(formError || error) && (

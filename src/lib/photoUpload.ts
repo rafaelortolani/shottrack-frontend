@@ -27,6 +27,8 @@ export const NETWORK_FAILURE = "Falha de rede ao enviar a foto. Tente de novo.";
 export function photoErrorMessage(code: string | null, status: number, fallback: string): string {
   if (code && MESSAGES[code]) return MESSAGES[code];
   if (status === 429) return MESSAGES.RATE_LIMITED;
+  // erro do servidor sem código conhecido: mensagem do próprio componente, nunca texto técnico do backend
+  if (status >= 500) return "Não foi possível enviar a foto. Tente de novo.";
   return fallback;
 }
 

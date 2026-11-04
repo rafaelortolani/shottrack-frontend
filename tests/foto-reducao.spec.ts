@@ -22,7 +22,8 @@ test.describe("FUC26 — redução da foto (unidade)", () => {
     expect(photoErrorMessage("PHOTO_LIMIT_PER_SERIES_REACHED", 409, "x")).toBe("Limite de 5 fotos por série.");
     expect(photoErrorMessage("PHOTO_UNSUPPORTED_TYPE", 415, "x")).toContain("JPEG, PNG ou WebP");
     expect(photoErrorMessage(null, 429, "x")).toContain("Aguarde");
-    expect(photoErrorMessage("OUTRO", 500, "padrão")).toBe("padrão");
+    expect(photoErrorMessage("OUTRO", 400, "padrão")).toBe("padrão");
+    expect(photoErrorMessage("OUTRO", 503, "texto técnico")).toBe("Não foi possível enviar a foto. Tente de novo.");
   });
 });
 
