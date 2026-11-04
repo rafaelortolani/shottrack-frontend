@@ -69,11 +69,13 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // /api: checagem de origem (A05). Páginas: CSP com nonce (A03) e proteção de sessão. Ficam de fora
+  // /api: checagem de origem (A05), exceto o upload de foto (`POST /api/series/{id}/photos`, FUC26): com o proxy
+  // o Next guarda o corpo em memória (e trunca acima de 10 MB); o handler do upload faz a mesma checagem de origem
+  // e repassa o corpo em streaming. Páginas: CSP com nonce (A03) e proteção de sessão. Ficam de fora
   // arquivos estáticos, o service worker, o manifest e o túnel do Sentry (/monitoring), que não
   // devem passar por aqui.
   matcher: [
-    "/api/:path*",
+    "/api/((?!series/[^/]+/photos$).*)",
     "/((?!api|monitoring|_next/static|_next/image|icons/|sw\\.js|favicon\\.ico|icon\\.svg|manifest\\.webmanifest|robots\\.txt).*)",
   ],
 };
