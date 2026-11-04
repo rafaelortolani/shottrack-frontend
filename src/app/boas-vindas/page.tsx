@@ -114,7 +114,7 @@ export default function BoasVindasPage() {
         <TargetRings className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 w-[min(max(96vw,560px),92dvh,760px)] h-[min(max(96vw,560px),92dvh,760px)] text-accent-target pointer-events-none" />
 
         {/* Placa por trás do texto: o centro da retícula (cruz e pontos) não corta a saudação */}
-        <div className="relative z-10 w-full max-w-sm text-center rounded-lg bg-background/85 px-5 py-6">
+        <div className="relative z-content w-full max-w-sm text-center rounded-lg bg-background/85 px-5 py-6">
           <LogoWordmark className="text-4xl mb-4" />
 
           {error ? (

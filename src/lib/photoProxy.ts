@@ -7,6 +7,12 @@ import { backendRawFetch } from "@/lib/backend";
  */
 export const MAX_UPLOAD_BYTES = 11 * 1024 * 1024;
 
+/**
+ * `Accept` das rotas de imagem. Com `image/jpeg` sozinho, um erro do backend (JSON) não tem representação aceita e
+ * versões antigas respondiam 401 no lugar de 404. `application/json;q=0.9` mantém o erro legível em qualquer versão.
+ */
+export const IMAGE_ACCEPT = "image/jpeg, application/json;q=0.9";
+
 export function unauthenticated() {
   return NextResponse.json({ error: { code: "UNAUTHENTICATED", message: "Sessão expirada" } }, { status: 401 });
 }
@@ -41,7 +47,7 @@ export async function streamJpeg(request: NextRequest, path: string): Promise<Ne
 
   let response: Response;
   try {
-    response = await backendRawFetch(path, { accessToken, headers: { Accept: "image/jpeg" } });
+    response = await backendRawFetch(path, { accessToken, headers: { Accept: IMAGE_ACCEPT } });
   } catch {
     return NextResponse.json({ error: { code: "PHOTO_LOAD_FAILED", message: "Não foi possível carregar a foto" } }, { status: 502 });
   }

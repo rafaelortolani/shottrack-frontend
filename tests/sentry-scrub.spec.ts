@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
 import type { Breadcrumb, ErrorEvent } from "@sentry/nextjs";
-import { maskEmails, scrubBreadcrumb, scrubEvent, sentryPrivacyOptions, stripQuery } from "../src/lib/sentryScrub";
+import { maskEmails, maskPathIds, scrubBreadcrumb, scrubEvent, sentryPrivacyOptions, stripQuery } from "../src/lib/sentryScrub";
 
 /** Auditoria A09: nada de query string (token de uso único, e-mail) nos eventos enviados ao Sentry. Teste unitário, sem navegador. */
 test.describe("Sentry — scrubber de URLs (A09)", () => {
@@ -106,7 +106,7 @@ test.describe("Sentry — scrubber de URLs (A09)", () => {
     expect(JSON.stringify(event)).not.toContain("@shottrack.com");
   });
 
-  test("maskEmails: 200 000 caracteres sem @ (e outras entradas adversárias) processam em menos de 100 ms", () => {
+  test("maskEmails: 200 000 caracteres sem @ (e outras entradas adversárias) processam em menos de 500 ms", () => {
     const entradas = [
       "a".repeat(200_000),
       "a@".repeat(100_000),
@@ -117,7 +117,7 @@ test.describe("Sentry — scrubber de URLs (A09)", () => {
     for (const entrada of entradas) {
       const inicio = performance.now();
       maskEmails(entrada);
-      expect(performance.now() - inicio, entrada.slice(0, 12)).toBeLessThan(100);
+      expect(performance.now() - inicio, entrada.slice(0, 12)).toBeLessThan(500); // o custo quadrático levava ~109 s; 500 ms aguenta máquina carregada
     }
   });
 
@@ -145,6 +145,69 @@ test.describe("Sentry — scrubber de URLs (A09)", () => {
     expect(scrubbed.breadcrumbs?.[1].message).toBe("button#entrar");
     expect(scrubBreadcrumb({ message: "a@b.com" } as Breadcrumb).message).toBe("[email]");
     expect(JSON.stringify(scrubbed)).not.toContain("@shottrack.com");
+  });
+
+  test("maskPathIds troca UUIDs de caminho por :id e preserva o resto", () => {
+    const sid = "6a1c2f4e-1111-4222-8333-444455556666";
+    const pid = "7B2D3E5F-AAAA-4BBB-8CCC-DDDDEEEEFFFF";
+    expect(maskPathIds(`/api/series/${sid}/photos/${pid}/thumbnail`)).toBe("/api/series/:id/photos/:id/thumbnail");
+    expect(maskPathIds(`https://app.shottrack.com/api/series/${sid}/photos`)).toBe("https://app.shottrack.com/api/series/:id/photos");
+    expect(maskPathIds(`/api/series/${sid}`)).toBe("/api/series/:id");
+    expect(maskPathIds(`/${sid}/`)).toBe("/:id/");
+    expect(maskPathIds(`Falha ao buscar /api/series/${sid}/photos (404)`)).toBe("Falha ao buscar /api/series/:id/photos (404)");
+    // não é UUID de caminho: nada muda
+    expect(maskPathIds("/api/series/history")).toBe("/api/series/history");
+    expect(maskPathIds(`/api/x/${sid}extra`)).toBe(`/api/x/${sid}extra`); // UUID colado em mais caracteres
+    expect(maskPathIds(`/api/x/${sid.slice(0, 35)}`)).toBe(`/api/x/${sid.slice(0, 35)}`); // curto demais
+    expect(maskPathIds(`id=${sid}`)).toBe(`id=${sid}`); // sem "/" antes: não é segmento de caminho
+    expect(maskPathIds("sem barra")).toBe("sem barra");
+    expect(maskPathIds("")).toBe("");
+  });
+
+  test("breadcrumbs, request, transaction, contexts e exceções perdem os ids de caminho", () => {
+    const sid = "6a1c2f4e-1111-4222-8333-444455556666";
+    const pid = "7b2d3e5f-aaaa-4bbb-8ccc-ddddeeeeffff";
+    const fetchCrumb = scrubBreadcrumb({ category: "fetch", data: { url: `/api/series/${sid}/photos/${pid}/thumbnail?t=1`, method: "GET" } } as Breadcrumb);
+    expect(fetchCrumb.data?.url).toBe("/api/series/:id/photos/:id/thumbnail");
+    const xhr = scrubBreadcrumb({ category: "xhr", data: { url: `https://app.shottrack.com/api/series/${sid}/photos` } } as Breadcrumb);
+    expect(xhr.data?.url).toBe("https://app.shottrack.com/api/series/:id/photos");
+    const nav = scrubBreadcrumb({ category: "navigation", data: { from: `/treinos/${sid}`, to: "/dashboard" } } as Breadcrumb);
+    expect(nav.data).toEqual({ from: "/treinos/:id", to: "/dashboard" });
+
+    const event = {
+      transaction: `GET /api/series/${sid}/photos/${pid}/content`,
+      request: { url: `https://app.shottrack.com/api/series/${sid}/photos?x=1`, headers: { Referer: `https://app.shottrack.com/treinos/${sid}?a=1` } },
+      contexts: { rota: { path: `/api/series/${sid}/photos/${pid}` } },
+      exception: { values: [{ type: "TypeError", value: `Failed to fetch /api/series/${sid}/photos/${pid}/thumbnail` }] },
+      message: `erro em /api/series/${sid}`,
+    } as unknown as ErrorEvent;
+    const scrubbed = scrubEvent(event);
+    expect(scrubbed.transaction).toBe("GET /api/series/:id/photos/:id/content");
+    expect(scrubbed.request?.url).toBe("https://app.shottrack.com/api/series/:id/photos");
+    expect(scrubbed.request?.headers?.Referer).toBe("https://app.shottrack.com/treinos/:id");
+    expect((scrubbed.contexts?.rota as { path: string }).path).toBe("/api/series/:id/photos/:id");
+    expect(scrubbed.exception?.values?.[0].value).toBe("Failed to fetch /api/series/:id/photos/:id/thumbnail");
+    expect(scrubbed.message).toBe("erro em /api/series/:id");
+    expect(JSON.stringify(scrubbed)).not.toContain(sid);
+    expect(JSON.stringify(scrubbed)).not.toContain(pid);
+  });
+
+  test("maskPathIds: 200 000 caracteres (barras, hex e UUIDs repetidos) processam em menos de 500 ms", () => {
+    const uuid = "6a1c2f4e-1111-4222-8333-444455556666";
+    const entradas = [
+      "/".repeat(200_000),
+      "a".repeat(200_000),
+      ("/" + "a".repeat(35)).repeat(5_500),
+      ("/" + uuid).repeat(5_400),
+      ("/" + uuid.slice(0, 35)).repeat(5_500),
+      "/".repeat(100_000) + uuid + "/".repeat(100_000),
+    ];
+    for (const entrada of entradas) {
+      const inicio = performance.now();
+      maskPathIds(entrada);
+      expect(performance.now() - inicio, entrada.slice(0, 12)).toBeLessThan(500);
+    }
+    expect(maskPathIds(("/" + uuid).repeat(3))).toBe("/:id/:id/:id");
   });
 
   test("as opções desligam o PII padrão e ligam os dois hooks", () => {

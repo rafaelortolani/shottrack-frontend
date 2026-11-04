@@ -144,6 +144,7 @@ test.describe("A03 — cabeçalhos de segurança", () => {
   });
 
   test("navegar pelas telas autenticadas não gera violação da política", async ({ page }) => {
+    test.setTimeout(90_000); // 21 telas em sequência: sob carga o limite padrão de 30 s estoura
     const email = randomEmail();
     await createUser(email);
     const violations = await collectViolations(page);

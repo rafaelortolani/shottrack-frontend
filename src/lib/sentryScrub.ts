@@ -3,13 +3,51 @@ import type { Breadcrumb, ErrorEvent } from "@sentry/nextjs";
 /**
  * Privacidade dos eventos do Sentry (auditoria A09): a URL da página e a das chamadas de rede
  * acompanham o evento, e a query pode carregar token de uso único (`?token=`) ou e-mail.
- * Também mascara e-mails em `transaction`, `contexts`, `message` e na mensagem das exceções e dos breadcrumbs.
+ * Também mascara e-mails em `transaction`, `contexts`, `message` e na mensagem das exceções e dos breadcrumbs,
+ * e troca ids (UUID) de caminhos de URL por `:id` (FUC26: série e foto aparecem em `/api/series/{id}/photos/{id}`).
  * Os três `Sentry.init` (navegador, Node e edge) usam estas opções.
  */
 
 /** Remove a query string (`?a=b`) de uma URL, absoluta ou relativa, preservando o fragmento. */
 export function stripQuery(url: string): string {
   return url.replace(/\?[^#]*/, "");
+}
+
+// sticky: confere só a partir do `lastIndex` (logo depois de uma "/"), nunca varre o texto
+const UUID_AT = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/iy;
+const ID_CHAR = /[A-Za-z0-9_-]/;
+
+/**
+ * Troca segmentos de caminho que são UUID por `:id` (`/api/series/<uuid>/photos/<uuid>/thumbnail` vira
+ * `/api/series/:id/photos/:id/thumbnail`): o id de uma série ou foto identifica um dado do atleta e não ajuda a
+ * achar o erro. Funciona em URL (absoluta ou relativa) e em texto com URL dentro (mensagem de exceção).
+ *
+ * Custo linear: parte de cada "/" e confere os 36 caracteres seguintes (uma checagem de tamanho fixo), sem regex
+ * que recomece em toda posição — a mesma lição do `maskEmails`.
+ */
+export function maskPathIds(text: string): string {
+  let slash = text.indexOf("/");
+  if (slash === -1) return text;
+
+  let masked = "";
+  let copiedUntil = 0;
+  while (slash !== -1) {
+    const end = slash + 37;
+    UUID_AT.lastIndex = slash + 1;
+    if (UUID_AT.test(text) && (end >= text.length || !ID_CHAR.test(text[end]))) {
+      masked += text.slice(copiedUntil, slash + 1) + ":id";
+      copiedUntil = end;
+      slash = text.indexOf("/", end);
+    } else {
+      slash = text.indexOf("/", slash + 1);
+    }
+  }
+  return masked + text.slice(copiedUntil);
+}
+
+/** URL sem query e sem ids no caminho. */
+function scrubUrl(url: string): string {
+  return maskPathIds(stripQuery(url));
 }
 
 const LOCAL_CHAR = /[A-Za-z0-9._%+-]/;
@@ -51,7 +89,7 @@ const URL_LIKE = /^(?:https?:\/\/|\/)\S*$/;
 /** Percorre `contexts` (objetos aninhados): mascara e-mails e tira a query de valores que são URL. Tolera ciclos. */
 function scrubValue(value: unknown, seen: WeakSet<object>): unknown {
   if (typeof value === "string") {
-    return maskEmails(URL_LIKE.test(value) ? stripQuery(value) : value);
+    return maskEmails(URL_LIKE.test(value) ? scrubUrl(value) : value);
   }
   if (value === null || typeof value !== "object") return value;
   if (seen.has(value)) return value;
@@ -69,37 +107,37 @@ function scrubValue(value: unknown, seen: WeakSet<object>): unknown {
 }
 
 function stripIfString(value: unknown): unknown {
-  return typeof value === "string" ? stripQuery(value) : value;
+  return typeof value === "string" ? scrubUrl(value) : value;
 }
 
 export function scrubEvent<T extends ErrorEvent>(event: T): T {
   if (event.request) {
-    if (event.request.url) event.request.url = stripQuery(event.request.url);
+    if (event.request.url) event.request.url = scrubUrl(event.request.url);
     delete event.request.query_string;
     delete event.request.cookies;
     const headers = event.request.headers;
     if (headers) {
       for (const name of Object.keys(headers)) {
-        if (/^(referer|referrer)$/i.test(name)) headers[name] = stripQuery(headers[name]);
+        if (/^(referer|referrer)$/i.test(name)) headers[name] = scrubUrl(headers[name]);
       }
     }
   }
   if (event.breadcrumbs) {
     event.breadcrumbs = event.breadcrumbs.map(scrubBreadcrumb);
   }
-  if (event.message) event.message = maskEmails(event.message);
-  if (event.logentry?.message) event.logentry.message = maskEmails(event.logentry.message);
-  if (event.transaction) event.transaction = maskEmails(stripQuery(event.transaction));
+  if (event.message) event.message = maskPathIds(maskEmails(event.message));
+  if (event.logentry?.message) event.logentry.message = maskPathIds(maskEmails(event.logentry.message));
+  if (event.transaction) event.transaction = maskEmails(scrubUrl(event.transaction));
   if (event.contexts) scrubValue(event.contexts, new WeakSet());
   for (const exception of event.exception?.values ?? []) {
-    if (exception.value) exception.value = maskEmails(exception.value);
+    if (exception.value) exception.value = maskPathIds(maskEmails(exception.value));
   }
   return event;
 }
 
 /** Navegação (`from`/`to`) e fetch/xhr (`url`) levam a URL nos dados do breadcrumb; a mensagem pode ter e-mail. */
 export function scrubBreadcrumb<T extends Breadcrumb>(breadcrumb: T): T {
-  if (breadcrumb.message) breadcrumb.message = maskEmails(breadcrumb.message);
+  if (breadcrumb.message) breadcrumb.message = maskPathIds(maskEmails(breadcrumb.message));
   if (breadcrumb.data) {
     for (const key of ["url", "from", "to"]) {
       if (key in breadcrumb.data) breadcrumb.data[key] = stripIfString(breadcrumb.data[key]);

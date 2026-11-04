@@ -20,8 +20,16 @@ test.describe("FUC26 — redução da foto (unidade)", () => {
 
   test("mensagens de erro na linguagem do atleta, por código do backend", () => {
     expect(photoErrorMessage("PHOTO_LIMIT_PER_SERIES_REACHED", 409, "x")).toBe("Limite de 5 fotos por série.");
-    expect(photoErrorMessage("PHOTO_UNSUPPORTED_TYPE", 415, "x")).toContain("JPEG, PNG ou WebP");
+    expect(photoErrorMessage("PHOTO_UNSUPPORTED_TYPE", 415, "x")).toBe("Formato não aceito. Use uma foto JPEG ou PNG.");
     expect(photoErrorMessage(null, 429, "x")).toContain("Aguarde");
+    expect(photoErrorMessage("PHOTO_INVALID_IMAGE", 400, "x")).toBe("Não foi possível ler essa imagem. Escolha outra foto.");
+    expect(photoErrorMessage("PHOTO_DIMENSIONS_TOO_LARGE", 400, "x")).toBe("A imagem tem resolução alta demais. Escolha outra foto.");
+    expect(photoErrorMessage("PHOTO_TOO_LARGE", 413, "x")).toBe("A foto é grande demais (máximo de 10 MB). Escolha outra ou tire de novo.");
+    expect(photoErrorMessage("PHOTO_LIMIT_PER_ATHLETE_REACHED", 409, "x")).toBe("Você chegou ao limite de fotos da conta. Exclua alguma para enviar outra.");
+    expect(photoErrorMessage("PHOTO_PROCESSING_BUSY", 503, "x")).toBe("O servidor está processando outras fotos. Tente de novo em instantes.");
+    // o código vale mais que o status: 503 com código conhecido não cai na mensagem genérica
+    expect(photoErrorMessage("PHOTO_PROCESSING_BUSY", 503, "texto técnico")).not.toContain("Não foi possível enviar");
+    expect(photoErrorMessage("TOO_MANY_REQUESTS", 429, "x")).toContain("Aguarde"); // código real do backend no 429
     expect(photoErrorMessage("OUTRO", 400, "padrão")).toBe("padrão");
     expect(photoErrorMessage("OUTRO", 503, "texto técnico")).toBe("Não foi possível enviar a foto. Tente de novo.");
   });

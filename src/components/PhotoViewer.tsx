@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { IconChevronLeft, IconChevronRight, IconX } from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { probePhoto } from "@/lib/photoLoad";
 import type { PhotoMeta } from "@/lib/photoUpload";
 
 const MIN_SCALE = 1;
@@ -28,11 +30,13 @@ function PhotoStage({
   photo,
   label,
   onSwipe,
+  onMissing,
 }: {
   seriesId: string;
   photo: PhotoMeta;
   label: string;
   onSwipe: (delta: number) => void;
+  onMissing: (photo: PhotoMeta) => void;
 }) {
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -40,6 +44,15 @@ function PhotoStage({
   const [loaded, setLoaded] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+
+  /** A `<img>` falhou: descobre o motivo. 404 → some da lista; sessão renovada → recarrega uma vez; senão → "tentar de novo". */
+  async function onImageError() {
+    const url = photoUrl(seriesId, photo.id, "content");
+    const result = await probePhoto(url);
+    if (result === "missing") onMissing(photo);
+    else if (result === "available" && attempt === 0) setAttempt(1);
+    else setLoadFailed(true);
+  }
 
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef({ startDistance: 0, startScale: 1, startX: 0, startY: 0, moved: false, lastTap: 0, panFrom: { x: 0, y: 0 } });
@@ -161,7 +174,7 @@ function PhotoStage({
           alt={label}
           draggable={false}
           onLoad={() => setLoaded(true)}
-          onError={() => setLoadFailed(true)}
+          onError={() => void onImageError()}
           data-scale={scale}
           style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, transition: dragging ? "none" : "transform 150ms" }}
           className={`absolute inset-0 m-auto max-h-full max-w-full object-contain ${loaded ? "" : "opacity-0"}`}
@@ -179,6 +192,8 @@ export function PhotoViewer({
   onIndexChange,
   onClose,
   onDelete,
+  onPhotoMissing,
+  notice,
 }: {
   seriesId: string;
   seriesNumber: number;
@@ -187,6 +202,9 @@ export function PhotoViewer({
   onIndexChange: (index: number) => void;
   onClose: () => void;
   onDelete: (photo: PhotoMeta) => Promise<string | null>;
+  /** A foto não existe mais no servidor (404): a tela-mãe a tira da lista e informa em `notice`. */
+  onPhotoMissing: (photo: PhotoMeta) => void;
+  notice?: string | null;
 }) {
   const photo = photos[index];
   const [confirming, setConfirming] = useState(false);
@@ -249,16 +267,18 @@ export function PhotoViewer({
     setDeleteError(message);
   }
 
-  if (!photo) return null;
+  if (!photo || typeof document === "undefined") return null;
   const label = `Foto do alvo da série ${seriesNumber}`;
 
-  return (
+  // Portal em document.body: fora de qualquer contexto de empilhamento da tela, acima da barra do app (z-viewer).
+  // O padding respeita o notch e as bordas arredondadas (o do rodapé está na barra de controles).
+  return createPortal(
     <div
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label={`${label}, foto ${index + 1} de ${photos.length}`}
-      className="fixed inset-0 z-20 flex flex-col bg-background"
+      className="fixed inset-0 z-viewer flex flex-col bg-background pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
     >
       <div className="flex items-center justify-between gap-3 p-3">
         <span className="text-sm text-foreground-muted" aria-live="polite">
@@ -269,10 +289,10 @@ export function PhotoViewer({
         </button>
       </div>
 
-      <PhotoStage key={photo.id} seriesId={seriesId} photo={photo} label={label} onSwipe={go} />
+      <PhotoStage key={photo.id} seriesId={seriesId} photo={photo} label={label} onSwipe={go} onMissing={onPhotoMissing} />
 
-      {deleteError && (
-        <p className="px-4 pb-1 text-center text-sm text-accent-target" role="alert">{deleteError}</p>
+      {(deleteError ?? notice) && (
+        <p className="px-4 pb-1 text-center text-sm text-accent-target" role="alert">{deleteError ?? notice}</p>
       )}
 
       <div className="flex items-center justify-between gap-3 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
@@ -306,6 +326,7 @@ export function PhotoViewer({
           Esta foto será removida definitivamente.
         </ConfirmDialog>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

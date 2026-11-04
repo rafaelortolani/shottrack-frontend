@@ -5,6 +5,7 @@ import { IconCamera, IconPhotoOff } from "@tabler/icons-react";
 import { MAX_PHOTOS_PER_SERIES, PhotoPicker, PhotoProgress } from "@/components/PhotoPicker";
 import { photoUrl, PhotoViewer } from "@/components/PhotoViewer";
 import { callApi } from "@/lib/clientApi";
+import { PHOTO_NOT_FOUND_MESSAGE, probePhoto } from "@/lib/photoLoad";
 import { PhotoReduceError, reducePhoto } from "@/lib/photoResize";
 import { photoErrorMessage, uploadSeriesPhoto, type PhotoMeta } from "@/lib/photoUpload";
 
@@ -14,8 +15,24 @@ type Job =
   | { phase: "uploading"; fraction: number }
   | { phase: "failed"; message: string; blob: Blob | null };
 
-/** Miniatura com esqueleto enquanto carrega e "tentar de novo" se falhar. */
-function Thumbnail({ seriesId, photo, seriesNumber, onOpen }: { seriesId: string; photo: PhotoMeta; seriesNumber: number; onOpen: () => void }) {
+/**
+ * Miniatura com esqueleto enquanto carrega. Se falhar, descobre o motivo: foto inexistente (404) sai da lista com
+ * a mensagem "Foto não encontrada." (tentar de novo não resolve); sessão renovada recarrega uma vez; rede/servidor
+ * mostram "tentar de novo".
+ */
+function Thumbnail({
+  seriesId,
+  photo,
+  seriesNumber,
+  onOpen,
+  onMissing,
+}: {
+  seriesId: string;
+  photo: PhotoMeta;
+  seriesNumber: number;
+  onOpen: () => void;
+  onMissing: (photo: PhotoMeta) => void;
+}) {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
 
@@ -49,7 +66,13 @@ function Thumbnail({ seriesId, photo, seriesNumber, onOpen }: { seriesId: string
         src={`${photoUrl(seriesId, photo.id, "thumbnail")}${attempt ? `?t=${attempt}` : ""}`}
         alt={`Foto do alvo da série ${seriesNumber}`}
         onLoad={() => setState("ready")}
-        onError={() => setState("error")}
+        onError={() => {
+          void probePhoto(photoUrl(seriesId, photo.id, "thumbnail")).then((result) => {
+            if (result === "missing") onMissing(photo);
+            else if (result === "available" && attempt === 0) setAttempt(1);
+            else setState("error");
+          });
+        }}
         className="h-full w-full object-cover"
       />
     </button>
@@ -80,6 +103,7 @@ export function SeriesPhotos({
   const [panelOpen, setPanelOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [job, setJob] = useState<Job>({ phase: "idle" });
+  const [notice, setNotice] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const onCountChangeRef = useRef(onCountChange);
   useEffect(() => {
@@ -113,7 +137,17 @@ export function SeriesPhotos({
   const limitReached = count >= MAX_PHOTOS_PER_SERIES;
   const busy = job.phase === "reducing" || job.phase === "uploading";
 
+  /** 404 numa imagem: a foto foi excluída em outro lugar. Sai da lista na hora e a lista do servidor é relida. */
+  function handleMissing(photo: PhotoMeta) {
+    const remaining = photos.filter((p) => p.id !== photo.id);
+    setPhotos(remaining);
+    setNotice(PHOTO_NOT_FOUND_MESSAGE);
+    if (remaining.length === 0) setViewerIndex(null);
+    void load();
+  }
+
   async function sendBlob(blob: Blob) {
+    setNotice(null);
     const controller = new AbortController();
     abortRef.current = controller;
     setJob({ phase: "uploading", fraction: 0 });
@@ -186,9 +220,23 @@ export function SeriesPhotos({
             <div key={i} className="h-14 w-14 animate-pulse rounded-md bg-surface" aria-hidden="true" />
           ))}
         {photos.slice(0, MAX_PHOTOS_PER_SERIES).map((photo, i) => (
-          <Thumbnail key={photo.id} seriesId={seriesId} photo={photo} seriesNumber={seriesNumber} onOpen={() => setViewerIndex(i)} />
+          <Thumbnail
+            key={photo.id}
+            seriesId={seriesId}
+            photo={photo}
+            seriesNumber={seriesNumber}
+            onOpen={() => {
+              setNotice(null);
+              setViewerIndex(i);
+            }}
+            onMissing={handleMissing}
+          />
         ))}
       </div>
+
+      {notice && viewerIndex === null && (
+        <p className="text-sm text-accent-target" role="alert">{notice}</p>
+      )}
 
       {listState === "error" && (
         <p className="flex items-center gap-2 text-sm text-accent-target" role="alert">
@@ -230,6 +278,8 @@ export function SeriesPhotos({
           onIndexChange={setViewerIndex}
           onClose={() => setViewerIndex(null)}
           onDelete={deletePhoto}
+          onPhotoMissing={handleMissing}
+          notice={notice}
         />
       )}
     </div>

@@ -77,7 +77,7 @@ function LoginForm() {
       />
 
       <div className="relative w-full max-w-sm px-6">
-        <div className="relative z-10">
+        <div className="relative z-content">
           <h1 className="text-5xl mb-3">
             <LogoWordmark animated />
           </h1>

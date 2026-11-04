@@ -9,10 +9,10 @@ import { GET as photoContent } from "../src/app/api/series/[id]/photos/[photoId]
 import { GET as photoThumbnail } from "../src/app/api/series/[id]/photos/[photoId]/thumbnail/route";
 
 /**
- * FUC26 (foto do alvo), Lote 1 — BFF. O backend ainda não implementa as rotas de foto (só os UC60–62), então:
- *  - a primeira parte roda contra o BFF real e só cobre o que independe do backend (id, sessão, origem, tamanho);
- *  - a segunda chama os handlers direto, com o `fetch` do backend substituído, para conferir streaming,
- *    cabeçalhos e repasse de erros.
+ * FUC26 (foto do alvo) — BFF. Duas partes:
+ *  - contra o BFF e o backend reais do ambiente de teste: id inválido, sessão, origem, tamanho e cabeçalhos;
+ *  - chamando os handlers direto, com o `fetch` do backend substituído, para conferir streaming, cabeçalhos enviados
+ *    ao backend (token, Accept) e repasse de erros. O isolamento entre atletas (404 exato) está em foto-alvo.spec.ts.
  */
 const SENHA = "senha12345";
 const SERIE = "11111111-1111-4111-8111-111111111111";
@@ -148,6 +148,8 @@ test.describe("FUC26 — handlers de fotos (backend simulado)", () => {
       expect(new Uint8Array(await resultado.arrayBuffer())).toEqual(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]));
       expect(chamadas[0].url).toContain(`/api/series/${SERIE}/photos/${FOTO}/${kind}`);
       expect(new Headers(chamadas[0].init.headers).get("authorization")).toBe("Bearer jwt-do-atleta");
+      // `image/jpeg` sozinho fazia o backend responder 401 no lugar de 404 (erro JSON sem representação aceita)
+      expect(new Headers(chamadas[0].init.headers).get("accept")).toBe("image/jpeg, application/json;q=0.9");
     }
   });
 
