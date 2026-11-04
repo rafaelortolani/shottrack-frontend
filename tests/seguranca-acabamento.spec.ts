@@ -46,6 +46,20 @@ test.describe("A11 — autoComplete dos campos de e-mail e senha", () => {
     await expect(page.getByLabel("Nova senha")).toHaveAttribute("autocomplete", "new-password");
   });
 
+  test("os campos de e-mail de cadastro, esqueci-senha e troca de e-mail são email", async ({ page }) => {
+    await page.goto("/cadastro");
+    await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
+
+    await page.goto("/esqueci-senha");
+    await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
+
+    const email = randomEmail();
+    await createUser(email, SENHA);
+    await loginUi(page, email);
+    await page.goto("/usuario/email");
+    await expect(page.getByLabel("Novo email")).toHaveAttribute("autocomplete", "email");
+  });
+
   test("excluir conta: a senha de confirmação segue current-password", async ({ page }) => {
     const email = randomEmail();
     await createUser(email, SENHA);

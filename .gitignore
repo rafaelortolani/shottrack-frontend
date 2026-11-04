@@ -3,7 +3,7 @@
 
 # next.js
 /.next/
-/.next-e2e*/
+/.next-*/
 /out/
 
 # production
@@ -40,3 +40,6 @@ inventario-*.txt
 relatorio-*.txt
 relatorio-*.sh
 docs/seguranca/
+
+# Gerado pelo `next dev` (regras do agente); fica local
+AGENTS.md

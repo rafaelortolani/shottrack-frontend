@@ -72,6 +72,7 @@ export default function EsqueciSenhaPage() {
               <input
                 id="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-md bg-surface border border-border px-3 py-2 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"

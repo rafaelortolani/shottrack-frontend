@@ -205,6 +205,7 @@ export default function TrocarEmailPage() {
             <input
               id="newEmail"
               type="email"
+              autoComplete="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               className="w-full rounded-md bg-surface border border-border px-3.5 py-2.5 text-foreground placeholder:text-foreground-muted/60 focus:outline-none focus:ring-2 focus:ring-accent-target/50 focus:border-accent-target transition-colors"
