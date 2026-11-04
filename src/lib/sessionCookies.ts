@@ -9,6 +9,8 @@ const REFRESH_COOKIE = "shottrack_refresh";
  */
 export const REFRESH_COOKIE_PATH = "/api/auth";
 
+const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
+
 const baseOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
@@ -28,13 +30,18 @@ function expireLegacyRefreshCookie(response: NextResponse) {
   );
 }
 
-/** Cookies httpOnly da sessão: access (1h, ADR-0001) e refresh (7 dias, só em `/api/auth`). */
+/**
+ * Cookies httpOnly da sessão. O JWT de acesso vale 1 h (ADR-0001), mas o cookie dura o mesmo que o refresh
+ * (7 dias): com ele expirado o navegador ainda o envia, o backend responde 401 e o cliente renova a sessão
+ * (`/api/auth/refresh`, A07). Se o cookie sumisse com o JWT, a página redirecionaria ao login antes de qualquer
+ * renovação. O refresh vai só para `/api/auth`.
+ */
 export function setSessionCookies(response: NextResponse, accessToken: string, refreshToken: string) {
-  response.cookies.set(ACCESS_COOKIE, accessToken, { ...baseOptions, path: "/", maxAge: 60 * 60 });
+  response.cookies.set(ACCESS_COOKIE, accessToken, { ...baseOptions, path: "/", maxAge: SESSION_MAX_AGE });
   response.cookies.set(REFRESH_COOKIE, refreshToken, {
     ...baseOptions,
     path: REFRESH_COOKIE_PATH,
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: SESSION_MAX_AGE,
   });
   // Sessão aberta antes da restrição de path: o cookie antigo (Path=/) seguiria indo em toda requisição
   expireLegacyRefreshCookie(response);

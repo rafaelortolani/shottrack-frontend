@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 import { Rajdhani, IBM_Plex_Sans } from "next/font/google";
 import { PwaProvider } from "@/components/PwaProvider";
+import { SessionRenewal } from "@/components/SessionRenewal";
 import "./globals.css";
 
 const rajdhani = Rajdhani({
@@ -46,6 +47,7 @@ export default async function RootLayout({
         className={`${rajdhani.variable} ${plexSans.variable} antialiased`}
         suppressHydrationWarning
       >
+        <SessionRenewal />
         <PwaProvider>{children}</PwaProvider>
       </body>
     </html>
