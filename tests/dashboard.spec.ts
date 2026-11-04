@@ -264,9 +264,13 @@ test.describe("Dashboard em abas — Resumo (FUC15 v6)", () => {
     await submitLogin(page, email);
     await openDashboardFromNav(page);
 
-    // Cookie presente (o proxy deixa passar) mas token inválido: o backend
-    // responde 401 e a tela precisa tratar como sessão expirada.
-    await context.addCookies([{ name: "shottrack_access", value: "token-invalido", url: BASE_URL }]);
+    // Cookie presente (o proxy deixa passar) mas token inválido E refresh inválido (a sessão não se renova mais,
+    // A07): o backend responde 401 e a tela precisa tratar como sessão expirada.
+    const refresh = (await context.cookies()).find((c) => c.name === "shottrack_refresh")!;
+    await context.addCookies([
+      { name: "shottrack_access", value: "token-invalido", url: BASE_URL },
+      { ...refresh, value: "refresh-invalido" },
+    ]);
     await page.reload();
     await expect(page).toHaveURL(/\/login/);
   });
