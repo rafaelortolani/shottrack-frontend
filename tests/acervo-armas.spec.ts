@@ -7,6 +7,8 @@ import {
   getWeaponModels,
   getModelCalibers,
   getValidWeaponCombo,
+  findCatalogModel,
+  pickOption,
   registerWeapon,
   getModalityCatalog,
   addPracticedModality,
@@ -37,16 +39,11 @@ async function findModelsOfDistinctTypes(token: string): Promise<[WeaponCatalogM
   return [modelA, modelB];
 }
 
-/** Modelo com mais de um calibre permitido, procurando em todas as marcas do catálogo. */
+/** Taurus G3: modelo com dois calibres (9mm e .38 TPC), então o calibre precisa ser escolhido. */
 async function findModelWithMultipleCalibers(token: string) {
-  const { brands } = await getWeaponCatalog(token);
-  for (const brand of brands) {
-    for (const model of await getWeaponModels(token, brand.id)) {
-      const calibers = await getModelCalibers(token, model.id);
-      if (calibers.length > 1) return { brand, model, calibers };
-    }
-  }
-  throw new Error("Catálogo de teste sem modelo com mais de um calibre");
+  const { brand, model, calibers } = await findCatalogModel(token, "Taurus", "G3");
+  if (calibers.length < 2) throw new Error("Taurus G3 deveria ter mais de um calibre no catálogo de teste");
+  return { brand, model, calibers };
 }
 
 test.describe("Acervo > Armas (FUC07)", () => {
@@ -69,8 +66,8 @@ test.describe("Acervo > Armas (FUC07)", () => {
     await expect(page.getByLabel("Tipo")).toHaveCount(0);
     await expect(page.getByLabel("Calibre")).toBeDisabled();
 
-    await page.getByLabel("Marca").selectOption({ label: brand.name });
-    await page.getByLabel("Modelo").selectOption({ label: model.name });
+    await pickOption(page, "Marca", brand.name);
+    await pickOption(page, "Modelo", model.name);
 
     const typeField = page.getByLabel("Tipo");
     await expect(typeField).toHaveValue(model.type.name);
@@ -88,16 +85,15 @@ test.describe("Acervo > Armas (FUC07)", () => {
     const email = randomEmail();
     await createUser(email);
     const token = await loginAndGetToken(email);
-    const { brands, calibers: allCalibers } = await getWeaponCatalog(token);
-    const brand = brands[0];
-    const [modelA, modelB] = await getWeaponModels(token, brand.id);
-    const modelACalibers = await getModelCalibers(token, modelA.id);
+    const { calibers: allCalibers } = await getWeaponCatalog(token);
+    const { brand, model: modelA, calibers: modelACalibers } = await findModelWithMultipleCalibers(token);
+    const { model: modelB } = await findCatalogModel(token, "Taurus", "G2C");
     const notAllowed = allCalibers.find((c) => !modelACalibers.some((mc) => mc.id === c.id));
 
     await login(page, email);
     await page.goto("/acervo/armas/nova");
-    await page.getByLabel("Marca").selectOption({ label: brand.name });
-    await page.getByLabel("Modelo").selectOption({ label: modelA.name });
+    await pickOption(page, "Marca", brand.name);
+    await pickOption(page, "Modelo", modelA.name);
 
     const caliberSelect = page.getByLabel("Calibre");
     await expect(caliberSelect).toBeEnabled();
@@ -107,10 +103,90 @@ test.describe("Acervo > Armas (FUC07)", () => {
       await expect(caliberSelect.locator("option", { hasText: notAllowed.name })).toHaveCount(0);
     }
 
+    // Modelo com vários calibres: nada é escolhido sozinho e o cadastro fica bloqueado até escolher
+    await expect(caliberSelect).toHaveValue("");
+    await expect(page.getByRole("button", { name: "Cadastrar" })).toBeDisabled();
     await caliberSelect.selectOption({ label: modelACalibers[0].name });
-    await page.getByLabel("Modelo").selectOption({ label: modelB.name });
+    await expect(page.getByRole("button", { name: "Cadastrar" })).toBeEnabled();
+
+    await pickOption(page, "Modelo", modelB.name);
     await expect(caliberSelect).toHaveValue("");
     await expect(page.getByLabel("Tipo")).toHaveValue(modelB.type.name);
+  });
+
+  test("trocar a marca limpa modelo, tipo e calibre", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { brand: taurus, model, caliber } = await findCatalogModel(token, "Taurus", "G2C").then((c) => ({
+      ...c,
+      caliber: c.calibers[0],
+    }));
+    const { brand: glock } = await findCatalogModel(token, "Glock", "G17");
+
+    await login(page, email);
+    await page.goto("/acervo/armas/nova");
+    await pickOption(page, "Marca", taurus.name);
+    await pickOption(page, "Modelo", model.name);
+    await page.getByLabel("Calibre").selectOption({ label: caliber.name });
+    await expect(page.getByRole("button", { name: "Cadastrar" })).toBeEnabled();
+
+    await pickOption(page, "Marca", glock.name);
+    await expect(page.getByRole("combobox", { name: "Modelo" })).toHaveValue("");
+    await expect(page.getByLabel("Tipo")).toHaveCount(0);
+    await expect(page.getByLabel("Calibre")).toHaveValue("");
+    await expect(page.getByRole("button", { name: "Cadastrar" })).toBeDisabled();
+  });
+
+  test("seletor de modelo com catálogo grande: ordem alfabética, busca, teclado e sem texto livre", async ({ page }) => {
+    const email = randomEmail();
+    await createUser(email);
+    const token = await loginAndGetToken(email);
+    const { brand } = await findCatalogModel(token, "Taurus", "G2C");
+    const models = await getWeaponModels(token, brand.id);
+    // Ponto de partida da conferência de usabilidade: a Taurus tem dezenas de modelos
+    expect(models.length).toBeGreaterThan(40);
+
+    await login(page, email);
+    await page.goto("/acervo/armas/nova");
+    const modelField = page.getByRole("combobox", { name: "Modelo" });
+    await expect(modelField).toBeDisabled();
+
+    await pickOption(page, "Marca", brand.name);
+    await modelField.click();
+    const listbox = page.getByRole("listbox", { name: "Modelo" });
+    const options = listbox.getByRole("option");
+    await expect(options).toHaveCount(models.length);
+    const shown = await options.allTextContents();
+    expect(shown).toEqual(models.map((m) => m.name));
+
+    // A lista rola dentro do próprio painel (não alarga nem empurra a página)
+    const box = await listbox.evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
+    expect(box.scroll).toBeGreaterThan(box.client);
+
+    // Busca sem diferenciar caixa: "g2c" mostra só os modelos que contêm G2C
+    await modelField.fill("g2c");
+    const filtered = models.filter((m) => m.name.toLowerCase().includes("g2c")).map((m) => m.name);
+    await expect(options).toHaveText(filtered);
+
+    // Sem resultado: aviso, e o texto livre não vira valor
+    await modelField.fill("zzzz-inexistente");
+    await expect(listbox.getByText("Nenhum resultado")).toBeVisible();
+    await modelField.blur();
+    await expect(modelField).toHaveValue("");
+    await expect(page.getByLabel("Tipo")).toHaveCount(0);
+
+    // Teclado: ↓ abre, ↓ navega, Enter escolhe (sem enviar o formulário), Esc fecha
+    const g3 = models.filter((m) => m.name.toLowerCase().includes("g3")).map((m) => m.name);
+    expect(g3.length).toBeGreaterThan(1);
+    await modelField.focus();
+    await modelField.fill("g3");
+    await modelField.press("ArrowDown");
+    await modelField.press("Enter");
+    await expect(modelField).toHaveValue(g3[1]);
+    await expect(listbox).toHaveCount(0);
+    await expect(page).toHaveURL(/\/acervo\/armas\/nova/);
+    await modelField.press("Escape");
   });
 
   test("edita o apelido de uma arma existente, com tipo somente leitura", async ({ page }) => {

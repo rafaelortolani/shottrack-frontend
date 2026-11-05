@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
+import { Combobox } from "@/components/Combobox";
 import { PageContainer } from "@/components/PageContainer";
 import { safeFetch } from "@/lib/safeFetch";
 
@@ -200,44 +201,24 @@ export default function NovaArmaPage() {
       <p className="text-foreground-muted mb-6">Selecione marca, modelo e calibre.</p>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <div>
-          <label htmlFor="brandId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
-            Marca
-          </label>
-          <select
-            id="brandId"
-            required
-            value={brandId}
-            onChange={(e) => handleBrandChange(e.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="" disabled>Selecione</option>
-            {brands.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
-        </div>
+        <Combobox
+          id="brandId"
+          label="Marca"
+          options={brands}
+          value={brandId}
+          onChange={handleBrandChange}
+          placeholder="Digite ou selecione"
+        />
 
-        <div>
-          <label htmlFor="modelId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
-            Modelo
-          </label>
-          <select
-            id="modelId"
-            required
-            disabled={!brandId || loadingModels}
-            value={modelId}
-            onChange={(e) => handleModelChange(e.target.value)}
-            className={SELECT_CLASS}
-          >
-            <option value="" disabled>
-              {brandId ? "Selecione" : "Escolha uma marca primeiro"}
-            </option>
-            {models.map((m) => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
-          </select>
-        </div>
+        <Combobox
+          id="modelId"
+          label="Modelo"
+          options={models}
+          value={modelId}
+          onChange={handleModelChange}
+          disabled={!brandId || loadingModels}
+          placeholder={brandId ? "Digite ou selecione" : "Escolha uma marca primeiro"}
+        />
 
         {selectedModel && (
           <div>

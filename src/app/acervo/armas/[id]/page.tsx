@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CancelButton } from "@/components/CancelButton";
+import { Combobox } from "@/components/Combobox";
 import { PageContainer } from "@/components/PageContainer";
 import { safeFetch } from "@/lib/safeFetch";
 
@@ -301,41 +302,24 @@ export default function EditarArmaPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="brandId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
-              Marca
-            </label>
-            <select
-              id="brandId"
-              required
-              value={brandId}
-              onChange={(e) => handleBrandChange(e.target.value)}
-              className={SELECT_CLASS}
-            >
-              {brands.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
-          </div>
+          <Combobox
+            id="brandId"
+            label="Marca"
+            options={brands}
+            value={brandId}
+            onChange={handleBrandChange}
+            placeholder="Digite ou selecione"
+          />
 
-          <div>
-            <label htmlFor="modelId" className="block text-xs uppercase tracking-wide text-foreground-muted mb-1">
-              Modelo
-            </label>
-            <select
-              id="modelId"
-              required
-              disabled={!brandId || loadingModels}
-              value={modelId}
-              onChange={(e) => handleModelChange(e.target.value)}
-              className={SELECT_CLASS}
-            >
-              <option value="" disabled>Selecione</option>
-              {models.map((m) => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </select>
-          </div>
+          <Combobox
+            id="modelId"
+            label="Modelo"
+            options={models}
+            value={modelId}
+            onChange={handleModelChange}
+            disabled={!brandId || loadingModels}
+            placeholder={brandId ? "Digite ou selecione" : "Escolha uma marca primeiro"}
+          />
 
           {selectedModel && (
             <div>
