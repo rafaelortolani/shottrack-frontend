@@ -44,7 +44,7 @@ export function DeleteAccountDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-background/80 p-4" onClick={busy ? undefined : onCancel}>
+    <div className="fixed inset-0 z-dialog flex items-center justify-center bg-background/80 p-4" onClick={busy ? undefined : onCancel}>
       <form
         role="dialog"
         aria-modal="true"

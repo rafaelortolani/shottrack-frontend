@@ -27,7 +27,7 @@ export function PageContainer({
       <TargetRings
         className={`absolute -top-14 -right-14 z-0 w-[380px] h-[380px] pointer-events-none text-accent-target`}
       />
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-content">{children}</div>
     </div>
   );
 }

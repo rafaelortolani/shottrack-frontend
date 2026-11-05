@@ -12,11 +12,12 @@ export type PhotoUploadResult =
 /** Mensagens na linguagem do atleta, por código de erro do backend (FUC26). */
 const MESSAGES: Record<string, string> = {
   PHOTO_TOO_LARGE: "A foto é grande demais (máximo de 10 MB). Escolha outra ou tire de novo.",
-  PHOTO_UNSUPPORTED_TYPE: "Formato não aceito. Use uma foto JPEG, PNG ou WebP.",
+  PHOTO_UNSUPPORTED_TYPE: "Formato não aceito. Use uma foto JPEG ou PNG.",
   PHOTO_INVALID_IMAGE: "Não foi possível ler essa imagem. Escolha outra foto.",
   PHOTO_DIMENSIONS_TOO_LARGE: "A imagem tem resolução alta demais. Escolha outra foto.",
   PHOTO_LIMIT_PER_SERIES_REACHED: "Limite de 5 fotos por série.",
   PHOTO_LIMIT_PER_ATHLETE_REACHED: "Você chegou ao limite de fotos da conta. Exclua alguma para enviar outra.",
+  PHOTO_PROCESSING_BUSY: "O servidor está processando outras fotos. Tente de novo em instantes.",
   RATE_LIMITED: "Muitos envios em pouco tempo. Aguarde um pouco e tente de novo.",
   SERIES_NOT_FOUND: "Série não encontrada.",
   PHOTO_NOT_FOUND: "Foto não encontrada.",

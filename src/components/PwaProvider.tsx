@@ -164,7 +164,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
       {!online && (
         <p
           role="status"
-          className="sticky top-0 z-50 bg-surface-raised border-b border-accent-brass px-4 py-2 text-center text-sm text-foreground"
+          className="sticky top-0 z-banner bg-surface-raised border-b border-accent-brass px-4 py-2 text-center text-sm text-foreground"
         >
           {OFFLINE_MESSAGE}
         </p>

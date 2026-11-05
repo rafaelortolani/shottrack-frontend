@@ -25,6 +25,15 @@
   /* verde discreto: só pra melhora num indicador (delta do dashboard) — nunca
      decoração, e o vermelho nunca indica piora (ver skill, "Dashboard") */
   --positive: #6fbf8a;
+
+  /* Escala de camadas (z-index) do projeto. Nunca usar número solto em componente:
+     use as classes z-content, z-nav, z-banner, z-dialog e z-viewer (definidas abaixo).
+     Cada camada fica acima da anterior; o visualizador de fotos cobre tudo, inclusive a barra do app. */
+  --z-content: 10;  /* conteúdo que precisa ficar acima do TargetRings decorativo */
+  --z-nav: 20;      /* barra de navegação inferior (mobile) */
+  --z-banner: 30;   /* aviso "sem conexão" (sticky no topo) */
+  --z-dialog: 40;   /* diálogos de confirmação e formulários modais */
+  --z-viewer: 50;   /* visualizador de fotos em tela cheia (renderizado num portal em document.body) */
 }
 
 @theme inline {
@@ -45,6 +54,12 @@
   --font-display: var(--font-rajdhani);
   --font-sans: var(--font-plex-sans);
 }
+
+@utility z-content { z-index: var(--z-content); }
+@utility z-nav { z-index: var(--z-nav); }
+@utility z-banner { z-index: var(--z-banner); }
+@utility z-dialog { z-index: var(--z-dialog); }
+@utility z-viewer { z-index: var(--z-viewer); }
 
 body {
   background: var(--background);

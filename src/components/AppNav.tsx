@@ -240,7 +240,7 @@ export function AppNav() {
         </div>
       </aside>
 
-      <nav className="flex md:hidden fixed bottom-0 inset-x-0 z-20 border-t border-border bg-background items-center pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+      <nav className="flex md:hidden fixed bottom-0 inset-x-0 z-nav border-t border-border bg-background items-center pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <div className="flex flex-1 items-center justify-around">
           {navItems.map((item) => (
             <MobileNavLink key={item.href} item={item} active={isActive(pathname, item.href)} />

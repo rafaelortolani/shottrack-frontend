@@ -10,6 +10,8 @@ registro rápido (FUC14).
 - **Card de registro rápido de série**: botão discreto "Foto do alvo" (opcional). A foto escolhida fica no aparelho
   e é enviada logo depois que a série é salva. Se o envio falhar, a série continua salva e aparece o aviso
   "Série salva. A foto não foi enviada — tentar de novo".
+  **A foto pendente vive só em memória**: recarregar a página (ou fechar a aba) entre salvar a série e terminar o
+  envio perde a foto. É aceito; a série fica salva e a foto pode ser anexada de novo pela linha da série.
 
 ## Fluxo de captura
 - Dois botões: "Tirar foto" (`<input type="file" accept="image/*" capture="environment">`) e "Escolher da galeria".
@@ -20,11 +22,24 @@ registro rápido (FUC14).
 ## Visualizador
 - Tela cheia (modal) com a foto em tamanho grande, zoom por pinça/duplo toque, deslizar para a próxima/anterior,
   botão fechar e ação "Excluir foto" com confirmação ("Esta foto será removida definitivamente").
+- Renderizado num portal em `document.body`, na camada `z-viewer` (acima da barra de navegação do app; escala de
+  camadas em `src/app/globals.css`), respeitando as áreas seguras do aparelho (`env(safe-area-inset-*)`).
 - Carrega a imagem pelo BFF (`/content`); miniaturas pelo `/thumbnail`.
+- Foto que não existe mais (404, ex.: excluída em outro aparelho): aparece "Foto não encontrada.", a foto sai da lista
+  e o visualizador segue para a vizinha. Não há "tentar de novo" para 404. Um 401 de sessão numa imagem renova a sessão
+  uma vez (como nas demais chamadas); um 404 nunca dispara renovação, logout nem redirecionamento.
 
 ## Erros (inline, na linguagem do atleta)
 `PHOTO_TOO_LARGE`, `PHOTO_UNSUPPORTED_TYPE`, `PHOTO_INVALID_IMAGE`, `PHOTO_DIMENSIONS_TOO_LARGE`,
-`PHOTO_LIMIT_PER_SERIES_REACHED`, `PHOTO_LIMIT_PER_ATHLETE_REACHED`, 429 e falha de rede com "tentar de novo".
+`PHOTO_LIMIT_PER_SERIES_REACHED`, `PHOTO_LIMIT_PER_ATHLETE_REACHED`, `PHOTO_PROCESSING_BUSY` (503: "O servidor está
+processando outras fotos. Tente de novo em instantes."), 429 e falha de rede com "tentar de novo".
+O texto de tipo não suportado segue o backend: "JPEG ou PNG".
+
+## Cache e privacidade
+Nenhuma foto fica em cache: o `Cache-Control` efetivo no navegador, em todas as rotas de foto, é `no-store`
+(`next.config.ts` aplica `no-store` a `/api/**`; o handler das imagens também envia `private, no-store`, mas o do
+`next.config` é o que chega), com `X-Content-Type-Options: nosniff` e `Content-Type: image/jpeg` fixo. O service worker
+nunca intercepta `/api/`.
 
 ## Estados
 Carregando (esqueleto da miniatura), erro de carregamento (ícone + "tentar de novo"), série sem foto (só o botão).
@@ -35,10 +50,12 @@ Botões com alvo de toque ≥ 44 px, texto alternativo "Foto do alvo da série N
 ## Referência backend
 - UC60 `POST /api/series/{id}/photos` · UC61 `GET /api/series/{id}/photos`, `.../{photoId}/content`, `.../{photoId}/thumbnail`
 - UC62 `DELETE /api/series/{id}/photos/{photoId}` · UC37 traz `photoCount`
-(conferir rotas exatas no Swagger depois de implementado)
+- Backend implementado (ADR-0026, UC60–62): 10 MB por arquivo, 5 fotos por série, 500 por atleta, 40 megapixels,
+  30 envios por hora por atleta (429 `TOO_MANY_REQUESTS`).
 
 ## Definição de pronto
-- [ ] Anexar na série existente e no registro rápido; erro de envio não perde a série
-- [ ] Visualizador, exclusão com confirmação, limite de 5
-- [ ] Redução no navegador (tamanho final < 2 MB típico); HEIC convertido
-- [ ] Mobile/PWA; E2E Playwright (usar imagens pequenas de teste); lint e build
+- [x] Anexar na série existente e no registro rápido; erro de envio não perde a série
+- [x] Visualizador (inclusive no celular, 390 px), exclusão com confirmação, limite de 5
+- [x] Redução no navegador (ex.: 4032×3024 de 11 MB vira 2000×1500 de ~1,4 MB). HEIC: convertido onde o navegador o
+  decodifica (Safari); onde não decodifica, erro claro (só este caminho é testado, em Chromium)
+- [x] Mobile/PWA; E2E Playwright contra o backend real (falhas injetadas por `page.route`); lint e build

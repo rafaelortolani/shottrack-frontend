@@ -1,158 +1,21 @@
-import { test, expect, type BrowserContext, type Page, type Route } from "@playwright/test";
-import {
-  addPracticedModality,
-  closeTraining,
-  createUser,
-  getModalityCatalog,
-  loginAndGetToken,
-  openTraining,
-  randomEmail,
-  registerSeries,
-  registerTrainingLocation,
-  startVisit,
-} from "./helpers";
+import { test, expect, type Page } from "@playwright/test";
+import { createUser, randomEmail } from "./helpers";
+import { backendDelete, backendPhotos, cameraButton, gallery, makeImage, seedPhotos, setup, watchUploads } from "./foto-helpers";
 
 /**
- * FUC26 — foto do alvo na série (telas). O backend ainda NÃO implementa as rotas de foto (só os UC60–62), então
- * `/api/series/{id}/photos...` é simulado no navegador (`page.route`) com um armazenamento em memória; treino,
- * série e login são reais. O que roda de verdade aqui: redução no navegador, envio multipart, telas, visualizador.
- * O que o simulador NÃO prova: o BFF repassando ao backend real (coberto por foto-bff.spec.ts com backend simulado)
- * e o isolamento entre atletas, que é regra do backend.
+ * FUC26 — foto do alvo na série (telas), contra o backend REAL do ambiente de teste (porta 8090): treino, série,
+ * fotos, exclusão, limite de 5 e isolamento são do backend de verdade. `page.route` só injeta falhas (503, 429,
+ * 401 de sessão, rede) e uma lista "velha" (foto já excluída em outro aparelho).
+ * O visualizador no celular (390 px) está em foto-visualizador-mobile.spec.ts.
  */
-type FakePhoto = { id: string; position: number; widthPx: number; heightPx: number; sizeBytes: number; createdAt: string };
-type Upload = { seriesId: string; size: number; startsWithJpeg: boolean; uploadHeader: string | undefined };
+const GHOST = "00000000-0000-4000-8000-0000000000ee"; // UUID válido de uma foto que não existe
 
-class FakePhotoBackend {
-  photos = new Map<string, FakePhoto[]>();
-  uploads: Upload[] = [];
-  /** Próximos envios falham com este erro (null = normal). */
-  failUploads: { status: number; code: string; times: number } | null = null;
-  deletes: string[] = [];
-  private jpeg: Buffer<ArrayBufferLike> = Buffer.alloc(0);
-  private counter = 0;
-
-  list(seriesId: string) {
-    return this.photos.get(seriesId) ?? [];
-  }
-
-  seed(seriesId: string, count: number) {
-    for (let i = 0; i < count; i++) this.add(seriesId);
-  }
-
-  private add(seriesId: string, size = 1000) {
-    const list = this.list(seriesId);
-    const photo = { id: `00000000-0000-4000-8000-${String(++this.counter).padStart(12, "0")}`, position: list.length + 1, widthPx: 100, heightPx: 80, sizeBytes: size, createdAt: new Date().toISOString() };
-    this.photos.set(seriesId, [...list, photo]);
-    return photo;
-  }
-
-  async install(page: BrowserContext) {
-    // JPEG real para miniaturas e fotos grandes (gerado por uma aba descartável, no navegador)
-    const probe = await page.newPage();
-    this.jpeg = await makeImage(probe, 120, 90, "image/jpeg");
-    await probe.close();
-
-    await page.route("**/api/trainings/*/series", async (route) => {
-      const response = await route.fetch();
-      if (route.request().method() !== "GET" || !response.ok()) return route.fulfill({ response });
-      const json = await response.json();
-      json.data = json.data.map((s: { id: string }) => ({ ...s, photoCount: this.list(s.id).length }));
-      return route.fulfill({ response, json });
-    });
-
-    await page.route(/\/api\/series\/[^/]+\/photos$/, (route) => this.collection(route));
-    await page.route(/\/api\/series\/[^/]+\/photos\/[^/]+\/(content|thumbnail)(\?.*)?$/, (route) =>
-      route.fulfill({ status: 200, contentType: "image/jpeg", headers: { "cache-control": "private, no-store" }, body: Buffer.from(this.jpeg) })
-    );
-    await page.route(/\/api\/series\/[^/]+\/photos\/[^/]+$/, (route) => this.item(route));
-  }
-
-  private async collection(route: Route) {
-    const request = route.request();
-    const seriesId = request.url().match(/\/series\/([^/]+)\/photos/)![1];
-    if (request.method() === "GET") return route.fulfill({ json: { data: this.list(seriesId) } });
-
-    const body = request.postDataBuffer() ?? Buffer.alloc(0);
-    const start = body.indexOf(Buffer.from([0xff, 0xd8, 0xff]));
-    this.uploads.push({ seriesId, size: body.length, startsWithJpeg: start > 0, uploadHeader: request.headers()["x-shottrack-upload"] });
-
-    if (this.failUploads && this.failUploads.times > 0) {
-      this.failUploads.times--;
-      const { status, code } = this.failUploads;
-      return route.fulfill({ status, json: { error: { code, message: "erro simulado" } } });
-    }
-    if (this.list(seriesId).length >= 5) {
-      return route.fulfill({ status: 409, json: { error: { code: "PHOTO_LIMIT_PER_SERIES_REACHED", message: "limite" } } });
-    }
-    if (start < 0) {
-      return route.fulfill({ status: 415, json: { error: { code: "PHOTO_UNSUPPORTED_TYPE", message: "tipo" } } });
-    }
-    return route.fulfill({ status: 201, json: { data: this.add(seriesId, body.length) } });
-  }
-
-  private async item(route: Route) {
-    const [, seriesId, photoId] = route.request().url().match(/\/series\/([^/]+)\/photos\/([^/]+)$/)!;
-    this.deletes.push(photoId);
-    this.photos.set(seriesId, this.list(seriesId).filter((p) => p.id !== photoId).map((p, i) => ({ ...p, position: i + 1 })));
-    return route.fulfill({ json: { ok: true } });
-  }
-}
-
-/** Imagem de teste gerada no navegador (canvas), no formato pedido. */
-async function makeImage(page: Page, width: number, height: number, type: "image/jpeg" | "image/png"): Promise<Buffer> {
-  const base64 = await page.evaluate(
-    async ([w, h, t]) => {
-      const canvas = document.createElement("canvas");
-      canvas.width = w as number;
-      canvas.height = h as number;
-      const ctx = canvas.getContext("2d")!;
-      ctx.fillStyle = "#c33";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#fff";
-      ctx.beginPath();
-      ctx.arc(canvas.width / 2, canvas.height / 2, canvas.height / 3, 0, Math.PI * 2);
-      ctx.fill();
-      const blob: Blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b!), t as string, 0.9));
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      let binary = "";
-      for (const b of bytes) binary += String.fromCharCode(b);
-      return btoa(binary);
-    },
-    [width, height, type] as const
-  );
-  return Buffer.from(base64, "base64");
-}
-
-async function setup(page: Page, options: { series?: number; closed?: boolean } = {}) {
-  const email = randomEmail();
-  await createUser(email);
-  const token = await loginAndGetToken(email);
-  const location = await registerTrainingLocation(token, { name: "Clube de Tiro Alvorada", city: "Curitiba", state: "PR" });
-  const [modality] = await getModalityCatalog(token);
-  await addPracticedModality(token, modality.id);
-  const visit = await startVisit(token, location.id);
-  const training = await openTraining(token, visit.id, modality.id);
-  const seriesIds: string[] = [];
-  for (let i = 0; i < (options.series ?? 1); i++) seriesIds.push((await registerSeries(token, { trainingId: training.id })).id);
-  if (options.closed) await closeTraining(token, training.id);
-
-  const fake = new FakePhotoBackend();
-  await fake.install(page.context());
-
-  await page.goto("/login");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Senha").fill("senha12345");
-  await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page).toHaveURL(/\/treinos\/visitas/);
-  return { fake, seriesIds, token, email };
-}
-
-const cameraButton = (page: Page, n = 1) => page.getByRole("button", { name: new RegExp(`^Fotos do alvo da série ${n}:`) });
-const gallery = (page: Page) => page.getByTestId("photo-input-gallery");
+const photoThumbs = (page: Page) => page.getByRole("img", { name: "Foto do alvo da série 1" });
 
 test.describe("Foto do alvo (FUC26) — série existente", () => {
   test("anexa JPEG e PNG: a imagem é reduzida no navegador (≤ 2000 px), enviada como JPEG e a contagem e as miniaturas atualizam", async ({ page }) => {
-    const { fake, seriesIds } = await setup(page);
+    const { seriesIds, token } = await setup(page);
+    const watch = await watchUploads(page);
     await page.goto("/treinos/visitas");
     await expect(cameraButton(page)).toBeVisible();
     await expect(page.getByTestId("photo-count-1")).toHaveText("0");
@@ -164,16 +27,21 @@ test.describe("Foto do alvo (FUC26) — série existente", () => {
     await gallery(page).setInputFiles({ name: "alvo.jpg", mimeType: "image/jpeg", buffer: grande });
 
     await expect(page.getByTestId("photo-count-1")).toHaveText("1");
-    await expect(page.getByRole("img", { name: "Foto do alvo da série 1" })).toHaveCount(1);
-    expect(fake.uploads).toHaveLength(1);
-    expect(fake.uploads[0]).toMatchObject({ seriesId: seriesIds[0], startsWithJpeg: true, uploadHeader: "1" });
-    expect(fake.uploads[0].size).toBeLessThan(grande.length); // 4000x3000 virou 2000x1500
+    await expect(photoThumbs(page)).toHaveCount(1);
+    expect(watch.uploads).toHaveLength(1);
+    expect(watch.uploads[0]).toMatchObject({ seriesId: seriesIds[0], startsWithJpeg: true, uploadHeader: "1" });
+    expect(watch.uploads[0].size).toBeLessThan(grande.length); // 4000x3000 virou 2000x1500
+    // o que o backend guardou: 2000x1500 (a redução do navegador chegou inteira)
+    const guardadas = await backendPhotos(token, seriesIds[0]);
+    expect(guardadas).toHaveLength(1);
+    expect([guardadas[0].widthPx, guardadas[0].heightPx]).toEqual([2000, 1500]);
 
     const png = await makeImage(page, 800, 600, "image/png");
     await gallery(page).setInputFiles({ name: "alvo.png", mimeType: "image/png", buffer: png });
     await expect(page.getByTestId("photo-count-1")).toHaveText("2");
-    expect(fake.uploads[1].startsWithJpeg).toBe(true); // PNG também sobe como JPEG
-    await expect(page.getByRole("img", { name: "Foto do alvo da série 1" })).toHaveCount(2);
+    expect(watch.uploads[1].startsWithJpeg).toBe(true); // PNG também sobe como JPEG
+    await expect(photoThumbs(page)).toHaveCount(2);
+    expect(await backendPhotos(token, seriesIds[0])).toHaveLength(2);
   });
 
   test("a câmera usa capture=environment e a galeria não", async ({ page }) => {
@@ -186,84 +54,111 @@ test.describe("Foto do alvo (FUC26) — série existente", () => {
   });
 
   test("treino encerrado também aceita foto", async ({ page }) => {
-    const { fake } = await setup(page, { closed: true });
+    const { token, seriesIds } = await setup(page, { closed: true });
     await page.goto("/treinos/visitas");
     await page.getByRole("button", { name: "Séries" }).click();
     await cameraButton(page).click();
     await gallery(page).setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 400, 300, "image/jpeg") });
     await expect(page.getByTestId("photo-count-1")).toHaveText("1");
-    expect(fake.uploads).toHaveLength(1);
+    expect(await backendPhotos(token, seriesIds[0])).toHaveLength(1);
   });
 
   test("com fotos já salvas, a contagem e as miniaturas vêm do carregamento da lista (até 5)", async ({ page }) => {
-    const { fake, seriesIds } = await setup(page, { series: 2 });
-    fake.seed(seriesIds[0], 3);
+    const { token, seriesIds } = await setup(page, { series: 2 });
+    await seedPhotos(page, token, seriesIds[0], 3);
     await page.goto("/treinos/visitas");
     await expect(page.getByTestId("photo-count-1")).toHaveText("3");
-    await expect(page.getByRole("img", { name: "Foto do alvo da série 1" })).toHaveCount(3);
+    await expect(photoThumbs(page)).toHaveCount(3);
     await expect(page.getByTestId("photo-count-2")).toHaveText("0");
   });
 
-  test("limite de 5: os botões somem e aparece 'Limite de 5 fotos por série'; a recusa do backend também vira mensagem", async ({ page }) => {
-    const { fake, seriesIds } = await setup(page);
-    fake.seed(seriesIds[0], 5);
+  test("limite de 5: os botões somem e aparece 'Limite de 5 fotos por série'", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
+    await seedPhotos(page, token, seriesIds[0], 5);
     await page.goto("/treinos/visitas");
     await expect(page.getByTestId("photo-count-1")).toHaveText("5");
     await cameraButton(page).click();
     await expect(page.getByText("Limite de 5 fotos por série")).toBeVisible();
     await expect(page.getByRole("button", { name: "Tirar foto" })).toHaveCount(0);
-    await expect(page.getByRole("img", { name: "Foto do alvo da série 1" })).toHaveCount(5);
+    await expect(photoThumbs(page)).toHaveCount(5);
   });
 
-  test("limite atingido em outro aparelho: o envio é recusado, a mensagem aparece e a lista é recarregada", async ({ page }) => {
-    const { fake, seriesIds } = await setup(page);
+  test("limite atingido em outro aparelho: o backend recusa (409 real), a mensagem aparece e a lista é recarregada", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
     await page.goto("/treinos/visitas");
     await cameraButton(page).click();
-    fake.seed(seriesIds[0], 5); // outro aparelho anexou 5 enquanto esta tela estava aberta
+    await seedPhotos(page, token, seriesIds[0], 5); // outro aparelho anexou 5 enquanto esta tela estava aberta
     await gallery(page).setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 300, 200, "image/jpeg") });
     await expect(page.getByRole("alert").filter({ hasText: "Limite de 5 fotos por série." })).toBeVisible();
     await expect(page.getByTestId("photo-count-1")).toHaveText("5");
+    expect(await backendPhotos(token, seriesIds[0])).toHaveLength(5);
   });
 
   test("arquivo que não é imagem: erro claro no navegador e nada é enviado; formato recusado pelo backend também tem mensagem", async ({ page }) => {
-    const { fake } = await setup(page);
+    await setup(page);
+    const watch = await watchUploads(page);
     await page.goto("/treinos/visitas");
     await cameraButton(page).click();
 
     await gallery(page).setInputFiles({ name: "notas.txt", mimeType: "text/plain", buffer: Buffer.from("não sou uma foto") });
     await expect(page.getByRole("alert").filter({ hasText: "não é uma imagem" })).toBeVisible();
-    expect(fake.uploads).toHaveLength(0);
+    expect(watch.uploads).toHaveLength(0);
 
     // imagem corrompida (ou HEIC que o navegador não abre)
     await gallery(page).setInputFiles({ name: "quebrada.jpg", mimeType: "image/jpeg", buffer: Buffer.from([1, 2, 3, 4, 5]) });
     await expect(page.getByRole("alert").filter({ hasText: "Não consegui abrir essa foto" })).toBeVisible();
-    expect(fake.uploads).toHaveLength(0);
+    expect(watch.uploads).toHaveLength(0);
 
-    // o backend recusa o tipo (ex.: política mudou): mensagem na linguagem do atleta
-    fake.failUploads = { status: 415, code: "PHOTO_UNSUPPORTED_TYPE", times: 1 };
+    // o backend recusa o tipo (ex.: política mudou): injetado, a mensagem usa o texto do backend ("JPEG ou PNG")
+    watch.fail = { status: 415, code: "PHOTO_UNSUPPORTED_TYPE", times: 1 };
     await gallery(page).setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 300, 200, "image/jpeg") });
-    await expect(page.getByRole("alert").filter({ hasText: "Formato não aceito" })).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: "Formato não aceito. Use uma foto JPEG ou PNG." })).toBeVisible();
     await expect(page.getByRole("button", { name: "Tentar de novo" })).toHaveCount(0); // não adianta repetir a mesma foto
   });
 
-  test("falha de rede no envio: mensagem com 'Tentar de novo', que reenvia a mesma foto", async ({ page }) => {
-    const { fake } = await setup(page);
+  test("falha de rede/servidor no envio: mensagem com 'Tentar de novo', que reenvia a mesma foto (503 injetado, depois backend real)", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
+    const watch = await watchUploads(page);
     await page.goto("/treinos/visitas");
     await cameraButton(page).click();
-    fake.failUploads = { status: 503, code: "SERVICE_UNAVAILABLE", times: 1 };
+    watch.fail = { status: 503, code: "SERVICE_UNAVAILABLE", times: 1 };
     await gallery(page).setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 300, 200, "image/jpeg") });
     await expect(page.getByRole("alert").filter({ hasText: "Não foi possível enviar a foto" })).toBeVisible();
     await page.getByRole("button", { name: "Tentar de novo" }).click();
     await expect(page.getByTestId("photo-count-1")).toHaveText("1");
-    expect(fake.uploads).toHaveLength(2);
+    expect(watch.uploads).toHaveLength(2);
+    expect(await backendPhotos(token, seriesIds[0])).toHaveLength(1);
+  });
+
+  test("PHOTO_PROCESSING_BUSY (503): mensagem própria em português e 'Tentar de novo'", async ({ page }) => {
+    await setup(page);
+    const watch = await watchUploads(page);
+    await page.goto("/treinos/visitas");
+    await cameraButton(page).click();
+    watch.fail = { status: 503, code: "PHOTO_PROCESSING_BUSY", times: 1 };
+    await gallery(page).setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 300, 200, "image/jpeg") });
+    await expect(page.getByRole("alert").filter({ hasText: "O servidor está processando outras fotos. Tente de novo em instantes." })).toBeVisible();
+    await page.getByRole("button", { name: "Tentar de novo" }).click();
+    await expect(page.getByTestId("photo-count-1")).toHaveText("1");
+  });
+
+  test("429 (limite de envios): mensagem de espera e 'Tentar de novo'", async ({ page }) => {
+    await setup(page);
+    const watch = await watchUploads(page);
+    await page.goto("/treinos/visitas");
+    await cameraButton(page).click();
+    watch.fail = { status: 429, code: "TOO_MANY_REQUESTS", times: 1 };
+    await gallery(page).setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 300, 200, "image/jpeg") });
+    await expect(page.getByRole("alert").filter({ hasText: "Muitos envios em pouco tempo. Aguarde um pouco e tente de novo." })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible();
   });
 
   test("cancelar o envio em andamento: nada é anexado e os botões voltam", async ({ page }) => {
-    const { fake } = await setup(page);
+    const { token, seriesIds } = await setup(page);
     let release!: () => void;
     const hold = new Promise<void>((resolve) => (release = resolve));
     await page.route(/\/api\/series\/[^/]+\/photos$/, async (route) => {
-      if (route.request().method() === "POST") await hold; // envio "travado"
+      if (route.request().method() === "POST") await hold; // envio "travado" no navegador
       await route.fallback();
     });
     await page.goto("/treinos/visitas");
@@ -274,8 +169,8 @@ test.describe("Foto do alvo (FUC26) — série existente", () => {
     await expect(page.getByRole("progressbar")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Tirar foto" })).toBeVisible();
     release();
-    expect(fake.photos.size).toBe(0);
     await expect(page.getByTestId("photo-count-1")).toHaveText("0");
+    expect(await backendPhotos(token, seriesIds[0])).toHaveLength(0);
   });
 });
 
@@ -287,24 +182,26 @@ test.describe("Foto do alvo (FUC26) — registro rápido", () => {
   }
 
   test("a foto fica no aparelho (nada é enviado antes) e sobe logo depois de a série ser salva", async ({ page }) => {
-    const { fake } = await setup(page, { series: 0 });
+    await setup(page, { series: 0 });
+    const watch = await watchUploads(page);
     await openNewSeriesForm(page);
 
     await page.getByRole("button", { name: "Foto do alvo" }).click();
     await gallery(page).setInputFiles({ name: "alvo.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 3000, 2000, "image/jpeg") });
     await expect(page.getByRole("img", { name: "Foto do alvo escolhida" })).toBeVisible();
-    expect(fake.uploads).toHaveLength(0); // ainda só em memória
+    expect(watch.uploads).toHaveLength(0); // ainda só em memória
 
     await page.getByRole("button", { name: "Salvar série" }).click();
     await expect(page.getByRole("button", { name: /^Série 1/ })).toBeVisible();
     await expect(page.getByTestId("photo-count-1")).toHaveText("1");
-    await expect(page.getByRole("img", { name: "Foto do alvo da série 1" })).toHaveCount(1);
-    expect(fake.uploads).toHaveLength(1);
-    expect(fake.uploads[0].startsWithJpeg).toBe(true);
+    await expect(photoThumbs(page)).toHaveCount(1);
+    expect(watch.uploads).toHaveLength(1);
+    expect(watch.uploads[0].startsWithJpeg).toBe(true);
   });
 
   test("é possível tirar a foto escolhida antes de salvar: a série salva sem foto", async ({ page }) => {
-    const { fake } = await setup(page, { series: 0 });
+    await setup(page, { series: 0 });
+    const watch = await watchUploads(page);
     await openNewSeriesForm(page);
     await page.getByRole("button", { name: "Foto do alvo" }).click();
     await gallery(page).setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 300, 200, "image/jpeg") });
@@ -313,12 +210,13 @@ test.describe("Foto do alvo (FUC26) — registro rápido", () => {
     await page.getByRole("button", { name: "Salvar série" }).click();
     await expect(page.getByRole("button", { name: /^Série 1/ })).toBeVisible();
     await expect(page.getByTestId("photo-count-1")).toHaveText("0");
-    expect(fake.uploads).toHaveLength(0);
+    expect(watch.uploads).toHaveLength(0);
   });
 
-  test("falha no envio: a série continua salva e aparece 'Série salva. A foto não foi enviada'; 'tentar de novo' reenvia", async ({ page }) => {
-    const { fake } = await setup(page, { series: 0 });
-    fake.failUploads = { status: 503, code: "SERVICE_UNAVAILABLE", times: 1 };
+  test("falha no envio: a série continua salva e aparece 'Série salva. A foto não foi enviada'; 'tentar de novo' reenvia (backend real)", async ({ page }) => {
+    await setup(page, { series: 0 });
+    const watch = await watchUploads(page);
+    watch.fail = { status: 503, code: "SERVICE_UNAVAILABLE", times: 1 };
     await openNewSeriesForm(page);
     await page.getByRole("button", { name: "Foto do alvo" }).click();
     await gallery(page).setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 600, 400, "image/jpeg") });
@@ -331,30 +229,31 @@ test.describe("Foto do alvo (FUC26) — registro rápido", () => {
     await page.getByRole("button", { name: "tentar de novo" }).click();
     await expect(page.getByRole("alert").filter({ hasText: "A foto não foi enviada" })).toHaveCount(0);
     await expect(page.getByTestId("photo-count-1")).toHaveText("1");
-    expect(fake.uploads).toHaveLength(2);
+    expect(watch.uploads).toHaveLength(2);
 
-    // recarregar não duplica a série nem perde a foto
+    // recarregar não duplica a série nem perde a foto; e a foto está guardada no backend
     await page.reload();
     await expect(page.getByRole("button", { name: /^Série \d/ })).toHaveCount(1);
     await expect(page.getByTestId("photo-count-1")).toHaveText("1");
   });
 
   test("foto com tipo inválido no registro rápido: erro inline e a série salva normalmente sem foto", async ({ page }) => {
-    const { fake } = await setup(page, { series: 0 });
+    await setup(page, { series: 0 });
+    const watch = await watchUploads(page);
     await openNewSeriesForm(page);
     await page.getByRole("button", { name: "Foto do alvo" }).click();
     await gallery(page).setInputFiles({ name: "notas.txt", mimeType: "text/plain", buffer: Buffer.from("x") });
     await expect(page.getByRole("alert").filter({ hasText: "não é uma imagem" })).toBeVisible();
     await page.getByRole("button", { name: "Salvar série" }).click();
     await expect(page.getByRole("button", { name: /^Série 1/ })).toBeVisible();
-    expect(fake.uploads).toHaveLength(0);
+    expect(watch.uploads).toHaveLength(0);
   });
 });
 
 test.describe("Foto do alvo (FUC26) — visualizador e exclusão", () => {
   test("abre em tela cheia com foco no fechar, navega entre fotos, e Esc fecha devolvendo o foco", async ({ page }) => {
-    const { fake, seriesIds } = await setup(page);
-    fake.seed(seriesIds[0], 3);
+    const { token, seriesIds } = await setup(page);
+    await seedPhotos(page, token, seriesIds[0], 3);
     await page.goto("/treinos/visitas");
 
     const thumb = page.getByRole("button", { name: "Abrir foto do alvo da série 1" }).first();
@@ -380,9 +279,9 @@ test.describe("Foto do alvo (FUC26) — visualizador e exclusão", () => {
     await expect(thumb).toBeFocused();
   });
 
-  test("duplo toque amplia e desfaz; deslizar para o lado troca de foto (mouse e toque)", async ({ page }) => {
-    const { fake, seriesIds } = await setup(page);
-    fake.seed(seriesIds[0], 2);
+  test("duplo toque amplia e desfaz; deslizar para o lado troca de foto (mouse)", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
+    await seedPhotos(page, token, seriesIds[0], 2);
     await page.goto("/treinos/visitas");
     await page.getByRole("button", { name: "Abrir foto do alvo da série 1" }).first().click();
     const viewer = page.getByRole("dialog");
@@ -404,9 +303,9 @@ test.describe("Foto do alvo (FUC26) — visualizador e exclusão", () => {
     await expect(viewer.getByText("Foto 2 de 2")).toBeVisible();
   });
 
-  test("excluir pede confirmação: cancelar mantém; confirmar remove, atualiza contagem e miniaturas", async ({ page }) => {
-    const { fake, seriesIds } = await setup(page);
-    fake.seed(seriesIds[0], 2);
+  test("excluir pede confirmação: cancelar mantém; confirmar remove no backend, atualiza contagem e miniaturas", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
+    await seedPhotos(page, token, seriesIds[0], 2);
     await page.goto("/treinos/visitas");
     await expect(page.getByTestId("photo-count-1")).toHaveText("2");
     await page.getByRole("button", { name: "Abrir foto do alvo da série 1" }).first().click();
@@ -417,25 +316,26 @@ test.describe("Foto do alvo (FUC26) — visualizador e exclusão", () => {
     await expect(confirm.getByText("Esta foto será removida definitivamente")).toBeVisible();
     await confirm.getByRole("button", { name: "Cancelar" }).click();
     await expect(confirm).toHaveCount(0);
-    expect(fake.deletes).toHaveLength(0);
+    expect(await backendPhotos(token, seriesIds[0])).toHaveLength(2);
     await expect(page.getByTestId("photo-count-1")).toHaveText("2");
 
     await viewer.getByRole("button", { name: "Excluir foto" }).click();
     await page.getByRole("dialog", { name: "Excluir foto" }).getByRole("button", { name: "Confirmar" }).click();
     await expect(page.getByTestId("photo-count-1")).toHaveText("1");
-    expect(fake.deletes).toHaveLength(1);
+    expect(await backendPhotos(token, seriesIds[0])).toHaveLength(1);
     await expect(page.getByRole("dialog", { name: /foto 1 de 1/ })).toBeVisible(); // segue para a que restou
 
     await page.getByRole("dialog", { name: /foto 1 de 1/ }).getByRole("button", { name: "Excluir foto" }).click();
     await page.getByRole("dialog", { name: "Excluir foto" }).getByRole("button", { name: "Confirmar" }).click();
     await expect(page.getByTestId("photo-count-1")).toHaveText("0");
     await expect(page.getByRole("dialog")).toHaveCount(0); // sem fotos, o visualizador fecha
-    await expect(page.getByRole("img", { name: "Foto do alvo da série 1" })).toHaveCount(0);
+    await expect(photoThumbs(page)).toHaveCount(0);
+    expect(await backendPhotos(token, seriesIds[0])).toHaveLength(0);
   });
 
-  test("falha ao carregar a imagem grande mostra erro com 'Tentar de novo'", async ({ page }) => {
-    const { fake, seriesIds } = await setup(page);
-    fake.seed(seriesIds[0], 1);
+  test("falha ao carregar a imagem grande (rede/servidor) mostra erro com 'Tentar de novo'", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
+    await seedPhotos(page, token, seriesIds[0], 1);
     let falhar = true;
     await page.route(/\/photos\/[^/]+\/content/, (route) => (falhar ? route.fulfill({ status: 502, json: { error: { code: "PHOTO_LOAD_FAILED", message: "x" } } }) : route.fallback()));
     await page.goto("/treinos/visitas");
@@ -446,9 +346,9 @@ test.describe("Foto do alvo (FUC26) — visualizador e exclusão", () => {
     await expect(page.getByRole("dialog").getByRole("img", { name: "Foto do alvo da série 1" })).toBeVisible();
   });
 
-  test("áreas de toque de pelo menos 44 px nos controles de foto", async ({ page }) => {
-    const { fake, seriesIds } = await setup(page);
-    fake.seed(seriesIds[0], 1);
+  test("áreas de toque de pelo menos 44 px nos controles de foto (inclui confirmar e cancelar)", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
+    await seedPhotos(page, token, seriesIds[0], 1);
     await page.goto("/treinos/visitas");
     await cameraButton(page).click();
     for (const locator of [cameraButton(page), page.getByRole("button", { name: "Tirar foto" }), page.getByRole("button", { name: "Escolher da galeria" }), page.getByRole("button", { name: "Abrir foto do alvo da série 1" }).first()]) {
@@ -462,31 +362,140 @@ test.describe("Foto do alvo (FUC26) — visualizador e exclusão", () => {
       expect(box.width, name).toBeGreaterThanOrEqual(44);
       expect(box.height, name).toBeGreaterThanOrEqual(44);
     }
+    await page.getByRole("dialog").getByRole("button", { name: "Excluir foto" }).click();
+    for (const name of ["Confirmar", "Cancelar"]) {
+      const box = (await page.getByRole("dialog", { name: "Excluir foto" }).getByRole("button", { name }).boundingBox())!;
+      expect(box.height, name).toBeGreaterThanOrEqual(44);
+    }
+  });
+});
+
+test.describe("Foto do alvo (FUC26) — foto inexistente (404) e sessão nas imagens", () => {
+  /**
+   * A lista vem "velha": traz também uma foto que já não existe (excluída em outro aparelho). Ela continua velha até
+   * o servidor confirmar o 404 da foto (aí a lista volta ao normal), então não depende de qual leitura chega primeiro.
+   * `thumbnailStub`: a miniatura da fantasma "carrega" (como se estivesse em cache), para dar para abri-la no visualizador.
+   */
+  async function staleListWithGhost(page: Page, thumbnailStub?: Buffer) {
+    let stale = true;
+    await page.route(/\/api\/series\/[^/]+\/photos$/, async (route) => {
+      if (route.request().method() !== "GET" || !stale) return route.fallback();
+      const response = await route.fetch();
+      const json = await response.json();
+      json.data.push({ id: GHOST, position: json.data.length + 1, widthPx: 100, heightPx: 80, sizeBytes: 1000, createdAt: new Date().toISOString() });
+      return route.fulfill({ response, json });
+    });
+    await page.route(new RegExp(`/photos/${GHOST}/(content|thumbnail)`), async (route) => {
+      if (thumbnailStub && route.request().url().includes("/thumbnail")) {
+        return route.fulfill({ status: 200, contentType: "image/jpeg", body: thumbnailStub });
+      }
+      const response = await route.fetch(); // 404 real do backend
+      stale = false;
+      return route.fulfill({ response });
+    });
+  }
+
+  function watchSessionFlow(page: Page) {
+    const refreshCalls: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("/api/auth/refresh")) refreshCalls.push(request.url());
+    });
+    return refreshCalls;
+  }
+
+  test("miniatura de foto inexistente: o backend real responde 404, a miniatura sai da lista com 'Foto não encontrada.', sem renovar sessão nem sair da tela", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
+    await seedPhotos(page, token, seriesIds[0], 2);
+    const refreshCalls = watchSessionFlow(page);
+    await staleListWithGhost(page);
+    await page.goto("/treinos/visitas");
+
+    await expect(page.getByRole("alert").filter({ hasText: "Foto não encontrada." })).toBeVisible();
+    await expect(photoThumbs(page)).toHaveCount(2); // a fantasma saiu; as reais ficaram
+    await expect(page.getByTestId("photo-count-1")).toHaveText("2");
+    await expect(page.getByRole("button", { name: /Tentar de novo carregar a miniatura/ })).toHaveCount(0); // 404 não tem "tentar de novo"
+    expect(refreshCalls).toEqual([]); // 404 de foto não dispara o fluxo de sessão
+    await expect(page).toHaveURL(/\/treinos\/visitas/);
+  });
+
+  test("visualizador: a foto grande vem 404 → mensagem no visualizador, a foto sai da lista e ele segue para a vizinha", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
+    await seedPhotos(page, token, seriesIds[0], 2);
+    const jpeg = await makeImage(page, 120, 90, "image/jpeg");
+    const refreshCalls = watchSessionFlow(page);
+    await staleListWithGhost(page, jpeg); // a foto grande da fantasma é o 404 real
+    await page.goto("/treinos/visitas");
+    await expect(photoThumbs(page)).toHaveCount(3);
+
+    await page.getByRole("button", { name: "Abrir foto do alvo da série 1" }).nth(2).click();
+    const viewer = page.getByRole("dialog");
+    await expect(viewer.getByRole("alert").filter({ hasText: "Foto não encontrada." })).toBeVisible();
+    await expect(viewer.getByText("Foto 2 de 2")).toBeVisible(); // seguiu para a vizinha; a fantasma saiu
+    await expect(viewer.getByRole("button", { name: "Tentar de novo" })).toHaveCount(0);
+    await expect(page.getByTestId("photo-count-1")).toHaveText("2");
+    expect(refreshCalls).toEqual([]);
+    await expect(page).toHaveURL(/\/treinos\/visitas/);
+  });
+
+  test("401 de sessão numa imagem: renova a sessão uma única vez e a miniatura aparece", async ({ page }) => {
+    const { token, seriesIds } = await setup(page);
+    await seedPhotos(page, token, seriesIds[0], 1);
+    const refreshCalls = watchSessionFlow(page);
+    let hits = 0;
+    // a imagem e a sondagem recebem 401 de sessão; a repetição depois da renovação vai ao backend real
+    await page.route(/\/photos\/[^/]+\/thumbnail/, (route) =>
+      hits++ < 2 ? route.fulfill({ status: 401, json: { error: { code: "UNAUTHENTICATED", message: "Sessão expirada" } } }) : route.fallback()
+    );
+    await page.goto("/treinos/visitas");
+    const thumb = photoThumbs(page);
+    await expect(thumb).toHaveCount(1);
+    await expect.poll(() => thumb.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+    expect(refreshCalls).toHaveLength(1);
+    await expect(page).toHaveURL(/\/treinos\/visitas/);
   });
 });
 
 test.describe("Foto do alvo (FUC26) — isolamento via BFF (backend real)", () => {
-  test("atleta B não abre lista, imagem nem miniatura de uma série do atleta A", async ({ page, playwright, baseURL }) => {
-    const { seriesIds } = await setup(page);
-    // sessão do atleta B, sem o simulador (rotas reais do BFF → backend)
+  test("atleta B recebe 404 exato em lista, imagem, miniatura, exclusão e envio de uma série/foto do atleta A", async ({ page, playwright, baseURL }) => {
+    const { seriesIds, token } = await setup(page);
+    const [foto] = await seedPhotos(page, token, seriesIds[0], 1);
+
     const emailB = randomEmail();
     await createUser(emailB);
     const b = await playwright.request.newContext({ baseURL });
     expect((await b.post("/api/auth/login", { data: { email: emailB, password: "senha12345" } })).status()).toBe(200);
 
-    const fotoQualquer = "00000000-0000-4000-8000-0000000000aa";
-    for (const path of [
-      `/api/series/${seriesIds[0]}/photos`,
-      `/api/series/${seriesIds[0]}/photos/${fotoQualquer}/content`,
-      `/api/series/${seriesIds[0]}/photos/${fotoQualquer}/thumbnail`,
-    ]) {
+    for (const path of [`/api/series/${seriesIds[0]}/photos`, `/api/series/${seriesIds[0]}/photos/${foto.id}/content`, `/api/series/${seriesIds[0]}/photos/${foto.id}/thumbnail`]) {
       const response = await b.get(path);
-      expect([401, 403, 404], path).toContain(response.status());
+      expect(response.status(), path).toBe(404); // exatamente 404: nem 401 (sessão) nem 403
       expect(response.headers()["content-type"] ?? "", path).not.toContain("image/");
       expect(response.headers()["cache-control"] ?? "", path).toContain("no-store");
+      expect((await response.json()).error.code, path).toMatch(/^(SERIES_NOT_FOUND|PHOTO_NOT_FOUND)$/);
     }
-    const apagar = await b.delete(`/api/series/${seriesIds[0]}/photos/${fotoQualquer}`);
-    expect([401, 403, 404]).toContain(apagar.status());
+    expect((await b.delete(`/api/series/${seriesIds[0]}/photos/${foto.id}`)).status()).toBe(404);
+    const envio = await b.post(`/api/series/${seriesIds[0]}/photos`, {
+      headers: { "x-shottrack-upload": "1" },
+      multipart: { file: { name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 100, 80, "image/jpeg") } },
+    });
+    expect(envio.status()).toBe(404);
     await b.dispose();
+
+    // a foto do atleta A segue intacta
+    expect(await backendPhotos(token, seriesIds[0])).toHaveLength(1);
+  });
+
+  test("o dono pedindo uma foto que não existe recebe 404 (e não 401 de sessão) nas duas imagens", async ({ page, playwright, baseURL }) => {
+    const { seriesIds, token } = await setup(page);
+    const [foto] = await seedPhotos(page, token, seriesIds[0], 1);
+    await backendDelete(token, seriesIds[0], foto.id);
+
+    // mesma sessão do atleta da tela: usa os cookies do navegador
+    const dono = await playwright.request.newContext({ baseURL, storageState: await page.context().storageState() });
+    for (const kind of ["content", "thumbnail"]) {
+      const response = await dono.get(`/api/series/${seriesIds[0]}/photos/${foto.id}/${kind}`);
+      expect(response.status(), kind).toBe(404);
+      expect((await response.json()).error.code, kind).toBe("PHOTO_NOT_FOUND");
+    }
+    await dono.dispose();
   });
 });
