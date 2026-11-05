@@ -1,32 +1,31 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { IconCamera, IconPhoto } from "@tabler/icons-react";
-
-export const MAX_PHOTOS_PER_SERIES = 5;
 
 const BUTTON =
   "inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm text-foreground hover:bg-surface disabled:opacity-60 transition-colors";
 
 /**
  * FUC26: dois botões — "Tirar foto" (câmera traseira no celular) e "Escolher da galeria". Só entrega o `File`;
- * redução e envio são de quem usa. Com o limite atingido, os botões somem e aparece o aviso.
+ * redução e envio são de quem usa. Com o limite da série atingido (`limit` vem do plano do atleta, FUC28),
+ * os botões ficam desabilitados e a explicação aparece ao lado.
  */
 export function PhotoPicker({
   onFile,
   disabled = false,
   limitReached = false,
+  limit = null,
 }: {
   onFile: (file: File) => void;
   disabled?: boolean;
   limitReached?: boolean;
+  /** Limite de fotos por série do plano (só para o texto do aviso). */
+  limit?: number | null;
 }) {
+  const explainId = useId();
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
-
-  if (limitReached) {
-    return <p className="text-sm text-foreground-muted">Limite de {MAX_PHOTOS_PER_SERIES} fotos por série</p>;
-  }
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -36,14 +35,21 @@ export function PhotoPicker({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <button type="button" className={BUTTON} disabled={disabled} onClick={() => cameraRef.current?.click()}>
+      <button type="button" className={BUTTON} disabled={disabled || limitReached} aria-describedby={limitReached ? explainId : undefined} onClick={() => cameraRef.current?.click()}>
         <IconCamera size={18} stroke={1.75} aria-hidden="true" />
         Tirar foto
       </button>
-      <button type="button" className={BUTTON} disabled={disabled} onClick={() => galleryRef.current?.click()}>
+      <button type="button" className={BUTTON} disabled={disabled || limitReached} aria-describedby={limitReached ? explainId : undefined} onClick={() => galleryRef.current?.click()}>
         <IconPhoto size={18} stroke={1.75} aria-hidden="true" />
         Escolher da galeria
       </button>
+      {limitReached && (
+        <p id={explainId} className="basis-full text-sm text-foreground-muted">
+          {limit !== null
+            ? `Você atingiu o limite de ${limit} ${limit === 1 ? "foto" : "fotos"} por série do seu plano. Exclua uma foto para enviar outra.`
+            : "Você atingiu o limite de fotos por série do seu plano. Exclua uma foto para enviar outra."}
+        </p>
+      )}
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-label="Câmera" data-testid="photo-input-camera" onChange={handleChange} />
       <input ref={galleryRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-label="Galeria" data-testid="photo-input-gallery" onChange={handleChange} />
     </div>

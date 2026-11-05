@@ -34,3 +34,16 @@ export function requireUuidParams<T extends Record<string, string>>(params: T): 
   }
   return validated as T;
 }
+
+const PLAN_CODE = /^[A-Z][A-Z0-9_]{1,29}$/;
+
+/** Código de plano (ex.: GRATUITO): mesmo formato do backend; vai no caminho, então nada fora dele passa. */
+export function requirePlanCode(value: string): string | NextResponse {
+  if (!PLAN_CODE.test(value)) {
+    return NextResponse.json(
+      { error: { code: "INVALID_PARAMETER", message: "Código de plano inválido" } },
+      { status: 400 }
+    );
+  }
+  return encodeURIComponent(value);
+}

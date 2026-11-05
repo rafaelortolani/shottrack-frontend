@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { resultTypeKind, resultTypeUnit } from "@/lib/resultTypeFormat";
 import { PhotoPicker, PhotoProgress } from "@/components/PhotoPicker";
 import { SeriesPhotos } from "@/components/SeriesPhotos";
+import { useMyPlan } from "@/lib/useMyPlan";
 import { PhotoReduceError, reducePhoto } from "@/lib/photoResize";
 import { uploadSeriesPhoto } from "@/lib/photoUpload";
 import { safeFetch } from "@/lib/safeFetch";
@@ -294,6 +295,8 @@ export function SeriesAccordion({
   >(null);
   const [photoRefresh, setPhotoRefresh] = useState<Record<string, number>>({});
   const photoAbort = useRef<AbortController | null>(null);
+  // Limite de fotos por série vem do plano do atleta (FUC28), nunca fixo no código
+  const { plan: myPlan, refresh: refreshPlan } = useMyPlan(expanded);
 
   const weaponsById = new Map(weapons.map((w) => [w.id, w]));
 
@@ -360,6 +363,7 @@ export function SeriesAccordion({
       setPhotoJob(null);
       setSeries((prev) => prev.map((s) => (s.id === seriesId ? { ...s, photoCount: (s.photoCount ?? 0) + 1 } : s)));
       setPhotoRefresh((prev) => ({ ...prev, [seriesId]: (prev[seriesId] ?? 0) + 1 }));
+      void refreshPlan();
       return;
     }
     if (result.aborted) {
@@ -512,6 +516,8 @@ export function SeriesAccordion({
                         seriesNumber={index + 1}
                         photoCount={s.photoCount ?? 0}
                         refreshToken={photoRefresh[s.id] ?? 0}
+                        photoLimit={myPlan?.limits.photosPerSeries ?? null}
+                        onPhotosChanged={refreshPlan}
                         onCountChange={(count) =>
                           setSeries((prev) => prev.map((item) => (item.id === s.id && (item.photoCount ?? 0) !== count ? { ...item, photoCount: count } : item)))
                         }

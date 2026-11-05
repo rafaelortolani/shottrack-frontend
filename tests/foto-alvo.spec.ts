@@ -4,7 +4,7 @@ import { backendDelete, backendPhotos, cameraButton, gallery, makeImage, seedPho
 
 /**
  * FUC26 — foto do alvo na série (telas), contra o backend REAL do ambiente de teste (porta 8090): treino, série,
- * fotos, exclusão, limite de 5 e isolamento são do backend de verdade. `page.route` só injeta falhas (503, 429,
+ * fotos, exclusão, limite da série e isolamento são do backend de verdade. `page.route` só injeta falhas (503, 429,
  * 401 de sessão, rede) e uma lista "velha" (foto já excluída em outro aparelho).
  * O visualizador no celular (390 px) está em foto-visualizador-mobile.spec.ts.
  */
@@ -72,14 +72,16 @@ test.describe("Foto do alvo (FUC26) — série existente", () => {
     await expect(page.getByTestId("photo-count-2")).toHaveText("0");
   });
 
-  test("limite de 5: os botões somem e aparece 'Limite de 5 fotos por série'", async ({ page }) => {
+  test("limite do plano (5 no Gratuito): '5 de 5 fotos nesta série', botões desabilitados e explicação", async ({ page }) => {
     const { token, seriesIds } = await setup(page);
     await seedPhotos(page, token, seriesIds[0], 5);
     await page.goto("/treinos/visitas");
     await expect(page.getByTestId("photo-count-1")).toHaveText("5");
     await cameraButton(page).click();
-    await expect(page.getByText("Limite de 5 fotos por série")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Tirar foto" })).toHaveCount(0);
+    await expect(page.getByTestId("photo-limit-1")).toHaveText("5 de 5 fotos nesta série");
+    await expect(page.getByText("Você atingiu o limite de 5 fotos por série do seu plano. Exclua uma foto para enviar outra.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Tirar foto" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Escolher da galeria" })).toBeDisabled();
     await expect(photoThumbs(page)).toHaveCount(5);
   });
 
@@ -89,7 +91,7 @@ test.describe("Foto do alvo (FUC26) — série existente", () => {
     await cameraButton(page).click();
     await seedPhotos(page, token, seriesIds[0], 5); // outro aparelho anexou 5 enquanto esta tela estava aberta
     await gallery(page).setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: await makeImage(page, 300, 200, "image/jpeg") });
-    await expect(page.getByRole("alert").filter({ hasText: "Limite de 5 fotos por série." })).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: "Você atingiu o limite de fotos por série do seu plano. Exclua uma foto para enviar outra." })).toBeVisible();
     await expect(page.getByTestId("photo-count-1")).toHaveText("5");
     expect(await backendPhotos(token, seriesIds[0])).toHaveLength(5);
   });
