@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import {
+  pickOption,
   createUser,
   randomEmail,
   loginAndGetToken,
@@ -210,8 +211,8 @@ test.describe("Mobile smoke (FUC22)", () => {
     await expectTouchFriendly(page);
     await expectNoHorizontalScroll(page);
 
-    await page.getByLabel("Marca").selectOption({ label: brand.name });
-    await page.getByLabel("Modelo").selectOption({ label: model.name });
+    await pickOption(page, "Marca", brand.name);
+    await pickOption(page, "Modelo", model.name);
     await page.getByLabel("Calibre").selectOption({ label: caliber.name });
     await page.getByRole("button", { name: "Cadastrar" }).click();
 

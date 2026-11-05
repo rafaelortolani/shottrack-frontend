@@ -258,13 +258,34 @@ export async function getModelCalibers(accessToken: string, modelId: string): Pr
   return data;
 }
 
-/** Primeira combinação válida marca → modelo → calibre do catálogo. */
-export async function getValidWeaponCombo(accessToken: string) {
+/** Busca marca → modelo pelo nome no catálogo (falha alto se o catálogo mudou). */
+export async function findCatalogModel(accessToken: string, brandName: string, modelName: string) {
   const { brands } = await getWeaponCatalog(accessToken);
-  const brand = brands[0];
-  const [model] = await getWeaponModels(accessToken, brand.id);
-  const [caliber] = await getModelCalibers(accessToken, model.id);
+  const brand = brands.find((b) => b.name === brandName);
+  if (!brand) throw new Error(`Marca fora do catálogo de teste: ${brandName}`);
+  const model = (await getWeaponModels(accessToken, brand.id)).find((m) => m.name === modelName);
+  if (!model) throw new Error(`Modelo fora do catálogo de teste: ${brandName} ${modelName}`);
+  const calibers = await getModelCalibers(accessToken, model.id);
+  return { brand, model, calibers };
+}
+
+/** Combinação válida e estável do catálogo: Glock G17 em 9mm. */
+export async function getValidWeaponCombo(accessToken: string) {
+  const { brand, model, calibers } = await findCatalogModel(accessToken, "Glock", "G17");
+  const caliber = calibers.find((c) => c.name === "9mm");
+  if (!caliber) throw new Error("Glock G17 sem 9mm no catálogo de teste");
   return { brand, model, caliber };
+}
+
+/**
+ * Escolhe um item num combobox com busca (Marca/Modelo): digita parte do nome e clica na opção exata.
+ * Exercita o caminho real do atleta (filtrar → escolher), não só a lista inteira.
+ */
+export async function pickOption(page: import("@playwright/test").Page, label: string, name: string) {
+  const field = page.getByRole("combobox", { name: label });
+  await field.click();
+  await field.fill(name);
+  await page.getByRole("listbox", { name: label }).getByRole("option", { name, exact: true }).click();
 }
 
 export async function registerWeapon(
