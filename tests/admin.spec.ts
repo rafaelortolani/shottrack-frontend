@@ -44,7 +44,7 @@ test.describe("Administração (ADR-0021)", () => {
     expect(new URL(response.headers()["location"], response.url()).pathname).toBe("/dashboard");
   });
 
-  test("admin vê o item no menu e abre /admin com o cartão de habitualidade ativo", async ({ page }) => {
+  test("admin vê o item no menu e abre /admin com os cartões de habitualidade e de planos e limites", async ({ page }) => {
     const email = randomEmail();
     await createUser(email);
     setUserRole(email, "ADMIN");
@@ -58,7 +58,10 @@ test.describe("Administração (ADR-0021)", () => {
     const card = page.getByRole("main").getByRole("link", { name: "Regras de habitualidade" });
     await expect(card).toBeVisible();
     await expect(card).toHaveAttribute("href", "/admin/habitualidade");
-    await expect(page.getByRole("main").getByRole("link")).toHaveCount(1);
+    // cartões do painel: habitualidade (FUC24) e planos e limites (FUC27)
+    const planos = page.getByRole("main").getByRole("link", { name: "Planos e limites" });
+    await expect(planos).toHaveAttribute("href", "/admin/planos");
+    await expect(page.getByRole("main").getByRole("link")).toHaveCount(2);
   });
 
   test("sem login, /admin leva ao /login (no servidor)", async ({ page, request }) => {

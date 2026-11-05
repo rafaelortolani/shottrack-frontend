@@ -28,12 +28,12 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-md bg-surface p-5"
+        className="w-full max-w-sm max-h-[90dvh] overflow-y-auto rounded-md bg-surface p-5"
       >
         <h2 id={titleId} className="font-display text-base font-semibold mb-2">
           {title}
         </h2>
-        <p className="text-foreground-muted mb-4">{children}</p>
+        <div className="text-foreground-muted mb-4 space-y-2">{children}</div>
         <div className="flex items-center gap-3">
           <button
             type="button"

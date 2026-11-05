@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IconCalendarStats } from "@tabler/icons-react";
+import { IconCalendarStats, IconAdjustmentsHorizontal } from "@tabler/icons-react";
 
 export default function AdminPage() {
   return (
@@ -14,6 +14,16 @@ export default function AdminPage() {
           <IconCalendarStats size={20} stroke={1.75} className="text-accent-sage-soft" />
         </span>
         <p className="font-medium">Regras de habitualidade</p>
+      </Link>
+
+      <Link
+        href="/admin/planos"
+        className="flex items-center gap-3 rounded-md bg-surface hover:bg-surface-raised p-4 min-h-11 transition-colors mt-2"
+      >
+        <span className="flex items-center justify-center w-10 h-10 rounded-full shrink-0 bg-accent-sage/15">
+          <IconAdjustmentsHorizontal size={20} stroke={1.75} className="text-accent-sage-soft" />
+        </span>
+        <p className="font-medium">Planos e limites</p>
       </Link>
     </div>
   );

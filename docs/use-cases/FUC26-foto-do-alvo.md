@@ -17,7 +17,8 @@ registro rápido (FUC14).
 - Dois botões: "Tirar foto" (`<input type="file" accept="image/*" capture="environment">`) e "Escolher da galeria".
 - **Antes de enviar**, o navegador reduz a imagem (lado maior 2000 px, JPEG ~0,85, respeitando a orientação da foto) e
   confere o tamanho; isso também converte HEIC. Barra de progresso durante o envio; botão de cancelar.
-- Máximo de 5 fotos por série: ao chegar no limite, o botão some e aparece "Limite de 5 fotos por série".
+- Limite de fotos por série vem do plano do atleta (FUC28, `GET /api/users/me/plan`; 5 no plano Gratuito), nunca fixo no código: a tela mostra "N de LIMITE fotos nesta série" e, ao chegar no limite, os botões ficam desabilitados com a explicação "Você atingiu o limite de N fotos por série do seu plano. Exclua uma foto para enviar outra.". Se o limite for reduzido abaixo do que já existe, todas as fotos continuam visíveis; só novos envios são bloqueados.
+- Mensagens do backend: `PHOTO_LIMIT_PER_SERIES_REACHED`, `PHOTO_LIMIT_PER_ATHLETE_REACHED` e `PHOTO_STORAGE_LIMIT_REACHED` ("Você atingiu o espaço do seu plano. Exclua fotos antigas para enviar novas."). O uso do plano é lido de novo depois de enviar ou excluir fotos.
 
 ## Visualizador
 - Tela cheia (modal) com a foto em tamanho grande, zoom por pinça/duplo toque, deslizar para a próxima/anterior,
@@ -50,12 +51,12 @@ Botões com alvo de toque ≥ 44 px, texto alternativo "Foto do alvo da série N
 ## Referência backend
 - UC60 `POST /api/series/{id}/photos` · UC61 `GET /api/series/{id}/photos`, `.../{photoId}/content`, `.../{photoId}/thumbnail`
 - UC62 `DELETE /api/series/{id}/photos/{photoId}` · UC37 traz `photoCount`
-- Backend implementado (ADR-0026, UC60–62): 10 MB por arquivo, 5 fotos por série, 500 por atleta, 40 megapixels,
+- Backend implementado (ADR-0026, UC60–62): 10 MB por arquivo, 5 fotos por série, 500 por atleta (valores do plano Gratuito; editáveis pelo administrador, FUC27), 40 megapixels,
   30 envios por hora por atleta (429 `TOO_MANY_REQUESTS`).
 
 ## Definição de pronto
 - [x] Anexar na série existente e no registro rápido; erro de envio não perde a série
-- [x] Visualizador (inclusive no celular, 390 px), exclusão com confirmação, limite de 5
+- [x] Visualizador (inclusive no celular, 390 px), exclusão com confirmação, limite da série vindo do plano
 - [x] Redução no navegador (ex.: 4032×3024 de 11 MB vira 2000×1500 de ~1,4 MB). HEIC: convertido onde o navegador o
   decodifica (Safari); onde não decodifica, erro claro (só este caminho é testado, em Chromium)
 - [x] Mobile/PWA; E2E Playwright contra o backend real (falhas injetadas por `page.route`); lint e build

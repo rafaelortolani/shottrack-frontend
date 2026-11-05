@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { MyPlanCard } from "@/components/MyPlanCard";
 import { InstallApp } from "@/components/InstallApp";
 import { safeFetch } from "@/lib/safeFetch";
 
@@ -236,6 +237,8 @@ function PerfilTabForm() {
           </Link>
         </div>
       </div>
+
+      <MyPlanCard />
 
       <div className="mt-4">
         <InstallApp variant="section" />

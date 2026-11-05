@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IconCamera, IconPhotoOff } from "@tabler/icons-react";
-import { MAX_PHOTOS_PER_SERIES, PhotoPicker, PhotoProgress } from "@/components/PhotoPicker";
+import { PhotoPicker, PhotoProgress } from "@/components/PhotoPicker";
 import { photoUrl, PhotoViewer } from "@/components/PhotoViewer";
 import { callApi } from "@/lib/clientApi";
 import { PHOTO_NOT_FOUND_MESSAGE, probePhoto } from "@/lib/photoLoad";
@@ -80,7 +80,7 @@ function Thumbnail({
 }
 
 /**
- * FUC26: fotos de uma série existente — ícone de câmera com a contagem, até 5 miniaturas e o visualizador.
+ * FUC26: fotos de uma série existente — ícone de câmera com a contagem, miniaturas de todas as fotos (reduzir o limite do plano nunca esconde nem apaga fotos já enviadas) e o visualizador.
  * O ícone abre o painel de anexar (tirar foto / galeria, progresso e cancelar). A lista sempre vem do BFF
  * (no-store) depois de anexar ou excluir, então a contagem nunca fica obsoleta.
  * `refreshToken` muda quando a tela-mãe anexou uma foto por fora (registro rápido).
@@ -91,12 +91,18 @@ export function SeriesPhotos({
   photoCount,
   refreshToken,
   onCountChange,
+  photoLimit,
+  onPhotosChanged,
 }: {
   seriesId: string;
   seriesNumber: number;
   photoCount: number;
   refreshToken: number;
   onCountChange: (count: number) => void;
+  /** Limite de fotos por série do plano do atleta (FUC28); `null` enquanto não carregou. */
+  photoLimit: number | null;
+  /** Avisa que fotos foram enviadas/excluídas, para atualizar o uso do plano. */
+  onPhotosChanged: () => void;
 }) {
   const [photos, setPhotos] = useState<PhotoMeta[]>([]);
   const [listState, setListState] = useState<"idle" | "loading" | "error">(photoCount > 0 ? "loading" : "idle");
@@ -106,8 +112,10 @@ export function SeriesPhotos({
   const [notice, setNotice] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const onCountChangeRef = useRef(onCountChange);
+  const onPhotosChangedRef = useRef(onPhotosChanged);
   useEffect(() => {
     onCountChangeRef.current = onCountChange;
+    onPhotosChangedRef.current = onPhotosChanged;
   });
 
   const load = useCallback(async () => {
@@ -134,7 +142,7 @@ export function SeriesPhotos({
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const count = listState === "idle" ? photos.length : photoCount;
-  const limitReached = count >= MAX_PHOTOS_PER_SERIES;
+  const limitReached = photoLimit !== null && count >= photoLimit;
   const busy = job.phase === "reducing" || job.phase === "uploading";
 
   /** 404 numa imagem: a foto foi excluída em outro lugar. Sai da lista na hora e a lista do servidor é relida. */
@@ -160,6 +168,7 @@ export function SeriesPhotos({
     if (result.ok) {
       setJob({ phase: "idle" });
       await load();
+      onPhotosChangedRef.current();
       return;
     }
     if (result.aborted) {
@@ -170,6 +179,7 @@ export function SeriesPhotos({
     const retryable = result.status === 0 || result.status === 429 || result.status >= 500;
     setJob({ phase: "failed", message: result.message, blob: retryable ? blob : null });
     if (result.code === "PHOTO_LIMIT_PER_SERIES_REACHED") await load();
+    if (result.code?.startsWith("PHOTO_LIMIT") || result.code === "PHOTO_STORAGE_LIMIT_REACHED") onPhotosChangedRef.current();
   }
 
   async function handleFile(file: File) {
@@ -192,6 +202,7 @@ export function SeriesPhotos({
     const result = await callApi(`/api/series/${seriesId}/photos/${photo.id}`, { method: "DELETE", fallback: "Não foi possível excluir a foto" });
     if (!result.ok && result.status !== 404) return photoErrorMessage(result.code, result.status, result.message);
     const remaining = await load();
+    onPhotosChangedRef.current();
     if (remaining) {
       if (remaining.length === 0) setViewerIndex(null);
       else setViewerIndex((i) => Math.min(i ?? 0, remaining.length - 1));
@@ -216,10 +227,10 @@ export function SeriesPhotos({
         </button>
 
         {listState === "loading" && photoCount > 0 && photos.length === 0 &&
-          Array.from({ length: Math.min(photoCount, MAX_PHOTOS_PER_SERIES) }, (_, i) => (
+          Array.from({ length: Math.min(photoCount, 20) }, (_, i) => (
             <div key={i} className="h-14 w-14 animate-pulse rounded-md bg-surface" aria-hidden="true" />
           ))}
-        {photos.slice(0, MAX_PHOTOS_PER_SERIES).map((photo, i) => (
+        {photos.map((photo, i) => (
           <Thumbnail
             key={photo.id}
             seriesId={seriesId}
@@ -233,6 +244,12 @@ export function SeriesPhotos({
           />
         ))}
       </div>
+
+      {photoLimit !== null && (
+        <p className="text-xs text-foreground-muted" data-testid={`photo-limit-${seriesNumber}`}>
+          {count} de {photoLimit} {photoLimit === 1 ? "foto" : "fotos"} nesta série
+        </p>
+      )}
 
       {notice && viewerIndex === null && (
         <p className="text-sm text-accent-target" role="alert">{notice}</p>
@@ -248,7 +265,7 @@ export function SeriesPhotos({
       {panelOpen && (
         <div className="mt-1 space-y-2">
           {job.phase === "idle" || job.phase === "failed" ? (
-            <PhotoPicker onFile={handleFile} limitReached={limitReached} />
+            <PhotoPicker onFile={handleFile} limitReached={limitReached} limit={photoLimit} />
           ) : (
             <PhotoProgress
               label={job.phase === "reducing" ? "Preparando a foto..." : `Enviando foto... ${Math.round(job.fraction * 100)}%`}
